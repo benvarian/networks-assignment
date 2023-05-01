@@ -1,2 +1,2 @@
-from get_questions import all
+from get_questions import *
 
