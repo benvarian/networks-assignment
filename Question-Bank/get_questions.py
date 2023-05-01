@@ -1,9 +1,7 @@
 import os
+from QuestionCSV.key import key
 
 # TODO: 
-key = {
-    'Maths': 'Question-Bank/QuestionCSV/Maths.csv'
-}
 
 # Opens csv file and handles errors
 # Returns a list of questions, or None if file not found
