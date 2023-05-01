@@ -1,12 +1,21 @@
 import os
 
+# TODO: 
+key = {
+    'Maths': 'Question-Bank/QuestionCSV/Maths.csv'
+}
+
 # Opens csv file and handles errors
-# Returns a dictionary of questions, or None if file not found
+# Returns a list of questions, or None if file not found
 # The key is the question ID
 # The value is a size-2 array: [question, answer]
 # NOTE: If a QID is a duplicate or corrupt
 # (e.g. A string instead of an int) the line is skipped
-def get_questions(filePath):
+def get_questions(topic):
+    # TODO: handle errors in 
+    # if (key[topic]):
+    #     return error
+    filePath = key[topic]
     try:
         with open(filePath, 'r', encoding='utf-8-sig') as data:
             questions = []
@@ -19,8 +28,8 @@ def get_questions(filePath):
                     row[0] = int(row[0])
                 except ValueError:
                     continue
-                if row[0] in questions:
-                        continue
+                # if row[0] in questions:
+                #         continue
                 else:
                     # Replace \\n with \n because when \n is stored in the csv file
                     # it is changed to \\n when read in by Python, this will help 
