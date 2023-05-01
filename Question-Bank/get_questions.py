@@ -6,7 +6,7 @@ import os
 # The value is a size-2 array: [question, answer]
 # NOTE: If a QID is a duplicate or corrupt
 # (e.g. A string instead of an int) the line is skipped
-def getQuestions(filePath):
+def get_questions(filePath):
     try:
         with open(filePath, 'r', encoding='utf-8-sig') as data:
             questions = {}
@@ -33,7 +33,6 @@ def getQuestions(filePath):
     except FileNotFoundError:
         print(f"""Filepath "{filePath}" not found""")
         return None
-
 
 # # TESTING
 # if __name__ == "__main__":
