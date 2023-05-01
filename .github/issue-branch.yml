@@ -1,3 +1,3 @@
-branchname: tiny
+branchName: 'i${issue.number}-${issue.title,}'
 autocloseIssue: true
 commentMessage: 'Branch ${branchName} created for issue: ${issue.title}'
