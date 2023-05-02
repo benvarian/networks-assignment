@@ -1,5 +1,5 @@
 ﻿QID,Q,A
-1,question1\nA.\nB.\nC.\nD.,answer1
+1,What is the output of the following code?\n\nx = {x}\nif x > {y}:\n\tprint("Hello")\nelse:\n\tprint("Goodbye")\n\nA. Hello\nB. Goodbye\nC. {x}\nD. {y}, answer1
 3,question2,answer2
 5,question3,answer3
 7,question4,answer4
