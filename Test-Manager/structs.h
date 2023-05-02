@@ -5,6 +5,14 @@
 #include <netdb.h>
 #include <errno.h>
 #include <sys/socket.h>
+#include <poll.h>
+
+struct pollfd
+{
+    int fd;
+    short events;
+    short revents;
+};
 
 struct addrinfo
 {
@@ -121,3 +129,5 @@ int getpeername(int sockfd, struct sockaddr *addr, int *addrlen);
 int gethostname(char *hostname, size_t size);
 // hostname arrya of chars, size if strlen
 // returns 0 on success
+
+int poll(struct pollfd fds[], nfds_t nfds, int timeout);
