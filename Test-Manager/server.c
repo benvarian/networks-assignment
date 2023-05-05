@@ -17,6 +17,7 @@
 #include <signal.h>
 
 #define BACKLOG 10
+#define MAXDATASIZE 100
 
 void sigchld_handler(int s)
 {
@@ -33,11 +34,12 @@ void sigchld_handler(int s)
 
 void *get_in_addr(struct sockaddr *sa)
 {
-	if (sa->sa_family == AF_INET) {
-		return &(((struct sockaddr_in*)sa)->sin_addr);
-	}
+    if (sa->sa_family == AF_INET)
+    {
+        return &(((struct sockaddr_in *)sa)->sin_addr);
+    }
 
-	return &(((struct sockaddr_in6*)sa)->sin6_addr);
+    return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
 void accept_connection(int sockfd)
@@ -45,9 +47,9 @@ void accept_connection(int sockfd)
 
     struct sockaddr_storage their_addr; // connector's address information
     socklen_t sin_size;
-    int new_fd;
-	char s[INET6_ADDRSTRLEN];
-
+    int new_fd, numbytes;
+    char s[INET6_ADDRSTRLEN];
+    char buf[MAXDATASIZE];
 
     printf("server: waiting for connections...\n");
 
@@ -65,16 +67,25 @@ void accept_connection(int sockfd)
                   get_in_addr((struct sockaddr *)&their_addr),
                   s, sizeof s);
         printf("server: got connection from %s\n", s);
+
         // end
         if (!fork())
         {                  // this is the child process
             close(sockfd); // child doesn't need the listener
-            if (send(new_fd, "Hello, world!", 13, 0) == -1)
-                perror("send");
+            // if (send(new_fd, "Hello, world!", 13, 0) == -1)
+            //     perror("send");
+            if ((numbytes = recv(new_fd, buf, sizeof buf, 0)) == -1)
+            {
+                perror("recv");
+                exit(1);
+            }
+            buf[numbytes] = '\0';
+            printf("server received: '%s'\n", buf);
+
             close(new_fd);
             exit(0);
         }
-        close(new_fd); // parent doesn't need this
+        close(new_fd);
     }
 }
 

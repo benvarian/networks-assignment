@@ -70,15 +70,21 @@ int main(int argc, char *argv[])
     printf("client: connecting to %s\n", s);
 
     freeaddrinfo(servinfo);
-
-    if((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1 ){
-        perror("recv"); 
+    
+    if(send(sockfd, "hello world", 13, 0) == -1){
+        perror("send");
         exit(1);
     }
+    printf("sent 'hello world' to server\n");
 
-    buf[numbytes] = '\0';
+    // if((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1 ){
+    //     perror("recv"); 
+    //     exit(1);
+    // }
 
-    printf("client received: '%s'\n", buf);
+    // buf[numbytes] = '\0';
+
+    // printf("client received: '%s'\n", buf);
 
     close(sockfd);
 
