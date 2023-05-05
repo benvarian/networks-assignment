@@ -1,142 +1,172 @@
+/**
+** @file server.c
+** @brief implementation of the server required for test-manager
+**/
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include <stdio.h>
+#include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
 #include <netdb.h>
-#include <errno.h>
-#include <sys/socket.h>
-#include <poll.h>
+#include <arpa/inet.h>
+#include <sys/wait.h>
+#include <signal.h>
 
-// #include "structs.h"
-
-#define MYPORT "3490"
 #define BACKLOG 10
 
-uint32_t htonf(float f)
+void sigchld_handler(int s)
 {
-    uint32_t p;
-    uint32_t sign;
-    if (f < 0)
-    {
-        sign = 1;
-        f = -f;
-    }
-    else
-    {
-        sign = 0;
-    }
+    (void)s; // quiet unused variable warning
 
-    p = ((((uint32_t)f) & 0x7fff) << 16 | (sign << 31));
-    p |= (uint32_t)(((f - (int)f) * 65536.0f)) & 0xffff;
+    // waitpid() might overwrite errno, so we save and restore it:
+    int saved_errno = errno;
 
-    return p;
+    while (waitpid(-1, NULL, WNOHANG) > 0)
+        ;
+
+    errno = saved_errno;
 }
 
-float ntohf(uint32_t p)
+void *get_in_addr(struct sockaddr *sa)
 {
-    float f = ((p >> 16) & 0x7fff);
-    f += (p & 0xffff) / 65536.0f;
+	if (sa->sa_family == AF_INET) {
+		return &(((struct sockaddr_in*)sa)->sin_addr);
+	}
 
-    if (((p >> 31) & 0x1) == 0x1)
-    {
-        f = -f;
-    }
-
-    return f;
+	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-// int getaddrinfo()
-// {
-//     int status;
-//     struct addrinfo hints;
-//     struct addrinfo *servinfo;
-//     memset(&hints, 0, sizeof hints); // makes sure the struct is empty
-//     hints.ai_family = AF_UNSPEC; // either ipv4 or 6
-//     hints.ai_socktype = SOCK_STREAM;
-//     hints.ai_flags = AI_PASSIVE;
-
-//     if ((status = getaddrinfo(NULL, "3490", &hints, &servinfo)) != 0)
-//     {
-//         fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(status));
-//         exit(1);
-//     }
-//     freeaddrinfo(servinfo);
-// }
-
-// void idk2()
-// {
-//     int s;
-//     struct addrinfo hints, *res;
-//     // todo error checking and walk through the res linked list looking for valid entries
-//     getaddrinfo("www.example.com", "http", &hints, &res);
-//     s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-
-//     // connect example
-//     // connect(sockfd, res->ai_addr, res->ai_addrlen);
-// }
-
-// void idk3()
-// {
-//     struct addrinfo hints, *res;
-//     int sockfd;
-//     memset(&hints, 0, sizeof hints);
-//     hints.ai_family = AF_UNSPEC;
-//     hints.ai_socktype = SOCK_STREAM;
-//     hints.ai_flags = AI_PASSIVE;
-
-//     getaddrinfo(NULL, "3490", &hints, &res);
-
-//     sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-//     //!  dont bind a port number lowes than 1024->65535
-//     bind(sockfd, res->ai_addr, res->ai_addrlen);
-
-//     // int yes = 1;
-//     // if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof yes) == -1)
-//     // {
-//     //     perror("setsockopt");
-//     //     exit(1);
-//     // }
-// }
-
-int main(void)
+void accept_connection(int sockfd)
 {
 
-    // sequence of calls
-    /*
-     * getaddrinfo()
-     * socket()
-     * bind()
-     * listen()
-     */
-    // struct sockaddr_storage their_addr;
-    // socklen_t addr_size;
-    // struct addrinfo hints, *res;
-    // int sockfd, new_fd;
+    struct sockaddr_storage their_addr; // connector's address information
+    socklen_t sin_size;
+    int new_fd;
+	char s[INET6_ADDRSTRLEN];
 
-    // memset(&hints, 0, sizeof hints);
-    // hints.ai_family = AF_UNSPEC;
-    // hints.ai_socktype = SOCK_STREAM;
-    // hints.ai_flags = AI_PASSIVE;
 
-    // getaddrinfo(NULL, MYPORT, &hints, &res);
+    printf("server: waiting for connections...\n");
 
-    // sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    // bind(sockfd, res->ai_addr, res->ai_addrlen);
-    // listen(sockfd, BACKLOG);
+    while (1)
+    { // main accept() loop
+        sin_size = sizeof their_addr;
+        new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
+        if (new_fd == -1)
+        {
+            perror("accept");
+            continue;
+        }
+        // todo will leave in for now, but will remove later basically just debugging
+        inet_ntop(their_addr.ss_family,
+                  get_in_addr((struct sockaddr *)&their_addr),
+                  s, sizeof s);
+        printf("server: got connection from %s\n", s);
+        // end
+        if (!fork())
+        {                  // this is the child process
+            close(sockfd); // child doesn't need the listener
+            if (send(new_fd, "Hello, world!", 13, 0) == -1)
+                perror("send");
+            close(new_fd);
+            exit(0);
+        }
+        close(new_fd); // parent doesn't need this
+    }
+}
 
-    // addr_size = sizeof their_addr;
-    // new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &addr_size);
-    // return 0;
+void bind_socket(struct addrinfo *servinfo)
+{
+    struct addrinfo *p;
+    struct sigaction sa;
+    int sockfd;
+    int yes = 1;
+    for (p = servinfo; p != NULL; p = p->ai_next)
+    {
+        if ((sockfd = socket(p->ai_family, p->ai_socktype,
+                             p->ai_protocol)) == -1)
+        {
+            perror("server: socket");
+            continue;
+        }
 
-    float f = 3.1415926, f2;
-    uint32_t netf;
-    netf = htonf(f);
-    f2 = ntohf(netf);
+        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
+                       sizeof(int)) == -1)
+        {
+            perror("setsockopt");
+            exit(1);
+        }
 
-    printf("orgin: %f\n", f);
-    printf("network: 0x%08x\n", netf);
-    printf("unpacket: %f\n", f2);
+        if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1)
+        {
+            close(sockfd);
+            perror("server: bind");
+            continue;
+        }
+
+        break;
+    }
+
+    freeaddrinfo(servinfo);
+
+    if (p == NULL)
+    {
+        fprintf(stderr, "server: failed to bind\n");
+        exit(1);
+    }
+
+    if (listen(sockfd, BACKLOG) == -1)
+    {
+        perror("listen");
+        exit(1);
+    }
+
+    sa.sa_handler = sigchld_handler; // reap all dead processes
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    if (sigaction(SIGCHLD, &sa, NULL) == -1)
+    {
+        perror("sigaction");
+        exit(1);
+    }
+
+    accept_connection(sockfd);
+}
+
+void get_addr_ip(char *port)
+{
+    int status;
+    struct addrinfo hints, *res;
+
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
+
+    if ((status = getaddrinfo(NULL, port, &hints, &res)) != 0)
+    {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
+        exit(EXIT_FAILURE);
+    }
+    bind_socket(res);
+}
+
+int main(int argc, char *argv[])
+{
+
+    socklen_t sin_size;
+    struct sockaddr_storage their_addr;
+
+    if (argc != 2)
+    {
+        fprintf(stderr, "usage: ./server port\n");
+        exit(EXIT_FAILURE);
+    }
+
+    get_addr_ip(argv[1]);
 
     return 0;
 }
