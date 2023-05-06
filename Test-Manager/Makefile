@@ -2,7 +2,7 @@ CC=gcc
 CCOPTS=-Wall -Wextra
 LIBS=
 
-SRCS=$(wildcard *.c)
+SRCS=$(wildcard *.c) $(wildcard ./hashtable/*.c)
 TARGETS=$(SRCS:.c=)
 
 .PHONY: all clean pristine
