@@ -12,6 +12,11 @@
 #define PORT "3490"
 #define MAXDATASIZE 100
 
+struct message {
+    char *msg;
+    int size;
+};
+
 void *get_in_addr(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET)
@@ -77,14 +82,14 @@ int main(int argc, char *argv[])
     }
     printf("sent 'hello world' to server\n");
 
-    // if((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1 ){
-    //     perror("recv"); 
-    //     exit(1);
-    // }
+    if((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1 ){
+        perror("recv"); 
+        exit(1);
+    }
 
-    // buf[numbytes] = '\0';
+    buf[numbytes] = '\0';
 
-    // printf("client received: '%s'\n", buf);
+    printf("client received: '%s'\n", buf);
 
     close(sockfd);
 

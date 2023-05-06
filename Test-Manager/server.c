@@ -19,6 +19,12 @@
 #define BACKLOG 10
 #define MAXDATASIZE 100
 
+void usage()
+{
+    fprintf(stderr, "usage: ./server port\n");
+    exit(EXIT_FAILURE);
+}
+
 void sigchld_handler(int s)
 {
     (void)s; // quiet unused variable warning
@@ -40,6 +46,26 @@ void *get_in_addr(struct sockaddr *sa)
     }
 
     return &(((struct sockaddr_in6 *)sa)->sin6_addr);
+}
+
+void received(int new_fd, char *buf, int size)
+{
+    int count = 0;
+    for (int i = 0; i < size; i++) {
+        if(buf[i] == '\0') {
+            count++;
+        }
+    }
+    printf("server: received '%s' with size of %d and empty bytes amount been %d\n", buf, size, count);
+}
+
+
+void send_message(int new_fd, char *buf, int size)
+{
+    if (send(new_fd, buf, size, 0) == -1)
+        perror("send");
+
+    printf("sent %s to connection %d\n", buf, new_fd);
 }
 
 void accept_connection(int sockfd)
@@ -72,16 +98,18 @@ void accept_connection(int sockfd)
         if (!fork())
         {                  // this is the child process
             close(sockfd); // child doesn't need the listener
-            // if (send(new_fd, "Hello, world!", 13, 0) == -1)
-            //     perror("send");
             if ((numbytes = recv(new_fd, buf, sizeof buf, 0)) == -1)
             {
                 perror("recv");
                 exit(1);
             }
-            buf[numbytes] = '\0';
-            printf("server received: '%s'\n", buf);
+            else
+            {
+                received(new_fd, buf, sizeof buf);
+            }
 
+            send_message(new_fd, "Hello, world!", sizeof "Hello, world!");
+            
             close(new_fd);
             exit(0);
         }
@@ -167,14 +195,9 @@ void get_addr_ip(char *port)
 
 int main(int argc, char *argv[])
 {
-
-    socklen_t sin_size;
-    struct sockaddr_storage their_addr;
-
     if (argc != 2)
     {
-        fprintf(stderr, "usage: ./server port\n");
-        exit(EXIT_FAILURE);
+        usage();
     }
 
     get_addr_ip(argv[1]);
