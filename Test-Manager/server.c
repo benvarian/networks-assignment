@@ -17,7 +17,7 @@
 #include <signal.h>
 
 #define BACKLOG 10
-#define MAXDATASIZE 2047
+#define MAXDATASIZE 4095
 #define BSIZE 1024
 #define SOCKET int
 
@@ -99,7 +99,7 @@ void send_400(int socket)
                        "Connection: close\r\n"
                        "Content-Length: 11\r\n\r\nBad Request";
     send(socket, c400, strlen(c400), 0);
-    drop_client(socket);
+    // drop_client(socket);
 }
 
 void send_404(int socket)
@@ -108,12 +108,12 @@ void send_404(int socket)
                        "Connection: close\r\n"
                        "Content-Length: 9\r\n\r\nPage Not Found";
     send(socket, c404, strlen(c404), 0);
-    drop_client(socket);
+    // drop_client(socket);
 }
 
-void serve(int socket, const char *path)
+void connection_get(int socket, const char *path)
 {
-    printf("Serving path %s\n", path);
+    // printf("Serving path %s\n", path);
 
     if (strcmp(path, "/") == 0)
     {
@@ -144,7 +144,6 @@ void serve(int socket, const char *path)
     fseek(fp, 0L, SEEK_END);
     size_t cl = ftell(fp);
     rewind(fp);
-
     const char *ct = get_content_type(full_path);
 
     char buffer[BSIZE];
@@ -177,11 +176,10 @@ void received(int new_fd, int numbytes, char *buf)
 {
     int client_received = 0;
     char *get = "GET /";
-    char *post = "POST /";
     if (numbytes < 1)
     {
         fprintf(stderr, "Unexpected disconnect from client.\n");
-        drop_client(new_fd);
+        // drop_client(new_fd);
     }
     else
     {
@@ -193,18 +191,15 @@ void received(int new_fd, int numbytes, char *buf)
         if (request)
         {
             *request = 0;
-
-            if (strncmp(get, buf, strlen(get - 1)))
+            // printf("%s", buf);
+            if (strncmp(get, buf, strlen(get)))
             {
                 send_400(new_fd);
-            }
-            else if (strncmp(post, buf, strlen(post - 1)))
-            {
-                printf("post: %s", buf);
             }
             else
             {
                 char *path = buf + 4;
+
                 char *end_path = strstr(path, " ");
                 if (!end_path)
                 {
@@ -213,9 +208,17 @@ void received(int new_fd, int numbytes, char *buf)
                 else
                 {
                     *end_path = 0;
-                    serve(new_fd, path);
+                    connection_get(new_fd, path);
                 }
             }
+            // if (strncmp(post, buf, strlen(post)))
+            // {
+            //     send_400(new_fd);
+            // }
+            // else
+            // {
+            //     printf("%s", buf);
+            // }
         }
     }
 }
