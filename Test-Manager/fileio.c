@@ -114,6 +114,7 @@ void getData(HASHTABLE *hashtable, char *filepath) {
         // add user to hashtable
         hashtable_add(hashtable, user, password, types, questions, answers, attemptsLeft, correct);
         // NEED TO FREE THE MEMORY OF THE HASHTABLE AT THE END
+        // - REMOVE IF ACTUALLY USING THIS FUNCTION AND FREE LATER
         free(user);
         free(password);
         free(types);
@@ -128,7 +129,9 @@ void getData(HASHTABLE *hashtable, char *filepath) {
     free(buffer);
 }
 
+/*
 int main(int argc, char *argv[]) {
     HASHTABLE *hashtable = hashtable_new();
     getData(hashtable, "./userdata.csv");
 }
+*/
