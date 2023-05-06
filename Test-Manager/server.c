@@ -121,12 +121,12 @@ void serve(int socket, const char *path)
     }
     if (strlen(path) > 100)
     {
-        // send_400(socket);
+        send_400(socket);
         return;
     }
     if (strstr(path, ".."))
     {
-        // send_400(socket);
+        send_400(socket);
         return;
     }
     char full_path[128];
@@ -137,7 +137,7 @@ void serve(int socket, const char *path)
 
     if (!fp)
     {
-        // send_404(socket);
+        send_404(socket);
         return;
     }
 
@@ -194,13 +194,13 @@ void received(int new_fd, int numbytes, char *buf)
         {
             *request = 0;
 
-            if (strncmp(get, buf, strlen(get-1)))
+            if (strncmp(get, buf, strlen(get - 1)))
             {
                 send_400(new_fd);
             }
-            else if (strncmp(post, buf, strlen(post-1)))
+            else if (strncmp(post, buf, strlen(post - 1)))
             {
-                send_400(new_fd);
+                printf("post: %s", buf);
             }
             else
             {
