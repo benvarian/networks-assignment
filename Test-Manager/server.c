@@ -93,6 +93,14 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
+void send_200(int socket)
+{
+    const char *c200 = "HTTP/1.1 200 OK\r\n"
+                       "Content-Type: text/html\r\n";
+    send(socket, c200, strlen(c200), 0);
+    // drop_client(socket);
+}
+
 void send_400(int socket)
 {
     const char *c400 = "HTTP/1.1 400 Bad Request\r\n"
@@ -113,7 +121,7 @@ void send_404(int socket)
 
 void connection_get(int socket, const char *path)
 {
-    // printf("Serving path %s\n", path);
+    printf("Serving path %s\n", path);
 
     if (strcmp(path, "/") == 0)
     {
@@ -175,7 +183,7 @@ void connection_get(int socket, const char *path)
 void received(int new_fd, int numbytes, char *buf)
 {
     int client_received = 0;
-    char *get = "GET /";
+    // char *get = "GET /";
     if (numbytes < 1)
     {
         fprintf(stderr, "Unexpected disconnect from client.\n");
@@ -185,18 +193,13 @@ void received(int new_fd, int numbytes, char *buf)
     {
         client_received += numbytes;
         buf[client_received] = 0;
-
+        // printf("%s\n", buf);
         char *request = strstr(buf, "\r\n\r\n");
 
         if (request)
         {
             *request = 0;
-            // printf("%s", buf);
-            if (strncmp(get, buf, strlen(get)))
-            {
-                send_400(new_fd);
-            }
-            else
+            if (strncmp(buf, "GET", 3) == 0)
             {
                 char *path = buf + 4;
 
@@ -211,13 +214,22 @@ void received(int new_fd, int numbytes, char *buf)
                     connection_get(new_fd, path);
                 }
             }
-            // if (strncmp(post, buf, strlen(post)))
+            else if (strncmp(buf, "POST", 4) == 0)
+            {
+                char *payload = request + 4;
+
+                printf("%s\n", payload);
+            }
+            else
+            {
+                printf("unknown request\n");
+            }
+            // if (strncmp(get, buf, strlen(get)))
             // {
             //     send_400(new_fd);
             // }
             // else
             // {
-            //     printf("%s", buf);
             // }
         }
     }
@@ -229,7 +241,7 @@ void manage_connection(int sockfd)
     struct sockaddr_storage their_addr; // connector's address information
     socklen_t sin_size;
     int new_fd, numbytes;
-    char s[INET6_ADDRSTRLEN];
+    // char s[INET6_ADDRSTRLEN];
     char buf[MAXDATASIZE + 1];
 
     printf("server: waiting for connections...\n");
@@ -244,10 +256,10 @@ void manage_connection(int sockfd)
             continue;
         }
 
-        inet_ntop(their_addr.ss_family,
-                  get_in_addr((struct sockaddr *)&their_addr),
-                  s, sizeof s);
-        printf("server: got connection from %s\n\n", s);
+        // inet_ntop(their_addr.ss_family,
+        //           get_in_addr((struct sockaddr *)&their_addr),
+        //           s, sizeof s);
+        // printf("server: got connection from %s\n\n", s);
 
         if (!fork())
         {
