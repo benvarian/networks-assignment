@@ -5,14 +5,9 @@ CFLAGS = -Wall -Wextra -Werror -pedantic
 SRCS = $(wildcard *.c)
 TARGETS = $(SRCS:.c=)
 
-all: server.o
-	$(C) $(CSTD) $(CFLAGS) -o server server.o -lm
 
 fileio : fileio.o
 	$(C) $(CSTD) $(CFLAGS) -o fileio fileio.o -lm
-
-server.o : server.c server.h
-	$(C) $(CSTD) $(CFLAGS)  -c server.c
 
 fileio.o : fileio.c fileio.h
 	$(C) $(CSTD) $(CFLAGS) -c fileio.c

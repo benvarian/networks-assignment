@@ -1,16 +1,15 @@
-// SHAMELESSLY ADAPTED FROM CHRIS CITS2002 WORKSHOP 7
 #define _POSIX_C_SOURCE     200809L
-
-#include <stdio.h>
+#include <sys/stat.h>
+#include <string.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
 
 #define	HASHTABLE_SIZE		997
 
 //  ENUMERATION OF QUESTION TYPE - M FOR MULTICHOICE, P FOR PROGRAMMING
-enum qType {M, P};
+enum qType {M, P, N};
 
 //  STUDENT DATA STRUCTURE
 typedef struct _testinfo {
@@ -42,3 +41,16 @@ extern void hashtable_add(HASHTABLE *hashtable, char *username, char *passw, enu
     RETURNS NULL POINTER IF USER DOES NOT EXIST     
 */
 extern TESTINFO *hashtable_get(HASHTABLE *hashtable, char *username);
+
+// Opens the file and returns file pointer
+extern FILE *openFile(char *file_path, char *mode);
+
+// Reads content of the file into a buffer
+extern char *readFile(FILE * fp);
+
+// Uses openFile and readFile to get data and put it in the hashtable
+// shouldn't need to call openFile and readFile, just this
+extern void getData(HASHTABLE *hashtable, char *filepath);
+
+// Frees memory of a student once finished
+extern void freeMemory(TESTINFO *student);
