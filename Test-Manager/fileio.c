@@ -34,11 +34,12 @@ void getData(HASHTABLE *hashtable, char *filepath) {
     FILE *fp = openFile(filepath, "r");
     char *buffer = readFile(fp);
     // split data into rows for each user
-    char *saverow, *saveentry, *savetype, *savequestions, *saveanswers, *saveattempts, *savecorrect;
+    char *saverow;
     char *row = strtok_r(buffer, "\n", &saverow);
     // strtok again to skip first row
     row = strtok_r(NULL, "\n", &saverow);
     while (row != NULL) {
+        char *saveentry, *savetype, *savequestions, *saveanswers, *saveattempts, *savecorrect;
         // parse username
         char *entries = strtok_r(row, ",", &saveentry);
         char *user = calloc(sizeof(entries), sizeof(char));
@@ -53,85 +54,80 @@ void getData(HASHTABLE *hashtable, char *filepath) {
 
         // parse enumerated types
         entries = strtok_r(NULL, ",", &saveentry);
-        enum qType *types = calloc(sizeof(NUM_QUESTIONS), sizeof(enum qType));
-        //CHECK_ALLOC(*types);
-        char *typetok = strtok_r(entries, ",", &savetype);
+        enum qType types[NUM_QUESTIONS];
+        char *typetok = strtok_r(entries, "$", &savetype);
         for(int i = 0; i < NUM_QUESTIONS; i++) {
-            CHECK_ALLOC(types);
-            if(i == 0) typetok = &typetok[1]; // if at start or end, remove the "
-            if(i == NUM_QUESTIONS - 1) typetok = &typetok[0];
             if(strcmp(typetok, "M") == 0) types[i] = (enum qType) M;
-            else if (strcmp(typetok, "P")) types[i] = (enum qType) P;
+            else if (strcmp(typetok, "P") == 0) types[i] = (enum qType) P;
             else types[i] = (enum qType) NULL;   // ERROR: SHOULD BE M OR P NOT NOTHING
-            strtok_r(NULL, ",", &savetype);
+            typetok = strtok_r(NULL, "$", &savetype);
         }
 
         // parse questions
         entries = strtok_r(NULL, ",", &saveentry);
         char *questions[NUM_QUESTIONS];
-        char *questionstok = strtok_r(entries, ",", &savequestions);
+        char *questionstok = strtok_r(entries, "$", &savequestions);
         for (int i = 0; i < NUM_QUESTIONS; i++) {
             questions[i] = calloc(sizeof(questionstok), sizeof(char));
             CHECK_ALLOC(questions[i]);
-            strcpy(questionstok, questions[i]);
-            strtok_r(NULL, ",", &savequestions);
+            strcpy(questions[i], questionstok);
+            questionstok = strtok_r(NULL, "$", &savequestions);
         }
 
         // parse answers
         entries = strtok_r(NULL, ",", &saveentry);
         char *answers[NUM_QUESTIONS];
         CHECK_ALLOC(answers);
-        char *answerstok = strtok_r(entries, ",", &saveanswers);
+        char *answerstok = strtok_r(entries, "$", &saveanswers);
         for (int i = 0; i < NUM_QUESTIONS; i++) {
             answers[i] = calloc(sizeof(answerstok), sizeof(char));
             CHECK_ALLOC(answers[i]);
-            strcpy(answerstok, answers[i]);
-            strtok_r(NULL, ",", &saveanswers);
+            strcpy(answers[i], answerstok);
+            answerstok = strtok_r(NULL, "$", &saveanswers);
         }
 
         // parse attempts left
         entries = strtok_r(NULL, ",", &saveentry);
-        int *attemptsLeft = calloc(sizeof(NUM_QUESTIONS), sizeof(int));
-        CHECK_ALLOC(attemptsLeft);
-        char *attemptstok = strtok_r(entries, ",", &saveattempts);
+        int attemptsLeft[NUM_QUESTIONS];
+        char *attemptstok = strtok_r(entries, "$", &saveattempts);
         for (int i = 0; i < NUM_QUESTIONS; i++) {
             attemptsLeft[i] = atoi(attemptstok);
-            strtok_r(NULL, ",", &saveattempts);
+            attemptstok = strtok_r(NULL, "$", &saveattempts);
         }
 
         // parse correct answers
         entries = strtok_r(NULL, ",", &saveentry);
-        bool *correct = calloc(sizeof(NUM_QUESTIONS), sizeof(bool));
-        CHECK_ALLOC(correct);
-        char *correcttok = strtok_r(entries, ",", &savecorrect);
+        bool correct[NUM_QUESTIONS];
+        char *correcttok = strtok_r(entries, "$", &savecorrect);
         for (int i = 0; i < NUM_QUESTIONS; i++) {
-            if(correcttok[i] == 'T') correct[i] = true;
-            else if (correcttok[i] == 'F') correct[i] = false;
+            if(strcmp(correcttok, "T")) correct[i] = true;
+            else if (strcmp(correcttok, "F")) correct[i] = false;
             else correct[i] = (bool) NULL;     // ERROR: SHOULD BE T OR F NOT NOTHING
-            strtok_r(entries, ",", &savecorrect);
+            correcttok = strtok_r(entries, "$", &savecorrect);
         }
 
         // add user to hashtable
         hashtable_add(hashtable, user, password, types, questions, answers, attemptsLeft, correct);
-        // NEED TO FREE THE MEMORY OF THE HASHTABLE AT THE END
-        // - REMOVE IF ACTUALLY USING THIS FUNCTION AND FREE LATER
-        free(user);
-        free(password);
-        free(types);
-        for(int i = 0; i < NUM_QUESTIONS; i++) {
-            free(questions[i]);
-            free(answers[i]);
-        }
-        free(attemptsLeft);
-        free(correct);
-        strtok_r(NULL, "\n", &saverow);
+        row = strtok_r(NULL, "\n", &saverow);
     }
     free(buffer);
 }
 
-/*
+void freeMemory(TESTINFO *student) {
+    /* NEED TO FIX UP FREEING QUESTIONS AND ANSWERS, MEMORY LEAKS RIGHT NOW
+    for(int i= 0; i < NUM_QUESTIONS; i++) {
+        free(student->answers[i]);
+        free(student->questions[i]);
+    }
+    */
+    free(student->user);
+    free(student->pw);
+}
+
 int main(int argc, char *argv[]) {
     HASHTABLE *hashtable = hashtable_new();
     getData(hashtable, "./userdata.csv");
+    TESTINFO *mitch = hashtable_get(hashtable, "mitch");
+    printf("Username: %s\nPassword: %s\nQuestion 1: %s\nAnswer 1: %s\n", mitch->user, mitch->pw, mitch->questions[0], mitch->answers[0]);
+    freeMemory(mitch);
 }
-*/

@@ -1,2 +1,2 @@
 user,pw,qtype,questions,answers,attemptsLeft,correct
-mitch,test123,"M,M,M,M,M,P,P,P,P,P","q1,q2,q3,q4,q5,q6,q7,q8,q9,q10","a1,a2,a3,a4,a5,a6,a7,a8,a9,a10","3,3,3,3,3,3,3,3,3,3","F,F,F,F,F,T,T,T,T,T"
+mitch,test123,M$M$M$M$M$P$P$P$P$P,question1$question2$q3$q4$q5$q6$q7$q8$q9$q10,a1$a2$a3$a4$a5$a6$a7$a8$a9$a10,3$3$3$3$3$3$3$3$3$3,F$F$F$F$F$T$T$T$T$T
