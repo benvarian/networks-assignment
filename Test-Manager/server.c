@@ -166,7 +166,28 @@ void connection_get(SOCKET socket, const char *path, const char *IPv6_Address)
 
 void connection_post(int socket, char *buf, char *args)
 {
-    printf("%d:%s:%s\n\n", socket, buf, args);
+    char *line;
+    int index = 0;
+    (void)socket;
+    (void)buf;
+    (void)args;
+    while ((line = strtok_r(buf + index, "\r\n", &line)))
+    {
+        index = (line - buf) + strlen(line) + 2;
+        char *key = NULL;
+        char *value = NULL;
+        if (strcmp(line, "") == 0)
+            break;
+        char *colon = strchr(line, ':');
+        if (colon != NULL)
+        {
+            value = colon + 2;
+        }
+        
+        // sscanf(line, "%s: %s", key, value);
+        if (value != NULL)
+            printf("%s:%s\n\n", key,value);
+    }
 }
 
 void received(int new_fd, int numbytes, char *buf, const char *IPv6_Address)
@@ -203,7 +224,7 @@ void received(int new_fd, int numbytes, char *buf, const char *IPv6_Address)
             }
             else if (strncmp(buf, "POST", 4) == 0)
             {
-                connection_post(new_fd, buf, request+4);
+                connection_post(new_fd, buf, request + 4);
             }
             else
             {
