@@ -3,25 +3,9 @@
 ** @brief implementation of the server required for test-manager
 **/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <sys/wait.h>
-#include <signal.h>
+#include "server.h"
 
-#define BACKLOG 10
-#define MAXDATASIZE 4095
-#define BSIZE 1024
-#define SOCKET int
-
-void usage()
+void usage(void)
 {
     fprintf(stderr, "usage: ./server port\n");
     exit(EXIT_FAILURE);
@@ -93,7 +77,7 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
-void send_200(int socket)
+void send_200(SOCKET socket)
 {
     const char *c200 = "HTTP/1.1 200 OK\r\n"
                        "Content-Type: text/html\r\n";
@@ -101,7 +85,7 @@ void send_200(int socket)
     // drop_client(socket);
 }
 
-void send_400(int socket)
+void send_400(SOCKET socket)
 {
     const char *c400 = "HTTP/1.1 400 Bad Request\r\n"
                        "Connection: close\r\n"
@@ -110,7 +94,7 @@ void send_400(int socket)
     // drop_client(socket);
 }
 
-void send_404(int socket)
+void send_404(SOCKET socket)
 {
     const char *c404 = "HTTP/1.1 404 Not Found\r\n"
                        "Connection: close\r\n"
@@ -119,9 +103,9 @@ void send_404(int socket)
     // drop_client(socket);
 }
 
-void connection_get(int socket, const char *path)
+void connection_get(SOCKET socket, const char *path, const char *IPv6_Address)
 {
-    printf("Serving path %s\n", path);
+    printf("Serving path: %s to: %s\n", path, IPv6_Address);
 
     if (strcmp(path, "/") == 0)
     {
@@ -180,10 +164,14 @@ void connection_get(int socket, const char *path)
     fclose(fp);
 }
 
-void received(int new_fd, int numbytes, char *buf)
+void connection_post(int socket, char *buf, char *args)
+{
+    printf("%d:%s:%s\n\n", socket, buf, args);
+}
+
+void received(int new_fd, int numbytes, char *buf, const char *IPv6_Address)
 {
     int client_received = 0;
-    // char *get = "GET /";
     if (numbytes < 1)
     {
         fprintf(stderr, "Unexpected disconnect from client.\n");
@@ -193,7 +181,6 @@ void received(int new_fd, int numbytes, char *buf)
     {
         client_received += numbytes;
         buf[client_received] = 0;
-        // printf("%s\n", buf);
         char *request = strstr(buf, "\r\n\r\n");
 
         if (request)
@@ -211,40 +198,32 @@ void received(int new_fd, int numbytes, char *buf)
                 else
                 {
                     *end_path = 0;
-                    connection_get(new_fd, path);
+                    connection_get(new_fd, path, IPv6_Address);
                 }
             }
             else if (strncmp(buf, "POST", 4) == 0)
             {
-                char *payload = request + 4;
-
-                printf("%s\n", payload);
+                connection_post(new_fd, buf, request+4);
             }
             else
             {
-                printf("unknown request\n");
+                // unknown request figure out how to handle
+                send_400(new_fd);
             }
-            // if (strncmp(get, buf, strlen(get)))
-            // {
-            //     send_400(new_fd);
-            // }
-            // else
-            // {
-            // }
         }
     }
 }
 
-void manage_connection(int sockfd)
+void manage_connection(SOCKET sockfd)
 {
 
     struct sockaddr_storage their_addr; // connector's address information
     socklen_t sin_size;
     int new_fd, numbytes;
-    // char s[INET6_ADDRSTRLEN];
+    char s[INET_ADDRSTRLEN];
     char buf[MAXDATASIZE + 1];
 
-    printf("server: waiting for connections...\n");
+    printf("Server: waiting for connections...\n");
 
     while (1)
     {
@@ -252,14 +231,12 @@ void manage_connection(int sockfd)
         new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
         if (new_fd == -1)
         {
-            perror("accept");
+            fprintf(stdout, "Client connection failed\n");
             continue;
         }
-
-        // inet_ntop(their_addr.ss_family,
-        //           get_in_addr((struct sockaddr *)&their_addr),
-        //           s, sizeof s);
-        // printf("server: got connection from %s\n\n", s);
+        inet_ntop(their_addr.ss_family,
+                  get_in_addr((struct sockaddr *)&their_addr),
+                  s, sizeof s);
 
         if (!fork())
         {
@@ -272,7 +249,7 @@ void manage_connection(int sockfd)
             }
             else
             {
-                received(new_fd, numbytes, buf);
+                received(new_fd, numbytes, buf, s);
             }
             close(new_fd);
             exit(0);
@@ -283,7 +260,6 @@ void manage_connection(int sockfd)
 
 SOCKET bind_socket(struct addrinfo *servinfo)
 {
-    // todo change all exit to return so that we can handle errors better
     struct addrinfo *p;
     struct sigaction sa;
     SOCKET sockfd;
@@ -340,7 +316,7 @@ SOCKET bind_socket(struct addrinfo *servinfo)
     return sockfd;
 }
 
-struct addrinfo *bind_to_port(char *port)
+struct addrinfo *get_info(char *port)
 {
     int status;
     struct addrinfo hints, *res;
@@ -349,7 +325,6 @@ struct addrinfo *bind_to_port(char *port)
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
-
     if ((status = getaddrinfo(NULL, port, &hints, &res)) != 0)
     {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
@@ -365,7 +340,7 @@ int main(int argc, char *argv[])
         usage();
     }
 
-    SOCKET socket = bind_socket(bind_to_port(argv[1]));
+    SOCKET socket = bind_socket(get_info(argv[1]));
 
     manage_connection(socket);
 

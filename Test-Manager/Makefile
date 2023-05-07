@@ -1,18 +1,15 @@
-CC=gcc
-CCOPTS=-Wall -Wextra
-LIBS=
+C = cc
+CSTD = -std=c99
+CFLAGS = -Wall -Wextra -Werror -pedantic
 
-SRCS=$(wildcard *.c)
-TARGETS=$(SRCS:.c=)
+SRCS = $(wildcard *.c)
+TARGETS = $(SRCS:.c=)
 
-.PHONY: all clean pristine
+all: server.o
+	$(C) $(CSTD) $(CFLAGS) -o server server.o -lm
 
-all: $(TARGETS)
+server.o : server.c server.h
+	$(C) $(CSTD) $(CFLAGS)  -c server.c
 
 clean:
 	rm -f $(TARGETS)
-
-pristine: clean
-
-%: %.c
-	$(CC) $(CCOPTS) -o $@ $< $(LIBS)
