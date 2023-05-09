@@ -111,7 +111,9 @@ void getData(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_US
 
         // parse questions
         entries = strtok_r(NULL, ",", &saveentry);
-        char *questions[NUM_QUESTIONS];
+        char **questions;
+        questions = (char **)calloc(sizeof(char *), NUM_QUESTIONS);
+
         char *questionstok = strtok_r(entries, "$", &savequestions);
         for (int i = 0; i < NUM_QUESTIONS; i++) {
             questions[i] = calloc(sizeof(questionstok), sizeof(char));
@@ -122,7 +124,8 @@ void getData(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_US
 
         // parse answers
         entries = strtok_r(NULL, ",", &saveentry);
-        char *answers[NUM_QUESTIONS];
+        char **answers;
+        answers = (char **)calloc(sizeof(char *), NUM_QUESTIONS);
         CHECK_ALLOC(answers);
         char *answerstok = strtok_r(entries, "$", &saveanswers);
         for (int i = 0; i < NUM_QUESTIONS; i++) {
@@ -134,7 +137,8 @@ void getData(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_US
 
         // parse attempts left
         entries = strtok_r(NULL, ",", &saveentry);
-        int attemptsLeft[NUM_QUESTIONS];
+        int *attemptsLeft;
+        attemptsLeft = (int *)calloc(sizeof(int *), NUM_QUESTIONS);
         char *attemptstok = strtok_r(entries, "$", &saveattempts);
         for (int i = 0; i < NUM_QUESTIONS; i++) {
             attemptsLeft[i] = atoi(attemptstok);
@@ -143,7 +147,9 @@ void getData(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_US
 
         // parse correct answers
         entries = strtok_r(NULL, ",", &saveentry);
-        bool correct[NUM_QUESTIONS];
+        // bool correct[NUM_QUESTIONS];
+        bool *correct;
+        correct = (bool *)calloc(sizeof(bool *), NUM_QUESTIONS);
         char *correcttok = strtok_r(entries, "$", &savecorrect);
         for (int i = 0; i < NUM_QUESTIONS; i++) {
             if(strcmp(correcttok, "T")) correct[i] = true;
@@ -208,7 +214,7 @@ void writeToCSV(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX
 }
 
 void writeToCSV(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_USER_LENGTH], char *filepath) {
-    FILE *fp = openFile(filepath, "w");
+    FILE *fp = openFile("out.csv", "w");
     TESTINFO *entry;
     fprintf(fp, "user,pw,qtype,questions,answers,attemptsLeft,correct\n");
     for (int i = 0; i < *numStudents; i++) {
