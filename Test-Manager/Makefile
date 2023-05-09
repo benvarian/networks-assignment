@@ -13,3 +13,7 @@ server.o : server.c server.h
 
 clean:
 	rm -f $(TARGETS) *.o
+	
+clearn:
+	rm -f $(TARGETS) *.o && clear
+	
