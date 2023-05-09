@@ -40,8 +40,8 @@ void extract_header_fields(struct HTTPRequest *request, char *header_fields)
     char *field = strtok(fields, "\n");
     while (field)
     {
-        headers.push(&headers, field, sizeof(char[strlen(field)]));
-        field = strtok(NULL, "\n");
+        headers.push(&headers, field, strlen(field) + 1);
+        field = strtok(NULL, "\r\n");
     }
     // Initialize the request's header_fields dictionary.
     request->header_fields = dictionary_constructor(compare_string_keys);
@@ -58,8 +58,9 @@ void extract_header_fields(struct HTTPRequest *request, char *header_fields)
             {
                 value++;
             }
+            // printf(":%s\n", value);
             // Push the key value pairs into the request's header_fields dictionary.
-            request->header_fields.insert(&request->header_fields, key, sizeof(char[strlen(key)]), value, sizeof(char[strlen(value)]));
+            request->header_fields.insert(&request->header_fields, key, strlen(key) + 1, value, strlen(value) + 1);
             // Collect the next field from the queue.
         }
         headers.pop(&headers);
@@ -76,6 +77,7 @@ void extract_body(struct HTTPRequest *request, char *body)
     char *content_type = (char *)request->header_fields.search(&request->header_fields, "Content-Type", sizeof("Content-Type"));
     if (content_type)
     {
+        printf("here");
         // Initialize the body_fields dictionary.
         struct Dictionary body_fields = dictionary_constructor(compare_string_keys);
         if (strcmp(content_type, "application/x-www-form-urlencoded") == 0)
@@ -173,10 +175,6 @@ void http_request_destructor(HTTPRequest *request)
     dictionary_destructor(&request->body);
 }
 
-void print_request(HTTPRequest *request) {
-    
-}
-
 void sigchld_handler(int s)
 {
     (void)s; // quiet unused variable warning
@@ -224,6 +222,15 @@ void send_404(SOCKET socket)
                        "Content-Length: 9\r\n\r\nPage Not Found";
     send(socket, c404, strlen(c404), 0);
     // drop_client(socket);
+}
+
+void send_201(SOCKET socket)
+{
+    const char *c201 = "HTTP/1.1 201 Created\r\n"
+                       "Location: /\r\n"
+                       "Content-Type: text/html\r\n\r\n"
+                       "<div><h1>HELLO WORLD</h1></div";
+    send(socket, c201, strlen(c201), 0);
 }
 
 void connection_get(SOCKET socket, const char *path, const char *IPv6_Address)
@@ -287,30 +294,30 @@ void connection_get(SOCKET socket, const char *path, const char *IPv6_Address)
     fclose(fp);
 }
 
-HTTPRequest connection_post(int socket, char *buf, char *args)
+void connection_post(int socket, char *response_string)
 {
     HTTPRequest response;
-    char request[strlen(buf)];
-    strcpy(request, buf);
     (void)socket;
-    for (int i = 0; i < (int)strlen(request) - 2; i++)
+    char duplicate[strlen(response_string)];
+    strcpy(duplicate, response_string);
+    for (int i = 0; i < (int)strlen(response_string) - 1; i++)
     {
-        if (request[i] == '\n' && request[i + 1] == '\n')
+        if (response_string[i] == '\n' && response_string[i + 1] == '\n')
         {
-            request[i + 1] = '|';
+            response_string[i + 1] = '|';
         }
     }
-    char *request_line = strtok(request, "\r\n");
+    char *request_line = strtok(response_string, "\n");
     char *header_fields = strtok(NULL, "|");
+    char *body = strstr(duplicate, "\r\n\r\n") + 4;
     extract_header_fields(&response, header_fields);
     extract_request_line_fields(&response, request_line);
-    extract_body(&response, args);
-
-    return response;
+    extract_body(&response, body);
 }
 
 void received(int new_fd, int numbytes, char *buf, const char *IPv6_Address)
 {
+    // todo maybe change up how this is dealt with as its a big messy
     int client_received = 0;
     if (numbytes < 1)
     {
@@ -319,6 +326,9 @@ void received(int new_fd, int numbytes, char *buf, const char *IPv6_Address)
     }
     else
     {
+        printf("%s\n\n", buf);
+        char original[strlen(buf)];
+        strcpy(original, buf);
         client_received += numbytes;
         buf[client_received] = 0;
         char *res = strstr(buf, "\r\n\r\n");
@@ -343,7 +353,8 @@ void received(int new_fd, int numbytes, char *buf, const char *IPv6_Address)
             }
             else if (strncmp(buf, "POST", 4) == 0)
             {
-                connection_post(new_fd, buf, res + 4);
+                send_201(new_fd);
+                // connection_post(new_fd, original);
             }
             else
             {

@@ -1,5 +1,5 @@
 C = cc
-CSTD = -std=c99
+CSTD = -std=c11
 CFLAGS = -Wall -Wextra -Werror -pedantic
 
 SRCS = $(wildcard *.c)

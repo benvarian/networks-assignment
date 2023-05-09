@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE     200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -56,7 +57,8 @@ void send_404(SOCKET socket);
 
 void connection_get(SOCKET socket, const char *path, const char *IPv6_Address);
 
-HTTPRequest connection_post(int socket, char *buf, char *args);
+//todo change back to HTTPRequest
+void connection_post(int socket, char *response_string);
 
 void received(int new_fd, int numbytes, char *buf, const char *IPv6_Address);
 
@@ -69,7 +71,9 @@ struct addrinfo *get_info(char *port);
 void http_request_destructor(HTTPRequest *request);
 
 void extract_request_line_fields(HTTPRequest *request, char *request_line);
+
 void extract_header_fields(HTTPRequest *request, char *header_fields);
+
 void extract_body(HTTPRequest *request, char *body);
 
-void print_request(HTTPRequest *request);
+// void print_request(HTTPRequest request);
