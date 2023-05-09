@@ -16,9 +16,7 @@ def req_parse(request):
     # needs to handle type qs, num qs.
     # first should be type, rest should be num?.
     # for now just always send ten.
-    print(request[0])
-    print(request)
-    questions = question_bank.gen_qs('c')
+    questions = question_bank.gen_qs(request)
     JSONQs = json.dumps(questions)
     print(JSONQs)
     return JSONQs
