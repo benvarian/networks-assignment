@@ -5,11 +5,26 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <signal.h>
 
 #define	HASHTABLE_SIZE		997
+#define NUM_QUESTIONS   10
+#define MAX_USER_LENGTH 128 // Max name length of a user
+#define str(x) #x           // used to convert enum to string
 
 //  ENUMERATION OF QUESTION TYPE - M FOR MULTICHOICE, P FOR PROGRAMMING
+//  https://stackoverflow.com/questions/9907160/how-to-convert-enum-names-to-string-in-c
+/*#define qType(Q) \
+        Q(M)     \
+        Q(P)     \
+        Q(N)     \
+#define GENERATE_ENUM(ENUM) ENUM,
+#define GENERATE_STRING(STRING) #STRING,
+
 enum qType {M, P, N};
+static const char *qTypeString[] = { "M", "P", "N" }; */
+enum qType {M, P, N};
+
 
 //  STUDENT DATA STRUCTURE
 typedef struct _testinfo {
@@ -50,7 +65,11 @@ extern char *readFile(FILE * fp);
 
 // Uses openFile and readFile to get data and put it in the hashtable
 // shouldn't need to call openFile and readFile, just this
-extern void getData(HASHTABLE *hashtable, char *filepath);
+extern void getData(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_USER_LENGTH], char *filepath);
 
 // Frees memory of a student once finished
 extern void freeMemory(TESTINFO *student);
+
+// Writes data from the hashtable into the csv at filepath, using the list of students
+// as a reference for the values in the hashtable
+extern void writeToCSV(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_USER_LENGTH], char *filepath);
