@@ -1,7 +1,6 @@
 #include "fileio.h"
 
 
-
 uint32_t hash_string(char *string) {
     uint32_t hash = 0;
 
@@ -48,8 +47,6 @@ TESTINFO *hashtable_get(HASHTABLE *hashtable, char *username) {
 /* Will open a file in the specified mode, returning the file pointer */
 FILE* openFile(char *file_path, char *mode) {
 	FILE *fp;
-	//char fullpath[1024];
-	//realpath(file_path, fullpath);
     fp = fopen(file_path, mode);
 	if(fp == NULL) {
 		perror("Failed to open file");
@@ -73,13 +70,14 @@ char *readFile(FILE *fp) {
     return buffer;
 }
 
-void getData(HASHTABLE *hashtable, char *filepath) {
+void getData(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_USER_LENGTH], char *filepath) {
     // get data into a buffer
     FILE *fp = openFile(filepath, "r");
     char *buffer = readFile(fp);
     // split data into rows for each user
     char *saverow;
     char *row = strtok_r(buffer, "\n", &saverow);
+    char (*test)[MAX_USER_LENGTH];
     // strtok again to skip first row
     row = strtok_r(NULL, "\n", &saverow);
     while (row != NULL) {
@@ -89,6 +87,10 @@ void getData(HASHTABLE *hashtable, char *filepath) {
         char *user = calloc(sizeof(entries), sizeof(char));
         CHECK_ALLOC(user);
         strcpy(user, entries);
+        studentNames = realloc(studentNames, sizeof(user));
+        CHECK_ALLOC(studentNames);
+        strcpy(studentNames[*numStudents], user);
+        *numStudents = *numStudents + 1;
 
         // parse password
         entries = strtok_r(NULL, ",", &saveentry);
@@ -205,11 +207,65 @@ void writeToCSV(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX
     fclose(fp);
 }
 
-/* TESTING FILE IO
+void writeToCSV(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_USER_LENGTH], char *filepath) {
+    FILE *fp = openFile(filepath, "w");
+    TESTINFO *entry;
+    fprintf(fp, "user,pw,qtype,questions,answers,attemptsLeft,correct\n");
+    for (int i = 0; i < *numStudents; i++) {
+        entry = hashtable_get(hashtable, studentNames[i]);
+        printf("entering user: %s", entry->user);
+        char *types;
+        char *questions;
+        char *answers;
+        char *attempts;
+        char *correct;
+        types = malloc(NUM_QUESTIONS * sizeof(char) * 2); // allocate space for each question and a space in between
+        CHECK_ALLOC(types);
+        attempts = malloc(NUM_QUESTIONS * sizeof(int) * 2);
+        CHECK_ALLOC(attempts);
+        correct = malloc(NUM_QUESTIONS * sizeof(char) * 2);
+        CHECK_ALLOC(correct);
+        for (int j = 0; j < NUM_QUESTIONS; j++) {
+            questions = malloc(sizeof(entry->questions[j]));
+            CHECK_ALLOC(questions);
+            answers = malloc(sizeof(entry->answers[j]));
+            CHECK_ALLOC(answers);
+            printf("\n\nQuestion 1: %s\n\n", entry->questions[j]);
+            if(j != NUM_QUESTIONS-1) {
+                sprintf(questions, "%s$", entry->questions[j]);
+                sprintf(answers, "%s$", entry->answers[j]);
+                sprintf(types, "%d$", entry->type[j]);
+                sprintf(attempts, "%i$", attempts[j]);
+                sprintf(correct, "%s$", (entry->correct[j] == true) ? "T" : "F");
+            }
+            else { // if it is the final question data, dont add $
+                sprintf(questions, "%s", entry->questions[j]);
+                sprintf(answers, "%s", entry->answers[j]);
+                sprintf(types, "%d", entry->type[j]);
+                sprintf(attempts, "%i", attempts[j]);
+                sprintf(correct, "%s", (entry->correct[j] == true) ? "T" : "F");
+            }
+        }
+        fprintf(fp, "%s,%s,%s,%s,%s,%s,%s\n", entry->user, entry->pw, types, questions, answers, attempts, correct);
+        // Free memory allocated to hashtable data
+        freeMemory(entry);
+        free(types);
+        free(questions);
+        free(answers);
+        free(attempts);
+        free(correct);
+    }
+    fclose(fp);
+}
+
 int main(void) {
+    int numStudents = 0;
+    char (*studentNames)[MAX_USER_LENGTH] = malloc(sizeof(char *) * MAX_USER_LENGTH);
+    CHECK_ALLOC(studentNames);
     HASHTABLE *hashtable = hashtable_new();
     getData(hashtable, &numStudents, studentNames, "./userdata.csv");
+    for(int i = 0; i < numStudents; i++) printf("User: %s\n", studentNames[i]);
     TESTINFO *mitch = hashtable_get(hashtable, "mitch");
     printf("Username: %s\nPassword: %s\nQuestion 1: %s\nAnswer 1: %s\n", mitch->user, mitch->pw, mitch->questions[0], mitch->answers[0]);
     writeToCSV(hashtable, &numStudents, studentNames, "./userdata.csv");
-}   */
+}
