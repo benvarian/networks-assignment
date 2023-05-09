@@ -1,23 +1,6 @@
-//
-// ==================================
-// libeom
-//
-// an open source c library.
-// ==================================
-//
-// Entry.c
-//
-// Eric Meehan
-// 2/12/21
-//
-//
-
 #include "Entry.h"
-
 #include <stdlib.h>
 #include <string.h>
-
-// MARK: CONSTRUCTORS
 
 // The constructor creates, initializes, and returns a new dictionary entry.
 struct Entry entry_constructor(void *key, unsigned long key_size, void *value, unsigned long value_size)

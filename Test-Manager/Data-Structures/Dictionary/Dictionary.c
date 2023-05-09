@@ -1,35 +1,16 @@
-//
-// ==================================
-// libeom
-//
-// an open source c library.
-// ==================================
-//
-// Dictionary.c
-//
-// Eric Meehan
-// 2/12/21
-//
-//
-
 #include "Dictionary.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-
-// MARK: PRIVATE MEMBER FUNCTIONS
 // Recursive algorithm to destroy the nodes in a dictionary - overrides the destructor of a BinarySearchTree
 void recursive_dictionary_destroy(struct Node *cursor);
 
-// MARK: PUBLIC MEMBER FUNCTIONS
 // Insert adds items to the dictionary - the user does not need to implement Elements themselves.
 void insert_dict(struct Dictionary *dictionary, void *key, unsigned long key_size, void *value, unsigned long value_size);
 // Search finds the value for a given key in the Dictionary.
 void * search_dict(struct Dictionary *dictionary, void *key, unsigned long key_size);
 
-// MARK: CONSTRUCTORS
 struct Dictionary dictionary_constructor(int (*compare)(void *key_one, void *key_two))
 {
     struct Dictionary dictionary;
@@ -46,7 +27,6 @@ void dictionary_destructor(struct Dictionary *dictionary)
     recursive_dictionary_destroy(dictionary->binary_search_tree.head);
 }
 
-// MARK: PRIVATE MEMBER FUNCTIONS
 void recursive_dictionary_destroy(struct Node *cursor)
 {
     if (cursor->previous)
@@ -61,8 +41,6 @@ void recursive_dictionary_destroy(struct Node *cursor)
     free(cursor->data);
     free(cursor);
 }
-
-// MARK: PUBLIC MEMBER FUNCTIONS
 
 void * search_dict(struct Dictionary *dictionary, void *key, unsigned long key_size)
 {
@@ -90,8 +68,6 @@ void insert_dict(struct Dictionary *dictionary, void *key, unsigned long key_siz
     dictionary->keys.insert(&dictionary->keys, dictionary->keys.length, key, key_size);
 }
 
-
-// MARK: PUBLIC HELPER FUNCTIONS
 int compare_string_keys(void *entry_one, void *entry_two)
 {
     if (strcmp((char *)(((struct Entry *)entry_one)->key), (char *)(((struct Entry *)entry_two)->key)) > 0)

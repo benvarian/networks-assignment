@@ -71,3 +71,5 @@ void http_request_destructor(HTTPRequest *request);
 void extract_request_line_fields(HTTPRequest *request, char *request_line);
 void extract_header_fields(HTTPRequest *request, char *header_fields);
 void extract_body(HTTPRequest *request, char *body);
+
+void print_request(HTTPRequest *request);

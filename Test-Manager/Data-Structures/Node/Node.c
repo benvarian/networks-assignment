@@ -1,25 +1,8 @@
-//
-// ==================================
-// libeom
-//
-// an open source c library.
-// ==================================
-//
-// Node.c
-//
-// Eric Meehan
-// 2/4/21
-//
-//
-
-
 #include "Node.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
-// MARK: CONSTRUCTORS
 
 // The constructor is used to create new instances of nodes.
 struct Node node_constructor(void *data, unsigned long size)

@@ -1,33 +1,12 @@
-//
-// ==================================
-// libeom
-//
-// an open source c library.
-// ==================================
-//
-// LinkedList.c
-//
-// Eric Meehan
-// 1/31/21
-//
-//
-
-
 #include <stdlib.h>
 #include <stdio.h>
 
 #include "LinkedList.h"
 
 
-// MARK: FUNCTION PROTOTYPES
-
-// MARK: Private Member Methods
-
 struct Node * create_node_ll(void *data, unsigned long size);
 void destroy_node_ll(struct Node *node_to_destroy);
 
-
-// MARK: Public Member Methods
 
 struct Node * iterate_ll(struct LinkedList *linked_list, int index);
 void insert_ll(struct LinkedList *linked_list, int index, void *data, unsigned long size);
@@ -35,8 +14,6 @@ void remove_node_ll(struct LinkedList *linked_list, int index);
 void * retrieve_ll(struct LinkedList *linked_list, int index);
 void bubble_sort_ll(struct LinkedList *linked_list, int (*compare)(void *a, void *b));
 short binary_search_ll(struct LinkedList *linked_list, void *query, int (*compare)(void *a, void *b));
-
-// MARK: CONSTRUCTORS
 
 struct LinkedList linked_list_constructor(void)
 {
@@ -60,12 +37,6 @@ void linked_list_destructor(struct LinkedList *linked_list)
         linked_list->remove(linked_list, 0);
     }
 }
-
-
-
-// MARK: PRIVATE METHODS
-
-// The create_node function creates a new node to add to the chain by allocating space on the heap and calling the node constructor.
 struct Node * create_node_ll(void *data, unsigned long size)
 {
     // Allocate space.
@@ -75,7 +46,6 @@ struct Node * create_node_ll(void *data, unsigned long size)
     return new_node;
 }
 
-// The destroy_node function removes a node by deallocating it's memory address.  This simply renames the node destructor function.
 void destroy_node_ll(struct Node *node_to_destroy)
 {
     node_destructor(node_to_destroy);
@@ -98,10 +68,6 @@ struct Node * iterate_ll(struct LinkedList *linked_list, int index)
     }
     return cursor;
 }
-
-
-
-// MARK: PUBLIC METHODS
 
 // The insert function puts a new node in the chain.
 void insert_ll(struct LinkedList *linked_list, int index, void *data, unsigned long size)
@@ -176,9 +142,6 @@ void * retrieve_ll(struct LinkedList *linked_list, int index)
     }
 }
 
-// The sort function is used to sort data in the list.
-// Note that this is a permanent change and items added after sorting will not themselves be sorted.
-// Bubble sort.
 void bubble_sort_ll(struct LinkedList *linked_list, int (*compare)(void *a, void *b))
 {
     for (struct Node *i = linked_list->retrieve(linked_list, 0); i; i = i->next)

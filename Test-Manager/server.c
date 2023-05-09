@@ -173,6 +173,10 @@ void http_request_destructor(HTTPRequest *request)
     dictionary_destructor(&request->body);
 }
 
+void print_request(HTTPRequest *request) {
+    
+}
+
 void sigchld_handler(int s)
 {
     (void)s; // quiet unused variable warning
@@ -241,7 +245,7 @@ void connection_get(SOCKET socket, const char *path, const char *IPv6_Address)
         return;
     }
     char full_path[128];
-
+    // ! change this part here to make it work wihtout static files, but we might be able to use static files
     sprintf(full_path, "public%s", path);
 
     FILE *fp = fopen(full_path, "rb");

@@ -1,54 +1,17 @@
-//
-// Homo Deus
-// 2/11/21
-//
-// Homo Deus C Library
-// BinarySearchTree.c
-//
-// Eric Meehan
-//
-
-//
-// ==================================
-// libeom
-//
-// an open source c library.
-// ==================================
-//
-// BinarySearchTree.c
-//
-// Eric Meehan
-// 2/11/21
-//
-//
-
 #include "BinarySearchTree.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-// MARK: PROTOTYPES
-
-// MARK: Private Member Methods
-
 struct Node * create_node_bst(void *data, unsigned long size);
 void destroy_node_bst(struct Node *node_to_destroy);
 struct Node * iterate_bst(struct BinarySearchTree *tree, struct Node *cursor, void *data, int *direction);
 void recursive_tree_destruction(struct Node *node);
 
-
-// MARK: Public Member Methods
-
 void * search_bst(struct BinarySearchTree *tree, void *data);
 void insert_bst(struct BinarySearchTree *tree, void *data, unsigned long size);
 
-
-// MARK: DEFINITIONS
-
-// MARK: Constructors
-
-// The constructor takes a compare function pointer as its only argument and returns a defined BinarySearchTree struct.
 struct BinarySearchTree binary_search_tree_constructor(int (*compare)(void *data_one, void *data_two))
 {
     struct BinarySearchTree tree;
@@ -64,10 +27,6 @@ void binary_search_tree_destructor(struct BinarySearchTree tree)
     recursive_tree_destruction(tree.head);
 }
 
-
-// MARK: Private Member Methods
-
-// The create_node allocates space on the heap for a node and uses the Node constructor to instantiate it.
 struct Node * create_node_bst(void *data, unsigned long size)
 {
     // Allocate space.
@@ -77,17 +36,11 @@ struct Node * create_node_bst(void *data, unsigned long size)
     return new_node;
 }
 
-// The destroy_node function removes a node by deallocating it's memory address.  This simply renames the node destructor function.
 void destroy_node_bst(struct Node *node_to_destroy)
 {
     node_destructor(node_to_destroy);
 }
 
-// The iterate function is a recursive algorithm that traverses the branches of a tree.
-// It utilizes the compare function to determine if it should move left or right, and returns the cursor once there is nowhere left for the iterator to move.
-// The user must take care to insrue this function returns the node they are actually looking for.
-// The function takes a reference to the BinarySearchTree, the current position, desired data, and an int pointer as arguments.
-// The int pointer becomes 1 if the desired data is greater than the returned node, -1 if it is less than, and 0 if they are equal.
 struct Node * iterate_bst(struct BinarySearchTree *tree, struct Node *cursor, void *data, int *direction)
 {
     // Compare the cursor's data to the desired data.
@@ -146,11 +99,6 @@ void recursive_tree_destruction(struct Node *node)
     destroy_node_bst(node);
 }
 
-
-// MARK: Public Member Methods
-
-// The search function utilizes the iterate function to test if a given node exists in the tree.
-// If the node is found, its data is returned.  Otherwise, NULL is returned.
 void * search_bst(struct BinarySearchTree *tree, void *data)
 {
     // Set the direction int pointer.
@@ -191,7 +139,6 @@ void insert_bst(struct BinarySearchTree *tree, void *data, unsigned long size)
         {
             cursor->previous = create_node_bst(data, size);
         }
-        // Duplicate nodes will not be added.
     }
 }
 

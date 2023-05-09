@@ -1,28 +1,8 @@
-//
-// ==================================
-// libeom
-//
-// an open source c library.
-// ==================================
-//
-// Queue.c
-//
-// Eric Meehan
-// 2/3/21
-//
-//
-
 #include "Queue.h"
-
-
-// MARK: FUNCTION PROTOTYPES
 
 void push(struct Queue *queue, void *data, unsigned long size);
 void * peek(struct Queue *queue);
 void pop (struct Queue *queue);
-
-
-// MARK: CONSTRUCTORS
 
 struct Queue queue_constructor(void)
 {
@@ -43,10 +23,6 @@ void queue_destructor(struct Queue *queue)
 {
     linked_list_destructor(&queue->list);
 }
-
-
-
-// MARK: PUBLIC METHODS
 
 // The push method adds an item to the end of the list.
 void push(struct Queue *queue, void *data, unsigned long size)
