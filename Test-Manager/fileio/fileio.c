@@ -77,7 +77,6 @@ void getData(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_US
     // split data into rows for each user
     char *saverow;
     char *row = strtok_r(buffer, "\n", &saverow);
-    char (*test)[MAX_USER_LENGTH];
     // strtok again to skip first row
     row = strtok_r(NULL, "\n", &saverow);
     while (row != NULL) {
@@ -162,6 +161,10 @@ void getData(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_US
         hashtable_add(hashtable, user, password, types, questions, answers, attemptsLeft, correct);
         row = strtok_r(NULL, "\n", &saverow);
     }
+    TESTINFO *mitch = hashtable_get(hashtable, "mitch");
+    for(int i = 0; i < NUM_QUESTIONS; i++) {
+        printf("Question %i: %s\n", i+1, mitch->questions[i]);
+    }
     free(buffer);
 }
 
@@ -235,6 +238,9 @@ int main(void) {
     getData(hashtable, &numStudents, studentNames, "./userdata.csv");
     for(int i = 0; i < numStudents; i++) printf("User: %s\n", studentNames[i]);
     TESTINFO *mitch = hashtable_get(hashtable, "mitch");
-    printf("Username: %s\nPassword: %s\nQuestion 1: %s\nAnswer 1: %s\n", mitch->user, mitch->pw, mitch->questions[0], mitch->answers[0]);
+    for(int i = 0; i < NUM_QUESTIONS; i++) {
+        printf("Question %i: %s\n", i+1, mitch->questions[i]);
+    }
+    printf("Username: %s\nPassword: %s\nQuestion 1: %s\nAnswer 1: %s\n", mitch->user, mitch->pw, str(mitch->type[0]), mitch->answers[0]);
     writeToCSV(hashtable, &numStudents, studentNames, "./userdata.csv");
 }
