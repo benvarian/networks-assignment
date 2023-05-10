@@ -174,37 +174,57 @@ void writeToCSV(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX
     fprintf(fp, "user,pw,qtype,questions,answers,attemptsLeft,correct\n");
     for (int i = 0; i < *numStudents; i++) {
         entry = hashtable_get(hashtable, studentNames[i]);
-        printf("entering user: %s", entry->user);
+        printf("entering user: %s\n", entry->user);
         char *types;
         char *questions;
+        char *questionstmp;
         char *answers;
+        char *answerstmp;
         char *attempts;
         char *correct;
+        int sizea = 0;
         types = malloc(NUM_QUESTIONS * sizeof(char) * 2); // allocate space for each question and a space in between
         CHECK_ALLOC(types);
         attempts = malloc(NUM_QUESTIONS * sizeof(int) * 2);
         CHECK_ALLOC(attempts);
         correct = malloc(NUM_QUESTIONS * sizeof(char) * 2);
         CHECK_ALLOC(correct);
+        for(int k = 0; k < NUM_QUESTIONS; k++) {
+            printf("%s: %li\n", entry->questions[k], strlen(entry->questions[k]));
+            printf("%s: %li\n", entry->answers[k], strlen(entry->answers[k]));
+        }
         for (int j = 0; j < NUM_QUESTIONS; j++) {
-            questions = malloc(sizeof(entry->questions[j]));
-            CHECK_ALLOC(questions);
-            answers = malloc(sizeof(entry->answers[j]));
-            CHECK_ALLOC(answers);
-            printf("\n\nQuestion 1: %s\n\n", entry->questions[j]);
+            if (j == 0) {
+                questions = malloc(strlen(entry->questions[j]) + 2); // +1 for '\0' and '$'s
+                CHECK_ALLOC(questions);
+                answers = malloc(strlen(entry->answers[j]) + 2);
+                CHECK_ALLOC(answers);
+                sizea += strlen(entry->answers[j]) + 2;
+            }
+            else {
+                printf("%s\n", questions);
+                questionstmp = realloc(questions, strlen(entry->questions[j]) + 1);
+                CHECK_ALLOC(questionstmp);
+                questions = questionstmp;
+                printf("%s: %li: %i\n\n", answers, strlen(entry->answers[j]) + 1, sizea);
+                answerstmp = realloc(answers, strlen(entry->answers[j]) + 1);
+                CHECK_ALLOC(answerstmp);
+                sizea += strlen(entry->answers[j]) + 1;
+                answers = answerstmp;
+            }
             if(j != NUM_QUESTIONS-1) {
-                sprintf(questions, "%s$", entry->questions[j]);
-                sprintf(answers, "%s$", entry->answers[j]);
-                sprintf(types, "%d$", entry->type[j]);
-                sprintf(attempts, "%i$", attempts[j]);
-                sprintf(correct, "%s$", (entry->correct[j] == true) ? "T" : "F");
+                sprintf(questions + strlen(questions), "%s$", entry->questions[j]);
+                sprintf(answers + strlen(answers), "%s$", entry->answers[j]);
+                sprintf(types + strlen(types), "%s$", (entry->type[j] == P) ? "P" : "M");
+                sprintf(attempts + strlen(attempts), "%i$", entry->attemptsLeft[j]);
+                sprintf(correct + strlen(correct), "%s$", (entry->correct[j] == true) ? "T" : "F");
             }
             else { // if it is the final question data, dont add $
-                sprintf(questions, "%s", entry->questions[j]);
-                sprintf(answers, "%s", entry->answers[j]);
-                sprintf(types, "%d", entry->type[j]);
-                sprintf(attempts, "%i", attempts[j]);
-                sprintf(correct, "%s", (entry->correct[j] == true) ? "T" : "F");
+                sprintf(questions + strlen(questions), "%s", entry->questions[j]);
+                sprintf(answers + strlen(answers), "%s", entry->answers[j]);
+                sprintf(types + strlen(types), "%s", (entry->type[j] == P) ? "P" : "M");
+                sprintf(attempts + strlen(attempts), "%i", entry->attemptsLeft[j]);
+                sprintf(correct + strlen(correct), "%s", (entry->correct[j] == true) ? "T" : "F");
             }
         }
         fprintf(fp, "%s,%s,%s,%s,%s,%s,%s\n", entry->user, entry->pw, types, questions, answers, attempts, correct);
@@ -228,7 +248,7 @@ int main(void) {
     for(int i = 0; i < numStudents; i++) printf("User: %s\n", studentNames[i]);
     TESTINFO *mitch = hashtable_get(hashtable, "mitch");
     for(int i = 0; i < NUM_QUESTIONS; i++) {
-        printf("Question %i: %s\n", i+1, mitch->questions[i]);
+        printf("Answer %i: %s\n", i+1, mitch->answers[i]);
     }
     printf("Username: %s\nPassword: %s\nQuestion 1: %s\nAnswer 1: %s\n", mitch->user, mitch->pw, str(mitch->type[0]), mitch->answers[0]);
     writeToCSV(hashtable, &numStudents, studentNames, "./userdata.csv");
