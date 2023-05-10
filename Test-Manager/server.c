@@ -77,7 +77,6 @@ void extract_body(struct HTTPRequest *request, char *body)
     char *content_type = (char *)request->header_fields.search(&request->header_fields, "Content-Type", sizeof("Content-Type"));
     if (content_type)
     {
-        printf("here");
         // Initialize the body_fields dictionary.
         struct Dictionary body_fields = dictionary_constructor(compare_string_keys);
         if (strcmp(content_type, "application/x-www-form-urlencoded") == 0)
@@ -88,6 +87,8 @@ void extract_body(struct HTTPRequest *request, char *body)
             while (field)
             {
                 fields.push(&fields, field, sizeof(char[strlen(field)]));
+                // loop over to the next field that is parsed otherwise itll cause a hang as its the same string
+                field = strtok(NULL, "&");
             }
             // Iterate over the queue to further separate keys from values.
             field = fields.peek(&fields);
@@ -307,12 +308,16 @@ void connection_post(int socket, char *response_string)
             response_string[i + 1] = '|';
         }
     }
-    char *request_line = strtok(response_string, "\n");
+    char *request_line = strtok(response_string, "\r\n");
     char *header_fields = strtok(NULL, "|");
     char *body = strstr(duplicate, "\r\n\r\n") + 4;
+
     extract_header_fields(&response, header_fields);
     extract_request_line_fields(&response, request_line);
     extract_body(&response, body);
+    printf("%s:%s\n", (char *)response.body.search(&response.body, "name", strlen("name")), (char *)response.body.search(&response.body, "surname", strlen("surname")));
+
+    send_201(socket);
 }
 
 void received(int new_fd, int numbytes, char *buf, const char *IPv6_Address)
@@ -353,8 +358,7 @@ void received(int new_fd, int numbytes, char *buf, const char *IPv6_Address)
             }
             else if (strncmp(buf, "POST", 4) == 0)
             {
-                send_201(new_fd);
-                // connection_post(new_fd, original);
+                connection_post(new_fd, original);
             }
             else
             {
