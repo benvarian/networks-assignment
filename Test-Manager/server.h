@@ -58,7 +58,7 @@ void send_404(SOCKET socket);
 void connection_get(SOCKET socket, const char *path, const char *IPv6_Address);
 
 //todo change back to HTTPRequest
-void connection_post(int socket, char *response_string);
+void connection_post(SOCKET socket, char *response_string);
 
 void received(int new_fd, int numbytes, char *buf, const char *IPv6_Address);
 
@@ -76,4 +76,5 @@ void extract_header_fields(HTTPRequest *request, char *header_fields);
 
 void extract_body(HTTPRequest *request, char *body);
 
-// void print_request(HTTPRequest request);
+void handle_uri(HTTPRequest response, SOCKET socket);
+

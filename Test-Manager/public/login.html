@@ -1,0 +1,33 @@
+<html>
+  <head>
+    <title>Login</title>
+  </head>
+  <body>
+    <section>
+      <form
+        action="/login"
+        method="POST"
+        enctype="application/x-www-form-urlencoded"
+        id="login-form"
+      >
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" /><br /><br />
+        <label for="password">Password:</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          required
+        /><br /><br />
+        <button type="submit">Login</button>
+      </form>
+    </section>
+    <script>
+      document
+        .getElementById("login-form")
+        .addEventListener("submit", function (event) {
+          console.log(event);
+        });
+    </script>
+  </body>
+</html>

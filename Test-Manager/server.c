@@ -230,8 +230,20 @@ void send_201(SOCKET socket)
     const char *c201 = "HTTP/1.1 201 Created\r\n"
                        "Location: /\r\n"
                        "Content-Type: text/html\r\n\r\n"
-                       "<div><h1>HELLO WORLD</h1></div";
+                       "<div><h1>CONGRATS</h1></div";
     send(socket, c201, strlen(c201), 0);
+}
+
+void send_401(SOCKET socket)
+{
+    const char *c401 = "HTTP/1.1 401 Unauthorized\r\n\r\n";
+    send(socket, c401, strlen(c401), 0);
+}
+
+void send_403(SOCKET socket)
+{
+    const char *c403 = "HTTP/1.1 403 Forbidden\r\n\r\n";
+    send(socket, c403, strlen(c403), 0);
 }
 
 void connection_get(SOCKET socket, const char *path, const char *IPv6_Address)
@@ -294,8 +306,27 @@ void connection_get(SOCKET socket, const char *path, const char *IPv6_Address)
     }
     fclose(fp);
 }
+void handle_uri(HTTPRequest response, SOCKET socket)
+{
+    char *match_user = "ben";
+    char *match_pass = "ben";
+    char *url = (char *)response.request_line.search(&response.request_line, "uri", strlen("uri"));
+    if (strcmp(url, "/login") == 0)
+    {
+        char *username = (char *)response.body.search(&response.body, "username", strlen("username"));
+        char *password = (char *)response.body.search(&response.body, "password", strlen("password"));
+        if (strcmp(username, match_user) == 0 && strcmp(password, match_pass) == 0)
+        {
+            send_201(socket);
+        }
+        else
+        {
+            send_401(socket);
+        }
+    }
+}
 
-void connection_post(int socket, char *response_string)
+void connection_post(SOCKET socket, char *response_string)
 {
     HTTPRequest response;
     (void)socket;
@@ -315,9 +346,7 @@ void connection_post(int socket, char *response_string)
     extract_header_fields(&response, header_fields);
     extract_request_line_fields(&response, request_line);
     extract_body(&response, body);
-    printf("%s:%s\n", (char *)response.body.search(&response.body, "name", strlen("name")), (char *)response.body.search(&response.body, "surname", strlen("surname")));
-
-    send_201(socket);
+    handle_uri(response, socket);
 }
 
 void received(int new_fd, int numbytes, char *buf, const char *IPv6_Address)
