@@ -1,5 +1,5 @@
 #include "fileio.h"
-#define NUM_QUESTIONS   10
+
 
 
 uint32_t hash_string(char *string) {
@@ -157,19 +157,6 @@ void getData(HASHTABLE *hashtable, char *filepath) {
     free(buffer);
 }
 
-<<<<<<< Updated upstream
-void freeMemory(TESTINFO *student) {
-    /* NEED TO FIX UP FREEING QUESTIONS AND ANSWERS, MEMORY LEAKS RIGHT NOW
-    for(int i= 0; i < NUM_QUESTIONS; i++) {
-        free(student->answers[i]);
-        free(student->questions[i]);
-    }
-    */
-    free(student->user);
-    free(student->pw);
-}
-
-=======
 void writeToCSV(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_USER_LENGTH], char *filepath) {
     FILE *fp = openFile("out.csv", "w");
     TESTINFO *entry;
@@ -219,19 +206,10 @@ void writeToCSV(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX
 }
 
 /* TESTING FILE IO
->>>>>>> Stashed changes
 int main(void) {
     HASHTABLE *hashtable = hashtable_new();
-<<<<<<< Updated upstream
-    getData(hashtable, "./userdata.csv");
-    TESTINFO *mitch = hashtable_get(hashtable, "mitch");
-    printf("Username: %s\nPassword: %s\nQuestion 1: %s\nAnswer 1: %s\n", mitch->user, mitch->pw, mitch->questions[0], mitch->answers[0]);
-    freeMemory(mitch);
-}
-=======
     getData(hashtable, &numStudents, studentNames, "./userdata.csv");
     TESTINFO *mitch = hashtable_get(hashtable, "mitch");
     printf("Username: %s\nPassword: %s\nQuestion 1: %s\nAnswer 1: %s\n", mitch->user, mitch->pw, mitch->questions[0], mitch->answers[0]);
     writeToCSV(hashtable, &numStudents, studentNames, "./userdata.csv");
 }   */
->>>>>>> Stashed changes

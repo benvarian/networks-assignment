@@ -7,6 +7,8 @@
 #include <stdlib.h>
 
 #define	HASHTABLE_SIZE		997
+#define NUM_QUESTIONS       10
+#define MAX_USER_LENGTH     256
 
 //  ENUMERATION OF QUESTION TYPE - M FOR MULTICHOICE, P FOR PROGRAMMING
 enum qType {M, P, N};
@@ -52,11 +54,6 @@ extern char *readFile(FILE * fp);
 // shouldn't need to call openFile and readFile, just this
 extern void getData(HASHTABLE *hashtable, char *filepath);
 
-<<<<<<< Updated upstream
-// Frees memory of a student once finished
-extern void freeMemory(TESTINFO *student);
-=======
 // Writes data from the hashtable into the csv at filepath, using the list of students
 // as a reference for the values in the hashtable
 extern void writeToCSV(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_USER_LENGTH], char *filepath);
->>>>>>> Stashed changes
