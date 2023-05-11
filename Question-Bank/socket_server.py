@@ -14,16 +14,6 @@ import time
 HOST = "localhost"  # Standard loopback interface address (localhost)
 PORT = 65433  # Port to listen on (non-privileged ports are > 1023)
 
-def req_parse(request):
-    # needs to handle type qs, num qs.
-    # first should be type, rest should be num?.
-    # for now just always send ten.
-    questions = question_bank.gen_qs(request)
-    JSONQs = json.dumps(questions)
-    print(JSONQs)
-    return JSONQs
-
-
 class Nick_Socket:
     """ 
     send and receive packets.
@@ -50,7 +40,7 @@ class Nick_Socket:
         # as per current protocol 3 byte header -- one for type (char), 2 for length (2 byte int)
         MSGLEN = len(msg)   
         byte_msg = b''.join(["J".encode(), MSGLEN.to_bytes(2, "little"), msg.encode()])
-        print("\nsending:\n MSGLEN:",  MSGLEN, "\nmsg:", msg, "\n")
+        print("\nsending:\nMSGLEN:",  MSGLEN, "\nmsg:", msg, "\n")
         totalsent = 0
         while totalsent < MSGLEN:
             sent = self.conn.send(byte_msg)
@@ -76,7 +66,7 @@ class Nick_Socket:
 
     def receive(self):
         msg = self.conn.recv(4096)
-        print("Msg received!\n Msg: ", msg, "\n")
+        print("Msg received!\nMsg:", msg, "\n")
         if (not msg):
             raise Exception('No message received.')
         # msg will have a few headers, could (?) parse them here to make that work simpler.
@@ -93,7 +83,6 @@ class Nick_Socket:
         # waits till receive anything.
         # client_req = self.format(new_sock_receive())
         client_req = new_sock.receive()
-        print(client_req)
 
         # chr converts bytes to unicode.
         mode_req = chr(client_req[0])
@@ -107,14 +96,14 @@ class Nick_Socket:
             # self.send_mark(qid, mark)
 
         elif (mode_req == 'q'):
-            q_num = chr(client_req[1])
-            q_type = int.from_bytes(client_req[2:4], "big")
-
-            questions = question_bank.get_JSON_qs(q_num, q_type)
+            q_type = chr(client_req[1])
+            q_num = int.from_bytes(client_req[2:4], "little")
+            print("qnum = ", q_num)
+            questions = question_bank.get_JSON_qs(q_type, q_num)
             self.send_questions(questions)
         else:
             # something went wrong.
-            print("something went wrong with request, skipping.")
+            print("Something went wrong with request, skipping.")
             # raise Exception("Protocol broken. closing socket")
 
 
