@@ -1,6 +1,7 @@
 #include "fileio.h"
 
 
+
 uint32_t hash_string(char *string) {
     uint32_t hash = 0;
 
@@ -112,7 +113,6 @@ void getData(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_US
         entries = strtok_r(NULL, ",", &saveentry);
         char **questions;
         questions = (char **)calloc(sizeof(char *), NUM_QUESTIONS);
-
         char *questionstok = strtok_r(entries, "$", &savequestions);
         for (int i = 0; i < NUM_QUESTIONS; i++) {
             questions[i] = calloc(sizeof(questionstok), sizeof(char));
@@ -146,7 +146,6 @@ void getData(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_US
 
         // parse correct answers
         entries = strtok_r(NULL, ",", &saveentry);
-        // bool correct[NUM_QUESTIONS];
         bool *correct;
         correct = (bool *)calloc(sizeof(bool *), NUM_QUESTIONS);
         char *correcttok = strtok_r(entries, "$", &savecorrect);
@@ -161,68 +160,37 @@ void getData(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_US
         hashtable_add(hashtable, user, password, types, questions, answers, attemptsLeft, correct);
         row = strtok_r(NULL, "\n", &saverow);
     }
-    TESTINFO *mitch = hashtable_get(hashtable, "mitch");
-    for(int i = 0; i < NUM_QUESTIONS; i++) {
-        printf("Question %i: %s\n", i+1, mitch->questions[i]);
-    }
     free(buffer);
 }
 
-void freeMemory(TESTINFO *student) {
-    /* NEED TO FIX UP FREEING QUESTIONS AND ANSWERS, MEMORY LEAKS RIGHT NOW
-    for(int i= 0; i < NUM_QUESTIONS; i++) {
-        free(student->answers[i]);
-        free(student->questions[i]);
-    }
-    */
-    free(student->user);
-    free(student->pw);
-}
-
 void writeToCSV(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_USER_LENGTH], char *filepath) {
-    FILE *fp = openFile("out.csv", "w");
+    FILE *fp = openFile(filepath, "w");
     TESTINFO *entry;
     fprintf(fp, "user,pw,qtype,questions,answers,attemptsLeft,correct\n");
     for (int i = 0; i < *numStudents; i++) {
         entry = hashtable_get(hashtable, studentNames[i]);
-        printf("entering user: %s\n", entry->user);
         char *types;
-        char *questions;
-        char *questionstmp;
-        char *answers;
-        char *answerstmp;
         char *attempts;
         char *correct;
-        int sizea = 0;
         types = malloc(NUM_QUESTIONS * sizeof(char) * 2); // allocate space for each question and a space in between
         CHECK_ALLOC(types);
         attempts = malloc(NUM_QUESTIONS * sizeof(int) * 2);
         CHECK_ALLOC(attempts);
         correct = malloc(NUM_QUESTIONS * sizeof(char) * 2);
         CHECK_ALLOC(correct);
-        for(int k = 0; k < NUM_QUESTIONS; k++) {
-            printf("%s: %li\n", entry->questions[k], strlen(entry->questions[k]));
-            printf("%s: %li\n", entry->answers[k], strlen(entry->answers[k]));
-        }
+        // Calculate size of questions/answers then allocate memory for a string to hold it
+        int qsize = 0; 
+        int asize = 0;
         for (int j = 0; j < NUM_QUESTIONS; j++) {
-            if (j == 0) {
-                questions = malloc(strlen(entry->questions[j]) + 2); // +1 for '\0' and '$'s
-                CHECK_ALLOC(questions);
-                answers = malloc(strlen(entry->answers[j]) + 2);
-                CHECK_ALLOC(answers);
-                sizea += strlen(entry->answers[j]) + 2;
-            }
-            else {
-                printf("%s\n", questions);
-                questionstmp = realloc(questions, strlen(entry->questions[j]) + 1);
-                CHECK_ALLOC(questionstmp);
-                questions = questionstmp;
-                printf("%s: %li: %i\n\n", answers, strlen(entry->answers[j]) + 1, sizea);
-                answerstmp = realloc(answers, strlen(entry->answers[j]) + 1);
-                CHECK_ALLOC(answerstmp);
-                sizea += strlen(entry->answers[j]) + 1;
-                answers = answerstmp;
-            }
+            qsize += strlen(entry->questions[j]) + 1; // +1 for $ delimiter or '\0'
+            asize += strlen(entry->answers[j]) + 1;
+        }
+        char *questions = malloc(qsize);
+        CHECK_ALLOC(questions);
+        char *answers = malloc(asize);
+        CHECK_ALLOC(answers);
+        // Concatenate the data into strings to add to the csv
+        for (int j = 0; j < NUM_QUESTIONS; j++) {
             if(j != NUM_QUESTIONS-1) {
                 sprintf(questions + strlen(questions), "%s$", entry->questions[j]);
                 sprintf(answers + strlen(answers), "%s$", entry->answers[j]);
@@ -239,28 +207,15 @@ void writeToCSV(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX
             }
         }
         fprintf(fp, "%s,%s,%s,%s,%s,%s,%s\n", entry->user, entry->pw, types, questions, answers, attempts, correct);
-        // Free memory allocated to hashtable data
-        freeMemory(entry);
-        free(types);
-        free(questions);
-        free(answers);
-        free(attempts);
-        free(correct);
     }
     fclose(fp);
 }
 
+// TESTING FILE IO
 int main(void) {
-    int numStudents = 0;
-    char (*studentNames)[MAX_USER_LENGTH] = malloc(sizeof(char *) * MAX_USER_LENGTH);
-    CHECK_ALLOC(studentNames);
-    HASHTABLE *hashtable = hashtable_new();
-    getData(hashtable, &numStudents, studentNames, "./userdata.csv");
-    for(int i = 0; i < numStudents; i++) printf("User: %s\n", studentNames[i]);
-    TESTINFO *mitch = hashtable_get(hashtable, "mitch");
-    for(int i = 0; i < NUM_QUESTIONS; i++) {
-        printf("Answer %i: %s\n", i+1, mitch->answers[i]);
-    }
-    printf("Username: %s\nPassword: %s\nQuestion 1: %s\nAnswer 1: %s\n", mitch->user, mitch->pw, str(mitch->type[0]), mitch->answers[0]);
-    writeToCSV(hashtable, &numStudents, studentNames, "./userdata.csv");
-}
+    // HASHTABLE *hashtable = hashtable_new();
+    // getData(hashtable, &numStudents, studentNames, "./userdata.csv");
+    // TESTINFO *mitch = hashtable_get(hashtable, "mitch");
+    // printf("Username: %s\nPassword: %s\nQuestion 1: %s\nAnswer 1: %s\n", mitch->user, mitch->pw, mitch->questions[0], mitch->answers[0]);
+    // writeToCSV(hashtable, &numStudents, studentNames, "./userdata.csv");
+}   
