@@ -8,3 +8,9 @@ key = {
 
 def gen_qs(type):
     return random.sample(get_questions(key[type]), 10)
+
+def mark(qid, ans):
+    return 1
+
+def get_JSON_qs():
+    return '["question1", "answer14"]'
