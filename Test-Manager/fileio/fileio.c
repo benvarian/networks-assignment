@@ -157,6 +157,7 @@ void getData(HASHTABLE *hashtable, char *filepath) {
     free(buffer);
 }
 
+<<<<<<< Updated upstream
 void freeMemory(TESTINFO *student) {
     /* NEED TO FIX UP FREEING QUESTIONS AND ANSWERS, MEMORY LEAKS RIGHT NOW
     for(int i= 0; i < NUM_QUESTIONS; i++) {
@@ -168,10 +169,69 @@ void freeMemory(TESTINFO *student) {
     free(student->pw);
 }
 
+=======
+void writeToCSV(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_USER_LENGTH], char *filepath) {
+    FILE *fp = openFile("out.csv", "w");
+    TESTINFO *entry;
+    fprintf(fp, "user,pw,qtype,questions,answers,attemptsLeft,correct\n");
+    for (int i = 0; i < *numStudents; i++) {
+        entry = hashtable_get(hashtable, studentNames[i]);
+        char *types;
+        char *attempts;
+        char *correct;
+        types = malloc(NUM_QUESTIONS * sizeof(char) * 2); // allocate space for each question and a space in between
+        CHECK_ALLOC(types);
+        attempts = malloc(NUM_QUESTIONS * sizeof(int) * 2);
+        CHECK_ALLOC(attempts);
+        correct = malloc(NUM_QUESTIONS * sizeof(char) * 2);
+        CHECK_ALLOC(correct);
+        // Calculate size of questions/answers then allocate memory for a string to hold it
+        int qsize = 0; 
+        int asize = 0;
+        for (int j = 0; j < NUM_QUESTIONS; j++) {
+            qsize += strlen(entry->questions[j]) + 1; // +1 for $ delimiter or '\0'
+            asize += strlen(entry->answers[j]) + 1;
+        }
+        char *questions = malloc(qsize);
+        CHECK_ALLOC(questions);
+        char *answers = malloc(asize);
+        CHECK_ALLOC(answers);
+        // Concatenate the data into strings to add to the csv
+        for (int j = 0; j < NUM_QUESTIONS; j++) {
+            if(j != NUM_QUESTIONS-1) {
+                sprintf(questions + strlen(questions), "%s$", entry->questions[j]);
+                sprintf(answers + strlen(answers), "%s$", entry->answers[j]);
+                sprintf(types + strlen(types), "%s$", (entry->type[j] == P) ? "P" : "M");
+                sprintf(attempts + strlen(attempts), "%i$", entry->attemptsLeft[j]);
+                sprintf(correct + strlen(correct), "%s$", (entry->correct[j] == true) ? "T" : "F");
+            }
+            else { // if it is the final question data, dont add $
+                sprintf(questions + strlen(questions), "%s", entry->questions[j]);
+                sprintf(answers + strlen(answers), "%s", entry->answers[j]);
+                sprintf(types + strlen(types), "%s", (entry->type[j] == P) ? "P" : "M");
+                sprintf(attempts + strlen(attempts), "%i", entry->attemptsLeft[j]);
+                sprintf(correct + strlen(correct), "%s", (entry->correct[j] == true) ? "T" : "F");
+            }
+        }
+        fprintf(fp, "%s,%s,%s,%s,%s,%s,%s\n", entry->user, entry->pw, types, questions, answers, attempts, correct);
+    }
+    fclose(fp);
+}
+
+/* TESTING FILE IO
+>>>>>>> Stashed changes
 int main(void) {
     HASHTABLE *hashtable = hashtable_new();
+<<<<<<< Updated upstream
     getData(hashtable, "./userdata.csv");
     TESTINFO *mitch = hashtable_get(hashtable, "mitch");
     printf("Username: %s\nPassword: %s\nQuestion 1: %s\nAnswer 1: %s\n", mitch->user, mitch->pw, mitch->questions[0], mitch->answers[0]);
     freeMemory(mitch);
 }
+=======
+    getData(hashtable, &numStudents, studentNames, "./userdata.csv");
+    TESTINFO *mitch = hashtable_get(hashtable, "mitch");
+    printf("Username: %s\nPassword: %s\nQuestion 1: %s\nAnswer 1: %s\n", mitch->user, mitch->pw, mitch->questions[0], mitch->answers[0]);
+    writeToCSV(hashtable, &numStudents, studentNames, "./userdata.csv");
+}   */
+>>>>>>> Stashed changes
