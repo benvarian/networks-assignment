@@ -1,5 +1,4 @@
 #include "fileio.h"
-#define NUM_QUESTIONS   10
 
 
 uint32_t hash_string(char *string) {
@@ -48,8 +47,6 @@ TESTINFO *hashtable_get(HASHTABLE *hashtable, char *username) {
 /* Will open a file in the specified mode, returning the file pointer */
 FILE* openFile(char *file_path, char *mode) {
 	FILE *fp;
-	//char fullpath[1024];
-	//realpath(file_path, fullpath);
     fp = fopen(file_path, mode);
 	if(fp == NULL) {
 		perror("Failed to open file");
@@ -73,7 +70,7 @@ char *readFile(FILE *fp) {
     return buffer;
 }
 
-void getData(HASHTABLE *hashtable, char *filepath) {
+void getData(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_USER_LENGTH], char *filepath) {
     // get data into a buffer
     FILE *fp = openFile(filepath, "r");
     char *buffer = readFile(fp);
@@ -89,6 +86,10 @@ void getData(HASHTABLE *hashtable, char *filepath) {
         char *user = calloc(sizeof(entries), sizeof(char));
         CHECK_ALLOC(user);
         strcpy(user, entries);
+        studentNames = realloc(studentNames, sizeof(user));
+        CHECK_ALLOC(studentNames);
+        strcpy(studentNames[*numStudents], user);
+        *numStudents = *numStudents + 1;
 
         // parse password
         entries = strtok_r(NULL, ",", &saveentry);
@@ -109,7 +110,9 @@ void getData(HASHTABLE *hashtable, char *filepath) {
 
         // parse questions
         entries = strtok_r(NULL, ",", &saveentry);
-        char *questions[NUM_QUESTIONS];
+        char **questions;
+        questions = (char **)calloc(sizeof(char *), NUM_QUESTIONS);
+
         char *questionstok = strtok_r(entries, "$", &savequestions);
         for (int i = 0; i < NUM_QUESTIONS; i++) {
             questions[i] = calloc(sizeof(questionstok), sizeof(char));
@@ -120,7 +123,8 @@ void getData(HASHTABLE *hashtable, char *filepath) {
 
         // parse answers
         entries = strtok_r(NULL, ",", &saveentry);
-        char *answers[NUM_QUESTIONS];
+        char **answers;
+        answers = (char **)calloc(sizeof(char *), NUM_QUESTIONS);
         CHECK_ALLOC(answers);
         char *answerstok = strtok_r(entries, "$", &saveanswers);
         for (int i = 0; i < NUM_QUESTIONS; i++) {
@@ -132,7 +136,8 @@ void getData(HASHTABLE *hashtable, char *filepath) {
 
         // parse attempts left
         entries = strtok_r(NULL, ",", &saveentry);
-        int attemptsLeft[NUM_QUESTIONS];
+        int *attemptsLeft;
+        attemptsLeft = (int *)calloc(sizeof(int *), NUM_QUESTIONS);
         char *attemptstok = strtok_r(entries, "$", &saveattempts);
         for (int i = 0; i < NUM_QUESTIONS; i++) {
             attemptsLeft[i] = atoi(attemptstok);
@@ -141,7 +146,9 @@ void getData(HASHTABLE *hashtable, char *filepath) {
 
         // parse correct answers
         entries = strtok_r(NULL, ",", &saveentry);
-        bool correct[NUM_QUESTIONS];
+        // bool correct[NUM_QUESTIONS];
+        bool *correct;
+        correct = (bool *)calloc(sizeof(bool *), NUM_QUESTIONS);
         char *correcttok = strtok_r(entries, "$", &savecorrect);
         for (int i = 0; i < NUM_QUESTIONS; i++) {
             if(strcmp(correcttok, "T")) correct[i] = true;
@@ -153,6 +160,10 @@ void getData(HASHTABLE *hashtable, char *filepath) {
         // add user to hashtable
         hashtable_add(hashtable, user, password, types, questions, answers, attemptsLeft, correct);
         row = strtok_r(NULL, "\n", &saverow);
+    }
+    TESTINFO *mitch = hashtable_get(hashtable, "mitch");
+    for(int i = 0; i < NUM_QUESTIONS; i++) {
+        printf("Question %i: %s\n", i+1, mitch->questions[i]);
     }
     free(buffer);
 }
@@ -168,10 +179,88 @@ void freeMemory(TESTINFO *student) {
     free(student->pw);
 }
 
+void writeToCSV(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_USER_LENGTH], char *filepath) {
+    FILE *fp = openFile("out.csv", "w");
+    TESTINFO *entry;
+    fprintf(fp, "user,pw,qtype,questions,answers,attemptsLeft,correct\n");
+    for (int i = 0; i < *numStudents; i++) {
+        entry = hashtable_get(hashtable, studentNames[i]);
+        printf("entering user: %s\n", entry->user);
+        char *types;
+        char *questions;
+        char *questionstmp;
+        char *answers;
+        char *answerstmp;
+        char *attempts;
+        char *correct;
+        int sizea = 0;
+        types = malloc(NUM_QUESTIONS * sizeof(char) * 2); // allocate space for each question and a space in between
+        CHECK_ALLOC(types);
+        attempts = malloc(NUM_QUESTIONS * sizeof(int) * 2);
+        CHECK_ALLOC(attempts);
+        correct = malloc(NUM_QUESTIONS * sizeof(char) * 2);
+        CHECK_ALLOC(correct);
+        for(int k = 0; k < NUM_QUESTIONS; k++) {
+            printf("%s: %li\n", entry->questions[k], strlen(entry->questions[k]));
+            printf("%s: %li\n", entry->answers[k], strlen(entry->answers[k]));
+        }
+        for (int j = 0; j < NUM_QUESTIONS; j++) {
+            if (j == 0) {
+                questions = malloc(strlen(entry->questions[j]) + 2); // +1 for '\0' and '$'s
+                CHECK_ALLOC(questions);
+                answers = malloc(strlen(entry->answers[j]) + 2);
+                CHECK_ALLOC(answers);
+                sizea += strlen(entry->answers[j]) + 2;
+            }
+            else {
+                printf("%s\n", questions);
+                questionstmp = realloc(questions, strlen(entry->questions[j]) + 1);
+                CHECK_ALLOC(questionstmp);
+                questions = questionstmp;
+                printf("%s: %li: %i\n\n", answers, strlen(entry->answers[j]) + 1, sizea);
+                answerstmp = realloc(answers, strlen(entry->answers[j]) + 1);
+                CHECK_ALLOC(answerstmp);
+                sizea += strlen(entry->answers[j]) + 1;
+                answers = answerstmp;
+            }
+            if(j != NUM_QUESTIONS-1) {
+                sprintf(questions + strlen(questions), "%s$", entry->questions[j]);
+                sprintf(answers + strlen(answers), "%s$", entry->answers[j]);
+                sprintf(types + strlen(types), "%s$", (entry->type[j] == P) ? "P" : "M");
+                sprintf(attempts + strlen(attempts), "%i$", entry->attemptsLeft[j]);
+                sprintf(correct + strlen(correct), "%s$", (entry->correct[j] == true) ? "T" : "F");
+            }
+            else { // if it is the final question data, dont add $
+                sprintf(questions + strlen(questions), "%s", entry->questions[j]);
+                sprintf(answers + strlen(answers), "%s", entry->answers[j]);
+                sprintf(types + strlen(types), "%s", (entry->type[j] == P) ? "P" : "M");
+                sprintf(attempts + strlen(attempts), "%i", entry->attemptsLeft[j]);
+                sprintf(correct + strlen(correct), "%s", (entry->correct[j] == true) ? "T" : "F");
+            }
+        }
+        fprintf(fp, "%s,%s,%s,%s,%s,%s,%s\n", entry->user, entry->pw, types, questions, answers, attempts, correct);
+        // Free memory allocated to hashtable data
+        freeMemory(entry);
+        free(types);
+        free(questions);
+        free(answers);
+        free(attempts);
+        free(correct);
+    }
+    fclose(fp);
+}
+
 int main(void) {
+    int numStudents = 0;
+    char (*studentNames)[MAX_USER_LENGTH] = malloc(sizeof(char *) * MAX_USER_LENGTH);
+    CHECK_ALLOC(studentNames);
     HASHTABLE *hashtable = hashtable_new();
-    getData(hashtable, "./userdata.csv");
+    getData(hashtable, &numStudents, studentNames, "./userdata.csv");
+    for(int i = 0; i < numStudents; i++) printf("User: %s\n", studentNames[i]);
     TESTINFO *mitch = hashtable_get(hashtable, "mitch");
-    printf("Username: %s\nPassword: %s\nQuestion 1: %s\nAnswer 1: %s\n", mitch->user, mitch->pw, mitch->questions[0], mitch->answers[0]);
-    freeMemory(mitch);
+    for(int i = 0; i < NUM_QUESTIONS; i++) {
+        printf("Answer %i: %s\n", i+1, mitch->answers[i]);
+    }
+    printf("Username: %s\nPassword: %s\nQuestion 1: %s\nAnswer 1: %s\n", mitch->user, mitch->pw, str(mitch->type[0]), mitch->answers[0]);
+    writeToCSV(hashtable, &numStudents, studentNames, "./userdata.csv");
 }
