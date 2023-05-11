@@ -8,7 +8,6 @@
         action="/login"
         method="POST"
         enctype="application/x-www-form-urlencoded"
-        id="login-form"
       >
         <label for="username">Username:</label>
         <input type="text" id="username" name="username" /><br /><br />
@@ -23,11 +22,6 @@
       </form>
     </section>
     <script>
-      document
-        .getElementById("login-form")
-        .addEventListener("submit", function (event) {
-          console.log(event);
-        });
     </script>
   </body>
 </html>

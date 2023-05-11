@@ -245,10 +245,16 @@ void send_403(SOCKET socket)
     const char *c403 = "HTTP/1.1 403 Forbidden\r\n\r\n";
     send(socket, c403, strlen(c403), 0);
 }
-
-void connection_get(SOCKET socket, const char *path, const char *IPv6_Address)
+void send_302(SOCKET socket, const char *username)
 {
-    printf("Serving path: %s to: %s\n", path, IPv6_Address);
+    char c302[52 + strlen(username)];
+    sprintf(c302, "HTTP/1.1 302 Found\r\nLocation: /profile/%s\r\nSet-Cookie: user=%s\r\n\r\n", username, username);
+    send(socket, c302, strlen(c302), 0);
+}
+
+void handle_get(SOCKET socket, HTTPRequest request)
+{
+    char *path = request.request_line.search(&request.request_line, "uri", strlen("uri"));
 
     if (strcmp(path, "/") == 0)
     {
@@ -298,15 +304,18 @@ void connection_get(SOCKET socket, const char *path, const char *IPv6_Address)
     sprintf(buffer, "\r\n");
     send(socket, buffer, strlen(buffer), 0);
 
-    int r = fread(buffer, 1, BSIZE, fp);
+    size_t r = fread(buffer, 1, BSIZE, fp);
     while (r)
     {
         send(socket, buffer, r, 0);
         r = fread(buffer, 1, BSIZE, fp);
     }
     fclose(fp);
+
+    // http_request_destructor(&request);
 }
-void handle_uri(HTTPRequest response, SOCKET socket)
+
+void handle_post(HTTPRequest response, SOCKET socket)
 {
     char *match_user = "ben";
     char *match_pass = "ben";
@@ -317,21 +326,25 @@ void handle_uri(HTTPRequest response, SOCKET socket)
         char *password = (char *)response.body.search(&response.body, "password", strlen("password"));
         if (strcmp(username, match_user) == 0 && strcmp(password, match_pass) == 0)
         {
-            send_201(socket);
+            // send_201(socket);
+            send_302(socket, username);
         }
         else
         {
+            printf("\n\ndeonst match");
             send_401(socket);
         }
     }
+    // http_request_destructor(&response);
 }
 
-void connection_post(SOCKET socket, char *response_string)
+void parse_request(char *response_string, SOCKET socket)
 {
     HTTPRequest response;
-    (void)socket;
+
     char duplicate[strlen(response_string)];
     strcpy(duplicate, response_string);
+
     for (int i = 0; i < (int)strlen(response_string) - 1; i++)
     {
         if (response_string[i] == '\n' && response_string[i + 1] == '\n')
@@ -346,10 +359,25 @@ void connection_post(SOCKET socket, char *response_string)
     extract_header_fields(&response, header_fields);
     extract_request_line_fields(&response, request_line);
     extract_body(&response, body);
-    handle_uri(response, socket);
+    // ! keeping for debugging incase something happens and everything breaks
+    // for (int i = 0; i < response.header_fields.keys.length; i++)
+    // {
+    //     printf("%s:%s\n", (char *)response.header_fields.keys.head->data, (char *)response.header_fields.search(&response.header_fields,
+    //     (char *)response.header_fields.keys.head->data, strlen((char *)response.header_fields.keys.head->data)));
+    //     response.header_fields.keys.head = response.header_fields.keys.head->next;
+    // }
+    char *method = (char *)response.request_line.search(&response.request_line, "method", strlen("method"));
+    if (strcmp(method, "GET") == 0)
+    {
+        handle_get(socket, response);
+    }
+    else if (strcmp(method, "POST") == 0)
+    {
+        handle_post(response, socket);
+    }
 }
 
-void received(int new_fd, int numbytes, char *buf, const char *IPv6_Address)
+void received(int new_fd, int numbytes, char *buf)
 {
     // todo maybe change up how this is dealt with as its a big messy
     int client_received = 0;
@@ -360,20 +388,18 @@ void received(int new_fd, int numbytes, char *buf, const char *IPv6_Address)
     }
     else
     {
-        printf("%s\n\n", buf);
         char original[strlen(buf)];
         strcpy(original, buf);
         client_received += numbytes;
         buf[client_received] = 0;
         char *res = strstr(buf, "\r\n\r\n");
-
+        // ! double check importance of this if statements and nested stuff later
         if (res)
         {
             *res = 0;
             if (strncmp(buf, "GET", 3) == 0)
             {
                 char *path = buf + 4;
-
                 char *end_path = strstr(path, " ");
                 if (!end_path)
                 {
@@ -382,16 +408,16 @@ void received(int new_fd, int numbytes, char *buf, const char *IPv6_Address)
                 else
                 {
                     *end_path = 0;
-                    connection_get(new_fd, path, IPv6_Address);
+                    parse_request(original, new_fd);
                 }
             }
             else if (strncmp(buf, "POST", 4) == 0)
             {
-                connection_post(new_fd, original);
+                parse_request(original, new_fd);
             }
             else
             {
-                // unknown request figure out how to handle
+                // todo  unknown request figure out how to handle
                 send_400(new_fd);
             }
         }
@@ -403,8 +429,8 @@ void manage_connection(SOCKET sockfd)
 
     struct sockaddr_storage their_addr; // connector's address information
     socklen_t sin_size;
-    int new_fd, numbytes;
-    char s[INET_ADDRSTRLEN];
+    int new_fd;
+    ssize_t numbytes;
     char buf[MAXDATASIZE + 1];
 
     printf("Server: waiting for connections...\n");
@@ -418,9 +444,6 @@ void manage_connection(SOCKET sockfd)
             fprintf(stdout, "Client connection failed\n");
             continue;
         }
-        inet_ntop(their_addr.ss_family,
-                  get_in_addr((struct sockaddr *)&their_addr),
-                  s, sizeof s);
 
         if (!fork())
         {
@@ -433,7 +456,7 @@ void manage_connection(SOCKET sockfd)
             }
             else
             {
-                received(new_fd, numbytes, buf, s);
+                received(new_fd, numbytes, buf);
             }
             close(new_fd);
             exit(0);
