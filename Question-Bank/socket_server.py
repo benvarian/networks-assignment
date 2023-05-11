@@ -9,9 +9,10 @@
 import socket
 import json
 import question_bank
+import time
 
 HOST = "localhost"  # Standard loopback interface address (localhost)
-PORT = 65435  # Port to listen on (non-privileged ports are > 1023)
+PORT = 65433  # Port to listen on (non-privileged ports are > 1023)
 
 def req_parse(request):
     # needs to handle type qs, num qs.
@@ -36,22 +37,20 @@ class Nick_Socket:
         self.PORT = PORT
 
     # binds sock to a port
-    def bind(self, host, port):
-        self.sock.bind((host, port))
-        print("socket binded!")
+    def bind(self):
+        self.sock.bind((self.HOST, self.PORT))
 
     # waits for TM to connect
     def wait_for_client_connect(self):
         self.sock.listen()
         self.conn, self.addr = self.sock.accept()
-        print("client connected!")
 
     # sends string along sock.
     def send_questions(self, msg):
         # as per current protocol 3 byte header -- one for type (char), 2 for length (2 byte int)
         MSGLEN = len(msg)   
-        sent = self.conn.send(MSGLEN)
-        byte_msg = b''.join(["J".encode(), MSGLEN.encode(2, "big"), msg.encode()])
+        byte_msg = b''.join(["J".encode(), MSGLEN.to_bytes(2, "little"), msg.encode()])
+        print("\nsending:\n MSGLEN:",  MSGLEN, "\nmsg:", msg, "\n")
         totalsent = 0
         while totalsent < MSGLEN:
             sent = self.conn.send(byte_msg)
@@ -77,8 +76,9 @@ class Nick_Socket:
 
     def receive(self):
         msg = self.conn.recv(4096)
+        print("Msg received!\n Msg: ", msg, "\n")
         if (not msg):
-            raise Exception('Connection failed')
+            raise Exception('No message received.')
         # msg will have a few headers, could (?) parse them here to make that work simpler.
         return msg
 
@@ -93,43 +93,56 @@ class Nick_Socket:
         # waits till receive anything.
         # client_req = self.format(new_sock_receive())
         client_req = new_sock.receive()
+        print(client_req)
 
-        mode_req = client_req[0]
-        
+        # chr converts bytes to unicode.
+        mode_req = chr(client_req[0])
+
         if (mode_req == 'm'):
-            qid = client_req[1]
-            ans = client_req[2]
+            qid = chr(client_req[1])
+            ans = chr(client_req[2])
 
             mark = question_bank.mark(qid, ans)
-            self.send_mark(qid, mark)
+            # NOT IMPLEMENTED YET
+            # self.send_mark(qid, mark)
+
         elif (mode_req == 'q'):
-            q_num = client_req[1]
-            q_type = client_req[2]
+            q_num = chr(client_req[1])
+            q_type = int.from_bytes(client_req[2:4], "big")
 
             questions = question_bank.get_JSON_qs(q_num, q_type)
-
             self.send_questions(questions)
         else:
             # something went wrong.
             print("something went wrong with request, skipping.")
-            raise Exception("Protocol broken. closing socket")
+            # raise Exception("Protocol broken. closing socket")
 
 
     def check_connection(self):
         try:
             # tries to read bytes without blocking without removing them from buffer (peek & don't wait)
-            data = self.sock.recv(16, socket.MSG_DONTWAIT | socket.MSG_PEEK)
-            return len(data) == 0
-        except :
-            # can be check against specific errors if needed.
-            return False
+            data = self.conn.recv(16, socket.MSG_DONTWAIT | socket.MSG_PEEK)
+            print(data)
+            print(len(data))
+            return len(data) != 0
+        except BlockingIOError:
+
+            return True  # socket is open and reading from it would block
+        except ConnectionResetError:
+            return False  # socket was closed for some other reason
+        except Exception as e:
+            print("Unexpected Exception when checking if socket is connected:")
+            print(e)
+            print("\n\n")
+            return True
         
     def restart_socket(self):
         # ends socket, and restarts it.
         # very likely we'll want more error checking for PORTs being already used.
-        self.sock.shutdown()
-        self.sock.close()
-        self.sock.bind(self.HOST, self.PORT)
+        self.conn.shutdown(socket.SHUT_RDWR)
+        self.conn.close()
+        # self.sock.shutdown
+        # self.bind()
     
     def main_loop(self):
         # receive, send... receive, send... 
@@ -138,21 +151,42 @@ class Nick_Socket:
         # set up a new socket later.
 
         self.bind()
+        print("Socket binded to: ", HOST, " : ", PORT)
+
+        print("Waiting for Client...")
         self.wait_for_client_connect()
+        
+        print("Connected to Client! Beginning main loop...\n")
+        
         while True:
             if (self.check_connection()):
                 try:
+                    print("Waiting for request...")
                     self.listen()
-                except:
-                    # if something is wrong, will be caught when checking connection.
-                    print("something went wrong")
-                    break
+                except Exception as e:
+                    # if something is wrong, will be caught when checking connection
+                    print(e)
+                    self.restart_socket()
+                    print("\nWaiting for new Client...")
+                    self.wait_for_client_connect()
+                    # raise Exception("Something went wrong...")
             else:
                 # connection has ended, restart_socket()
+                print("Connection ended, Restarting...")
                 self.restart_socket()
+                print("\nWaiting for new Client...")
                 self.wait_for_client_connect()
+                # self.wait_for_client_connect()
+                # print("Connected to Client! Restarting main loop...\n")
+                # raise Exception("Something went wrong...")
                 
 # echo-server.py
 new_sock = Nick_Socket(HOST, PORT)
 # binds to HOST, PORT.
-new_sock.main_loop()
+try:
+    new_sock.main_loop()
+except Exception as e:
+    print(e)
+    # new_sock.restart_socket()
+    new_sock.sock.close()
+
