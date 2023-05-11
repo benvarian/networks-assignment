@@ -158,7 +158,7 @@ void getData(HASHTABLE *hashtable, char *filepath) {
 }
 
 void writeToCSV(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_USER_LENGTH], char *filepath) {
-    FILE *fp = openFile("out.csv", "w");
+    FILE *fp = openFile(filepath, "w");
     TESTINFO *entry;
     fprintf(fp, "user,pw,qtype,questions,answers,attemptsLeft,correct\n");
     for (int i = 0; i < *numStudents; i++) {
