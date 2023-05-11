@@ -2,13 +2,7 @@
 // Client side C/C++ program to demonstrate Socket
 // programming
 #include "QBclient.h"
-#define PORT 65435
-#define HANDSHAKE "are you ready to receive the questions?"
-#define HANDSHAKE_FAILED "fail"
-#define HANDSHAKE_ACCEPTED "yes."
-#define HANDSHAKE_REJECTED "no.."
-#define HANDSHAKE_VERIF_LENGTH 4
-#define HANDSHAKE_LENGTH strlen(HANDSHAKE)
+#define PORT 65433
 
 char* hello = "Hello from client";
 int status = 0;
@@ -16,24 +10,19 @@ int valread = 0;
 int client_fd = 0;
 
 struct sockaddr_in serv_addr;
-char buffer[1024] = { 0 };
+char buffer[4096] = { 0 };
 
 void closeConnection() {
-    printf("closing...");
+    printf("closing...\n\n");
     close(client_fd);
 }
 
-void receiveStr(int length) {
-    int bytesRead = 0;
-    int received = 0;
-    while (bytesRead < length) {
-        received = read(client_fd, &buffer[bytesRead], 1024);
-        bytesRead += received;
-        if(!received) {
-            printf("socket connection broken. Ending process.");
-            closeConnection();
-            exit(EXIT_FAILURE);
-        }
+void receive() {
+    bool received = read(client_fd, buffer, 4096);
+    if(!received) {
+        printf("socket connection broken. Ending process.");
+        closeConnection();
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -42,6 +31,11 @@ int sendStr(char *str) {
     printf("sent %i bytes\n", valread);
 
     return valread;
+}
+
+void req_questions(char type, uint16_t num) {
+    char buf[] = {'q', (char)type, (char)num & 0x00FF, (char)num>>8};
+    send(client_fd, buf, 4, 0);
 }
 
 int main(int argc, char const* argv[])
@@ -77,22 +71,17 @@ int main(int argc, char const* argv[])
     }
 
     // connection is up and running -- ready to talk to the echo server.
-    bool run = true;
-    // int count = 0;
-    // char *response;
-    
-    while(run) {
+    int count = 0;
+    sleep(1);
+    while(count < 3) {
         // send a request
-        sendStr("c");
+        req_questions('c', count + 2);
 
         // receive a reply of length
-        receiveStr(2);
-        sendStr("ack");
-        uint16_t a = (uint16_t)buffer[0];
-        receiveStr(a);
-        printf("got: \n\n %s \n\n from server\n", buffer);
-        sendStr("ack");
-        break;
+        receive();
+        uint16_t recLength = *(uint16_t *)&buffer[1];
+        printf("got: type: %c \n length: %i\n with val: %s\n from server\n\n", buffer[0], recLength, buffer + 3);
+        count++;
     }
 
     // closing the connected socket
