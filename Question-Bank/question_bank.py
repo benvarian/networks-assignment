@@ -12,5 +12,5 @@ def gen_qs(type):
 def mark(qid, ans):
     return 1
 
-def get_JSON_qs():
+def get_JSON_qs(q_num, q_type):
     return '["question1", "answer14"]'
