@@ -18,9 +18,8 @@ typedef struct _testinfo {
     char         *user;          // Username of student
     char         *pw;            // Password of student
     enum qType   *type;          // array of question types
-    char         **questions;    // array of questions assigned to the student
-    char         **answers;      // array of answers assigned to student
-    int          *attemptsLeft;  // array of attempts left for each question
+    int          *qid;           // array of question IDs (unsigned int)
+    int          *attemptsLeft;  // array of attempts left for each question (unsigned int)
     bool         *correct;       // array of booleans stating if student has answered correct or not
     } TESTINFO; 
 
@@ -36,7 +35,7 @@ extern HASHTABLE *hashtable_new(void);
 /*  ADD A NEW USER TO A GIVEN HASHTABLE
     HASHING IS BASED ON THE USERNAME (SO IT MUST BE UNIQUE)
 */
-extern void hashtable_add(HASHTABLE *hashtable, char *username, char *passw, enum qType *type, char **questions, char **answers, int *attemptsLeft, bool *correct);
+extern void hashtable_add(HASHTABLE *hashtable, char *username, char *passw, enum qType *types, int *qid, int *attemptsLeft, bool *correct);
 
 /*  DETERMINE IF A USER EXISTS IN THE HASHTABLE AND
     RETURN A POINTER TO THE USER INFO STRUCTURE IF IT EXISTS 
