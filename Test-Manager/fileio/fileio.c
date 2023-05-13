@@ -1,8 +1,5 @@
 #include "fileio.h"
 
-
-
-
 uint32_t hash_string(char *string) {
     uint32_t hash = 0;
 
@@ -115,12 +112,12 @@ void getData(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_US
             else types[i] = (enum qType) N;   // ERROR: SHOULD BE M OR P NOT NOTHING
             typetok = strtok_r(NULL, "$", &savetype);
         }
-
         // parse question IDs
         entries = strtok_r(NULL, ",", &saveentry);
         int *qid = (int *) calloc(sizeof (int), NUM_QUESTIONS);
         CHECK_ALLOC(qid);
         char *qidtok = strtok_r(entries, "$", &saveqid);
+
         for (int i = 0; i < NUM_QUESTIONS; i++) {
             qid[i] = atoi(qidtok);
             qidtok = strtok_r(NULL, "$", &saveqid);
@@ -218,4 +215,4 @@ int main(void) {
     TESTINFO *mitch = hashtable_get(hashtable, "mitch");
     printf("Username: %s\nPassword: %s\nQID: %i\n\n", mitch->user, mitch->pw, mitch->qid[0]);
     writeToCSV(hashtable, &numStudents, studentNames, "./userdata.csv");
-} 
+}
