@@ -27,7 +27,8 @@ def get_questions(filePath):
                     # question/answer formatting
                     row[1] = row[1].replace("\\n", "\n")
                     row[2] = row[2].replace("\\n", "\n")
-                    questions[row[0]] = [row[1], row[2]]
+                    row[3] = row[3].replace("\\n", "\n")
+                    questions[row[0]] = [row[1], row[2], row[3]]
             return questions
         
     # File Path not found
