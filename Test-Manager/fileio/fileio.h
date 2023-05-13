@@ -9,6 +9,7 @@
 #define	HASHTABLE_SIZE		997
 #define NUM_QUESTIONS       10
 #define MAX_USER_LENGTH     256
+#define FILEPATH            "./fileio/userdata.csv"
 
 //  ENUMERATION OF QUESTION TYPE - M FOR MULTICHOICE, P FOR PROGRAMMING
 enum qType {M, P, N};

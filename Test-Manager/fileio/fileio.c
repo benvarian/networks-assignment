@@ -25,7 +25,6 @@ HASHTABLE *hashtable_new(void) {
 void hashtable_add(HASHTABLE *hashtable, char *username, char *passw, enum qType *types, int *qid, int *attemptsLeft, bool *correct) {
     uint32_t h   = hash_string(username) % HASHTABLE_SIZE;  // get index
     // allocate memory for user info
-    printf("size: %li\n", sizeof(TESTINFO));
     TESTINFO *new = malloc(sizeof(TESTINFO));
     CHECK_ALLOC(new);
     hashtable[h] = new;
@@ -55,7 +54,7 @@ FILE* openFile(char *file_path, char *mode) {
 	FILE *fp;
     fp = fopen(file_path, mode);
 	if(fp == NULL) {
-		perror("Failed to open file\n");
+		printf("Failed to open file\n");
 		fclose(fp);
 		exit(EXIT_FAILURE);
 	}
@@ -152,8 +151,6 @@ void getData(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_US
 
         // add user to hashtable
         hashtable_add(hashtable, user, password, types, qid, attemptsLeft, correct);
-        TESTINFO *mitch = hashtable_get(hashtable, "mitch");
-        printf("Username: %s\nPassword: %s\nQID: %i\n\n", mitch->user, mitch->pw, mitch->qid[0]);
         // free the allocated memory
         free(user);
         free(password);
@@ -165,8 +162,6 @@ void getData(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_US
 void writeToCSV(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_USER_LENGTH], char *filepath) {
     FILE *fp = openFile(filepath, "w");
     TESTINFO *entry;
-    TESTINFO *mitch = hashtable_get(hashtable, "mitch");
-    printf("Username: %s\nPassword: %s\nQID: %i\n\n", mitch->user, mitch->pw, mitch->qid[0]);
     fprintf(fp, "user,pw,qtype,qid,attemptsLeft,correct\n");
     for (int i = 0; i < *numStudents; i++) {
         entry = hashtable_get(hashtable, studentNames[i]);
@@ -199,7 +194,6 @@ void writeToCSV(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX
                 sprintf(correct + strlen(correct), "%s", (entry->correct[j] == true) ? "T" : "F");
             }
         }
-        printf("%s,%s,%s,%s,%s,%s\n", entry->user, entry->pw, types, qid, attempts, correct);
         fprintf(fp, "%s,%s,%s,%s,%s,%s\n", entry->user, entry->pw, types, qid, attempts, correct);
         free(types);
         free(qid);
@@ -209,13 +203,14 @@ void writeToCSV(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX
     fclose(fp);
 }
 
-// TESTING FILE IO
+/* TESTING FILE IO
 int main(void) {
     int numStudents = 0;
     char (*studentNames)[MAX_USER_LENGTH] = malloc(sizeof(char *) * MAX_USER_LENGTH);
     HASHTABLE *hashtable = hashtable_new();
-    getData(hashtable, &numStudents, studentNames, "./userdata.csv");
+    getData(hashtable, &numStudents, studentNames, FILEPATH);
     TESTINFO *mitch = hashtable_get(hashtable, "mitch");
     printf("Username: %s\nPassword: %s\nQID: %i\n\n", mitch->user, mitch->pw, mitch->qid[0]);
-    writeToCSV(hashtable, &numStudents, studentNames, "./userdata.csv");
-} 
+    writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
+    
+} */
