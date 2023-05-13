@@ -409,9 +409,11 @@ void manage_connection(SOCKET sockfd)
             }
             else
             {
-                printf("here: %s\n", buf);
-                sleep(3);
-                char *req = "qp10";
+                printf("msg: %s", buf);
+                sleep(1);
+                // Q = question, P = python, 1 = number. similarly, QP10 would be for ten qs.
+                // since every QB only has one subject, the P isnt actually required.
+                char *req = "QP1";
                 send(new_fd, req, strlen(req), 0);
                 // received(new_fd, numbytes, buf, s);
             }
