@@ -33,7 +33,16 @@ class QB_question_database:
         return json_qs
 
     def mark(self, qid, ans):
-        question = self.get_q_by_id(qid)
-        answer = question[1]
-        
-        return 1
+        # [type, q, a]
+        q_obj = self.get_q_by_id(qid)
+        # programming
+        if (q_obj[0] == 'P'):
+            return execute_script(q_obj[0], q_obj[1])
+        elif(q_obj[0] == 'M'):
+            # multichoice
+            return q_obj[2][0] == ans
+        # raise error...
+        return
+
+def execute_script(type, script):
+    return 0
