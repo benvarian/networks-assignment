@@ -15,7 +15,9 @@ import random
 
 HOST = "localhost"  # Standard loopback interface address (localhost)
 PORT =  8080 # Port to listen on (non-privileged ports are > 1023)
-QBTYPE = "Python"
+
+# p for python
+QBTYPE = "P"
 
 # C = in C, P = python. if not in list, will respond with something like "wrong qb, type not found"
 QTYPES = ['C', 'P']
@@ -54,7 +56,7 @@ class Nick_Socket:
 
         # connected to TM.
         # sending header.
-        self.send_str("QB" + QBTYPE)
+        self.send_str("Q" + QBTYPE)
 
         # print("here.")
         # while(True):
@@ -118,6 +120,8 @@ class Nick_Socket:
             except Exception as e:
                 raise e
             if (msg == b''):
+                # prevents infinite loop of broken pipelines.
+                # temporary.
                 raise Exception("Broken Pipeline")
             elif(not msg):
                 print("No req yet...")
