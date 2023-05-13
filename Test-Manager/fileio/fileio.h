@@ -7,6 +7,9 @@
 #include <stdlib.h>
 
 #define	HASHTABLE_SIZE		997
+#define NUM_QUESTIONS       10
+#define MAX_USER_LENGTH     256
+#define FILEPATH            "./fileio/userdata.csv"
 
 //  ENUMERATION OF QUESTION TYPE - M FOR MULTICHOICE, P FOR PROGRAMMING
 enum qType {M, P, N};
@@ -16,9 +19,8 @@ typedef struct _testinfo {
     char         *user;          // Username of student
     char         *pw;            // Password of student
     enum qType   *type;          // array of question types
-    char         **questions;    // array of questions assigned to the student
-    char         **answers;      // array of answers assigned to student
-    int          *attemptsLeft;  // array of attempts left for each question
+    int          *qid;           // array of question IDs (unsigned int)
+    int          *attemptsLeft;  // array of attempts left for each question (unsigned int)
     bool         *correct;       // array of booleans stating if student has answered correct or not
     } TESTINFO; 
 
@@ -34,7 +36,7 @@ extern HASHTABLE *hashtable_new(void);
 /*  ADD A NEW USER TO A GIVEN HASHTABLE
     HASHING IS BASED ON THE USERNAME (SO IT MUST BE UNIQUE)
 */
-extern void hashtable_add(HASHTABLE *hashtable, char *username, char *passw, enum qType *type, char **questions, char **answers, int *attemptsLeft, bool *correct);
+extern void hashtable_add(HASHTABLE *hashtable, char *username, char *passw, enum qType *types, int *qid, int *attemptsLeft, bool *correct);
 
 /*  DETERMINE IF A USER EXISTS IN THE HASHTABLE AND
     RETURN A POINTER TO THE USER INFO STRUCTURE IF IT EXISTS 
@@ -50,13 +52,8 @@ extern char *readFile(FILE * fp);
 
 // Uses openFile and readFile to get data and put it in the hashtable
 // shouldn't need to call openFile and readFile, just this
-extern void getData(HASHTABLE *hashtable, char *filepath);
+extern void getData(HASHTABLE *hashtable, int *numStudents, char ***studentNames, char *filepath);
 
-<<<<<<< Updated upstream
-// Frees memory of a student once finished
-extern void freeMemory(TESTINFO *student);
-=======
 // Writes data from the hashtable into the csv at filepath, using the list of students
 // as a reference for the values in the hashtable
-extern void writeToCSV(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_USER_LENGTH], char *filepath);
->>>>>>> Stashed changes
+extern void writeToCSV(HASHTABLE *hashtable, int *numStudents, char **studentNames, char *filepath);

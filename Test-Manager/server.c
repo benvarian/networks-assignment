@@ -497,16 +497,18 @@ int main(int argc, char *argv[])
     }
     // Read in the data of students from a csv
     int numStudents = 0;
-    char (*studentNames)[MAX_USER_LENGTH] = malloc(sizeof(char *) * MAX_USER_LENGTH);
-    CHECK_ALLOC(studentNames);
+    char **studentNames = NULL;
     HASHTABLE *hashtable = hashtable_new();
-    getData(hashtable, &numStudents, studentNames, "fileio/userdata.csv");
+    getData(hashtable, &numStudents, &studentNames, FILEPATH);
+    for(int i = 0; i < numStudents; i++) {
+        TESTINFO *student = hashtable_get(hashtable, studentNames[i]);
+        printf("Student data for %s loaded in\n", student->user);
+    }
     // Server stuff idk
     SOCKET socket = bind_socket(get_info(argv[1]));
 
     manage_connection(socket);
-
     // writes any changed data back to the csv when finished
-    writeToCSV(hashtable, &numStudents, studentNames, "./userdata.csv");
+    writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
     return 0;
 }
