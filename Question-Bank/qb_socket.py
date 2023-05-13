@@ -210,7 +210,7 @@ class Nick_Socket:
 try:
     PORT=int(sys.argv[1])
 except:
-    print("\nUsage:\n python3 socket_server.py {port}")
+    print("\nUsage:\n python3 qb_socket.py {port}")
     exit()
 
 print("PORT =", PORT)
