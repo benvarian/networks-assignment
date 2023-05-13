@@ -2,6 +2,7 @@
 
 
 
+
 uint32_t hash_string(char *string) {
     uint32_t hash = 0;
 
@@ -109,7 +110,8 @@ void getData(HASHTABLE *hashtable, char *filepath) {
 
         // parse questions
         entries = strtok_r(NULL, ",", &saveentry);
-        char *questions[NUM_QUESTIONS];
+        char **questions;
+        questions = (char **)calloc(sizeof(char *), NUM_QUESTIONS);
         char *questionstok = strtok_r(entries, "$", &savequestions);
         for (int i = 0; i < NUM_QUESTIONS; i++) {
             questions[i] = calloc(sizeof(questionstok), sizeof(char));
@@ -141,7 +143,8 @@ void getData(HASHTABLE *hashtable, char *filepath) {
 
         // parse correct answers
         entries = strtok_r(NULL, ",", &saveentry);
-        bool correct[NUM_QUESTIONS];
+        bool *correct;
+        correct = (bool *)calloc(sizeof(bool *), NUM_QUESTIONS);
         char *correcttok = strtok_r(entries, "$", &savecorrect);
         for (int i = 0; i < NUM_QUESTIONS; i++) {
             if(strcmp(correcttok, "T")) correct[i] = true;
@@ -212,4 +215,4 @@ int main(void) {
     // TESTINFO *mitch = hashtable_get(hashtable, "mitch");
     // printf("Username: %s\nPassword: %s\nQuestion 1: %s\nAnswer 1: %s\n", mitch->user, mitch->pw, mitch->questions[0], mitch->answers[0]);
     // writeToCSV(hashtable, &numStudents, studentNames, "./userdata.csv");
-}   
+} 

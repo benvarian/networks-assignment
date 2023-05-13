@@ -52,7 +52,7 @@ extern char *readFile(FILE * fp);
 
 // Uses openFile and readFile to get data and put it in the hashtable
 // shouldn't need to call openFile and readFile, just this
-extern void getData(HASHTABLE *hashtable, char *filepath);
+extern void getData(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_USER_LENGTH], char *filepath);
 
 // Writes data from the hashtable into the csv at filepath, using the list of students
 // as a reference for the values in the hashtable
