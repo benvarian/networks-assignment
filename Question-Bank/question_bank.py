@@ -34,5 +34,6 @@ class QB_question_database:
 
     def mark(self, qid, ans):
         question = self.get_q_by_id(qid)
-        question = 
+        answer = question[1]
+        
         return 1
