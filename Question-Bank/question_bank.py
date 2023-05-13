@@ -21,7 +21,7 @@ class QB_question_database:
         self.questions = get_questions(key[type])
 
     def get_q_by_id(self, qid):
-        return ["this is the qid", "this is the question", "this is the id."]
+        return self.questions[qid]
 
     def get_random_qs(self, q_num):
         # returns q_num questions as json array.
@@ -33,4 +33,6 @@ class QB_question_database:
         return json_qs
 
     def mark(self, qid, ans):
+        question = self.get_q_by_id(qid)
+        question = 
         return 1
