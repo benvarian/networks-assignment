@@ -552,15 +552,17 @@ int main(int argc, char *argv[])
     char **studentNames = NULL;
     HASHTABLE *hashtable = hashtable_new();
     getData(hashtable, &numStudents, &studentNames, FILEPATH);
-    for(int i = 0; i < numStudents; i++) {
-        TESTINFO *student = hashtable_get(hashtable, studentNames[i]);
-        printf("Student data for %s loaded in\n", student->user);
-    }
+   
     // Server stuff idk
     SOCKET socket = bind_socket(get_info(argv[1]));
 
     manage_connection(socket);
+    // ! dosnt work on bens machine 
     // writes any changed data back to the csv when finished
-    writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
+    // writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
+     // for(int i = 0; i < numStudents; i++) {
+    //     TESTINFO *student = hashtable_get(hashtable, studentNames[i]);
+    //     printf("Student data for %s loaded in\n", student->user);
+    // }
     return 0;
 }
