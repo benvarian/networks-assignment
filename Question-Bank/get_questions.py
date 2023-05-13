@@ -9,7 +9,7 @@ import os
 def get_questions(filePath):
     try:
         with open(filePath, 'r', encoding='utf-8-sig') as data:
-            questions = []
+            questions = { }
             lines = data.readlines()
             # Iterate over each row, adding to the dictionary
             for row in lines[1:]:
@@ -27,7 +27,7 @@ def get_questions(filePath):
                     # question/answer formatting
                     row[1] = row[1].replace("\\n", "\n")
                     row[2] = row[2].replace("\\n", "\n")
-                    questions.append([row[1], row[2]])
+                    questions[row[0]] = [row[1], row[2]]
             return questions
         
     # File Path not found
