@@ -4,6 +4,7 @@
 **/
 
 #include "server.h"
+#include "fileio/fileio.h"
 #include "Data-Structures/Queue/Queue.h"
 
 // Parses out the request line to retrieve the method, uri, and http version.
@@ -546,10 +547,20 @@ int main(int argc, char *argv[])
     {
         usage();
     }
-
+    // Read in the data of students from a csv
+    int numStudents = 0;
+    char **studentNames = NULL;
+    HASHTABLE *hashtable = hashtable_new();
+    getData(hashtable, &numStudents, &studentNames, FILEPATH);
+    for(int i = 0; i < numStudents; i++) {
+        TESTINFO *student = hashtable_get(hashtable, studentNames[i]);
+        printf("Student data for %s loaded in\n", student->user);
+    }
+    // Server stuff idk
     SOCKET socket = bind_socket(get_info(argv[1]));
 
     manage_connection(socket);
-
+    // writes any changed data back to the csv when finished
+    writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
     return 0;
 }

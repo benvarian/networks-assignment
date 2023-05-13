@@ -2,6 +2,7 @@
 
 
 
+
 uint32_t hash_string(char *string) {
     uint32_t hash = 0;
 
@@ -21,18 +22,21 @@ HASHTABLE *hashtable_new(void) {
 
 /*  ADD A NEW USER TO A GIVEN HASHTABLE
     HASHING IS BASED ON THE USERNAME (SO IT MUST BE UNIQUE) */
-void hashtable_add(HASHTABLE *hashtable, char *username, char *passw, enum qType *types, char **questions, char **answers, int *attemptsLeft, bool *correct) {
+void hashtable_add(HASHTABLE *hashtable, char *username, char *passw, enum qType *types, int *qid, int *attemptsLeft, bool *correct) {
     uint32_t h   = hash_string(username) % HASHTABLE_SIZE;  // get index
     // allocate memory for user info
-    TESTINFO *new = calloc(1, sizeof(TESTINFO));
+    TESTINFO *new = malloc(sizeof(TESTINFO));
     CHECK_ALLOC(new);
     hashtable[h] = new;
     // populate the user info in the hashtable entry
-    hashtable[h]->user = username;
-    hashtable[h]->pw = passw;
+    hashtable[h]->user = malloc(strlen(username) * sizeof(char) + 1);
+    CHECK_ALLOC(hashtable[h]->user);
+    strcpy(hashtable[h]->user, username);
+    hashtable[h]->pw = malloc(strlen(passw) * sizeof(char) + 1);
+    CHECK_ALLOC(hashtable[h]->pw);
+    strcpy(hashtable[h]->pw, passw);
     hashtable[h]->type = types;
-    hashtable[h]->questions = questions;
-    hashtable[h]->answers = answers;
+    hashtable[h]->qid = qid;
     hashtable[h]->attemptsLeft = attemptsLeft;
     hashtable[h]->correct = correct;
 }
@@ -50,8 +54,7 @@ FILE* openFile(char *file_path, char *mode) {
 	FILE *fp;
     fp = fopen(file_path, mode);
 	if(fp == NULL) {
-		perror("Failed to open file");
-		fclose(fp);
+		printf("Failed to open file\n");
 		exit(EXIT_FAILURE);
 	}
 	return(fp); // Owness is on the calling function to close file when finished
@@ -71,36 +74,49 @@ char *readFile(FILE *fp) {
     return buffer;
 }
 
-void getData(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_USER_LENGTH], char *filepath) {
+void getData(HASHTABLE *hashtable, int *numStudents, char ***studentNames, char *filepath) {
     // get data into a buffer
     FILE *fp = openFile(filepath, "r");
     char *buffer = readFile(fp);
     // split data into rows for each user
     char *saverow;
+    char *user;
+    char *password;
     char *row = strtok_r(buffer, "\n", &saverow);
+    char **studentNamestmp;
     // strtok again to skip first row
     row = strtok_r(NULL, "\n", &saverow);
     while (row != NULL) {
-        char *saveentry, *savetype, *savequestions, *saveanswers, *saveattempts, *savecorrect;
+        char *saveentry, *savetype, *saveqid, *saveattempts, *savecorrect;
         // parse username
         char *entries = strtok_r(row, ",", &saveentry);
-        char *user = calloc(sizeof(entries), sizeof(char));
+        user = malloc(strlen(entries) * sizeof(char) + 1);
         CHECK_ALLOC(user);
         strcpy(user, entries);
-        studentNames = realloc(studentNames, sizeof(user));
-        CHECK_ALLOC(studentNames);
-        strcpy(studentNames[*numStudents], user);
+        // Add student name to the list of names
+        if(*numStudents == 0) {
+            *studentNames = realloc(NULL, sizeof(char *)); // allocate memory for first string
+            CHECK_ALLOC(*studentNames);
+        }
+        else {
+            studentNamestmp = (char**) realloc(*studentNames, sizeof(char *)); // realloc if studentNames already has memory
+            CHECK_ALLOC(studentNamestmp);
+            *studentNames = studentNamestmp;
+        }
+        (*studentNames)[*numStudents] = calloc(1, strlen(user) * sizeof(char) + 1); // allocate memory for string
+        CHECK_ALLOC((*studentNames)[*numStudents]);
+        strcpy((*studentNames)[*numStudents], user);
         *numStudents = *numStudents + 1;
 
         // parse password
         entries = strtok_r(NULL, ",", &saveentry);
-        char *password = calloc(sizeof(entries), sizeof(char));
+        password = malloc(strlen(entries) * sizeof(char) + 1);
         CHECK_ALLOC(password);
         strcpy(password, entries);
 
         // parse enumerated types
         entries = strtok_r(NULL, ",", &saveentry);
-        enum qType types[NUM_QUESTIONS];
+        enum qType *types = calloc(sizeof(int), NUM_QUESTIONS); // enums take same size as int
         char *typetok = strtok_r(entries, "$", &savetype);
         for(int i = 0; i < NUM_QUESTIONS; i++) {
             if(strcmp(typetok, "M") == 0) types[i] = (enum qType) M;
@@ -109,35 +125,21 @@ void getData(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_US
             typetok = strtok_r(NULL, "$", &savetype);
         }
 
-        // parse questions
+        // parse question IDs
         entries = strtok_r(NULL, ",", &saveentry);
-        char **questions;
-        questions = (char **)calloc(sizeof(char *), NUM_QUESTIONS);
-        char *questionstok = strtok_r(entries, "$", &savequestions);
+        int *qid = (int *) calloc(sizeof (int), NUM_QUESTIONS);
+        CHECK_ALLOC(qid);
+        char *qidtok = strtok_r(entries, "$", &saveqid);
         for (int i = 0; i < NUM_QUESTIONS; i++) {
-            questions[i] = calloc(sizeof(questionstok), sizeof(char));
-            CHECK_ALLOC(questions[i]);
-            strcpy(questions[i], questionstok);
-            questionstok = strtok_r(NULL, "$", &savequestions);
-        }
-
-        // parse answers
-        entries = strtok_r(NULL, ",", &saveentry);
-        char **answers;
-        answers = (char **)calloc(sizeof(char *), NUM_QUESTIONS);
-        CHECK_ALLOC(answers);
-        char *answerstok = strtok_r(entries, "$", &saveanswers);
-        for (int i = 0; i < NUM_QUESTIONS; i++) {
-            answers[i] = calloc(sizeof(answerstok), sizeof(char));
-            CHECK_ALLOC(answers[i]);
-            strcpy(answers[i], answerstok);
-            answerstok = strtok_r(NULL, "$", &saveanswers);
+            qid[i] = atoi(qidtok);
+            qidtok = strtok_r(NULL, "$", &saveqid);
         }
 
         // parse attempts left
         entries = strtok_r(NULL, ",", &saveentry);
         int *attemptsLeft;
-        attemptsLeft = (int *)calloc(sizeof(int *), NUM_QUESTIONS);
+        attemptsLeft = (int *) calloc(sizeof(int), NUM_QUESTIONS);
+        CHECK_ALLOC(attemptsLeft);
         char *attemptstok = strtok_r(entries, "$", &saveattempts);
         for (int i = 0; i < NUM_QUESTIONS; i++) {
             attemptsLeft[i] = atoi(attemptstok);
@@ -147,7 +149,8 @@ void getData(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_US
         // parse correct answers
         entries = strtok_r(NULL, ",", &saveentry);
         bool *correct;
-        correct = (bool *)calloc(sizeof(bool *), NUM_QUESTIONS);
+        correct = (bool *) calloc(sizeof(bool *), NUM_QUESTIONS);
+        CHECK_ALLOC(correct);
         char *correcttok = strtok_r(entries, "$", &savecorrect);
         for (int i = 0; i < NUM_QUESTIONS; i++) {
             if(strcmp(correcttok, "T")) correct[i] = true;
@@ -157,65 +160,74 @@ void getData(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_US
         }
 
         // add user to hashtable
-        hashtable_add(hashtable, user, password, types, questions, answers, attemptsLeft, correct);
+        hashtable_add(hashtable, user, password, types, qid, attemptsLeft, correct);
+        // free the allocated memory
+        free(user);
+        free(password);
         row = strtok_r(NULL, "\n", &saverow);
+    }
+    if(*numStudents == 0) {
+        printf("Error: No student data in database\n");
+        exit(EXIT_FAILURE);
     }
     free(buffer);
 }
 
-void writeToCSV(HASHTABLE *hashtable, int *numStudents, char (*studentNames)[MAX_USER_LENGTH], char *filepath) {
+void writeToCSV(HASHTABLE *hashtable, int *numStudents, char **studentNames, char *filepath) {
     FILE *fp = openFile(filepath, "w");
     TESTINFO *entry;
-    fprintf(fp, "user,pw,qtype,questions,answers,attemptsLeft,correct\n");
+    fprintf(fp, "user,pw,qtype,qid,attemptsLeft,correct\n");
     for (int i = 0; i < *numStudents; i++) {
+        printf("%s\n", studentNames[i]);
         entry = hashtable_get(hashtable, studentNames[i]);
         char *types;
+        char *qid;
         char *attempts;
         char *correct;
-        types = malloc(NUM_QUESTIONS * sizeof(char) * 2); // allocate space for each question and a space in between
+        // allocate space for each question and a space in between
+        types = calloc(sizeof(char) * 2, NUM_QUESTIONS); 
         CHECK_ALLOC(types);
-        attempts = malloc(NUM_QUESTIONS * sizeof(int) * 2);
+        qid = calloc(sizeof(int) * 2, NUM_QUESTIONS);
+        CHECK_ALLOC(qid);
+        attempts = calloc(sizeof(int) * 2, NUM_QUESTIONS);
         CHECK_ALLOC(attempts);
-        correct = malloc(NUM_QUESTIONS * sizeof(char) * 2);
+        correct = calloc(sizeof(char) * 2, NUM_QUESTIONS);
         CHECK_ALLOC(correct);
-        // Calculate size of questions/answers then allocate memory for a string to hold it
-        int qsize = 0; 
-        int asize = 0;
-        for (int j = 0; j < NUM_QUESTIONS; j++) {
-            qsize += strlen(entry->questions[j]) + 1; // +1 for $ delimiter or '\0'
-            asize += strlen(entry->answers[j]) + 1;
-        }
-        char *questions = malloc(qsize);
-        CHECK_ALLOC(questions);
-        char *answers = malloc(asize);
-        CHECK_ALLOC(answers);
+        
         // Concatenate the data into strings to add to the csv
         for (int j = 0; j < NUM_QUESTIONS; j++) {
             if(j != NUM_QUESTIONS-1) {
-                sprintf(questions + strlen(questions), "%s$", entry->questions[j]);
-                sprintf(answers + strlen(answers), "%s$", entry->answers[j]);
                 sprintf(types + strlen(types), "%s$", (entry->type[j] == P) ? "P" : "M");
+                sprintf(qid + strlen(qid), "%i$", entry->qid[j]);
                 sprintf(attempts + strlen(attempts), "%i$", entry->attemptsLeft[j]);
                 sprintf(correct + strlen(correct), "%s$", (entry->correct[j] == true) ? "T" : "F");
             }
             else { // if it is the final question data, dont add $
-                sprintf(questions + strlen(questions), "%s", entry->questions[j]);
-                sprintf(answers + strlen(answers), "%s", entry->answers[j]);
                 sprintf(types + strlen(types), "%s", (entry->type[j] == P) ? "P" : "M");
+                sprintf(qid + strlen(qid), "%i", entry->qid[j]);
                 sprintf(attempts + strlen(attempts), "%i", entry->attemptsLeft[j]);
                 sprintf(correct + strlen(correct), "%s", (entry->correct[j] == true) ? "T" : "F");
             }
         }
-        fprintf(fp, "%s,%s,%s,%s,%s,%s,%s\n", entry->user, entry->pw, types, questions, answers, attempts, correct);
+        if(i != *numStudents - 1) fprintf(fp, "%s,%s,%s,%s,%s,%s\n", entry->user, entry->pw, types, qid, attempts, correct);
+        else fprintf(fp, "%s,%s,%s,%s,%s,%s", entry->user, entry->pw, types, qid, attempts, correct);
+        free(types);
+        free(qid);
+        free(attempts);
+        free(correct);
     }
     fclose(fp);
 }
 
-// TESTING FILE IO
+
+/* TESTING FILE IO
 int main(void) {
-    // HASHTABLE *hashtable = hashtable_new();
-    // getData(hashtable, &numStudents, studentNames, "./userdata.csv");
-    // TESTINFO *mitch = hashtable_get(hashtable, "mitch");
-    // printf("Username: %s\nPassword: %s\nQuestion 1: %s\nAnswer 1: %s\n", mitch->user, mitch->pw, mitch->questions[0], mitch->answers[0]);
-    // writeToCSV(hashtable, &numStudents, studentNames, "./userdata.csv");
-}   
+    int numStudents = 0;
+    char **studentNames = NULL;
+    HASHTABLE *hashtable = hashtable_new();
+    getData(hashtable, &numStudents, &studentNames, FILEPATH);
+    TESTINFO *mitch = hashtable_get(hashtable, "mitch");
+    printf("Username: %s\nPassword: %s\nQID: %i\n\n", mitch->user, mitch->pw, mitch->qid[0]);
+    for(int i = 0; i < numStudents; i++) printf("Name: %s\n", studentNames[i]);
+    writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
+} */
