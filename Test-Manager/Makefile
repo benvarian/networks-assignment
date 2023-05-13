@@ -34,3 +34,7 @@ Queue.o : ./Data-Structures/Queue/Queue.c ./Data-Structures/Queue/Queue.h
 
 clean:
 	rm -f $(TARGETS) *.o
+	
+clearn:
+	rm -f $(TARGETS) *.o && clear
+	
