@@ -17,14 +17,14 @@ HOST = "localhost"  # Standard loopback interface address (localhost)
 PORT =  8080 # Port to listen on (non-privileged ports are > 1023)
 
 # p for python
-QBTYPE = "P"
-
+QB_SUBJECT = "P"
+INIT_HEADER = "Q" + QB_SUBJECT
 # C = in C, P = python. if not in list, will respond with something like "wrong qb, type not found"
 QTYPES = ['C', 'P']
 MARK_HEADER = "M"
 QUESTION_HEADER = "Q"
 ERROR_HEADER = "Error"
-SIGN_OFF = "\r\n\r\n"
+SIGN_OFF = "\r\n\r\n\0"
 
 class Nick_Socket:
     """ 
@@ -53,10 +53,9 @@ class Nick_Socket:
                 print(e)
             print("Fail: Could not connect to TM, Trying again in 2 seconds.\n")
             time.sleep(2)
-
         # connected to TM.
         # sending header.
-        self.send_str("Q" + QBTYPE)
+        self.send_str(INIT_HEADER)
 
         # print("here.")
         # while(True):

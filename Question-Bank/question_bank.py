@@ -14,13 +14,9 @@ def mark(qid, ans):
     return 1
 
 def get_JSON_qs(q_type, q_num):
-    print("here....")
     qs = get_questions(key[q_type])
     
-    print("here....?")
     q_num_clamped = max(0, min(q_num, len(qs)-1))
-    
-    print("not here....")
     asdf = random.sample(qs, q_num_clamped)
     json_qs = json.dumps(asdf)
     return json_qs
