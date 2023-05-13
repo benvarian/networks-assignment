@@ -10,9 +10,10 @@ import socket
 import json
 import question_bank
 import time
+import sys
 
 HOST = "localhost"  # Standard loopback interface address (localhost)
-PORT = 1234  # Port to listen on (non-privileged ports are > 1023)
+PORT =  8080 # Port to listen on (non-privileged ports are > 1023)
 QBTYPE = "Python"
 QTYPES = ['c', 'p']
 class Nick_Socket:
@@ -45,8 +46,8 @@ class Nick_Socket:
 
         # connected to TM.
         # sending header.
-        self.send_str("QB" + QBTYPE)
-        
+        self.send_str("QB" + QBTYPE + "\0")
+
         # print("here.")
         # while(True):
         #     print(self.sock.recv(4096))
@@ -63,7 +64,7 @@ class Nick_Socket:
         byte_msg = msg.encode()
         sent = self.sock.send(byte_msg)
         if (sent != MSGLEN):
-            raise RuntimeError("couldnt send header.")
+            raise RuntimeError("Couldnt send string.")
         
     # sends string along sock.
     def send_questions(self, msg):
@@ -129,20 +130,21 @@ class Nick_Socket:
             self.send_mark(qid, 1)
         elif (mode_req == 'q'):
             q_type = chr(msg[1])
-            # if we choose str.
+            # read str
             q_num = int(msg[2:4].decode("utf-8"))
             # if we choose int.
             # q_num = int.from_bytes(msg[2:4], "little")
 
             print("qnum =", q_num)
             if (q_type not in QTYPES):
-                print("invalid request. second val in q req should be in QTYPES.")
+                print("Invalid Request. Second val of q req should be in QTYPES.")
+                return
             questions = question_bank.get_JSON_qs(q_type, q_num)
             self.send_questions(questions)
         else:
             # something went wrong.
             # TODO: maybe maintain a count and close socket after three issues in a row.
-            print("Request doesn't follow protocols, ignoring.")
+            print("Request doesn't follow protocol, ignoring.")
             # raise Exception("Protocol broken. closing socket")
 
     def check_connection(self):
@@ -184,23 +186,25 @@ class Nick_Socket:
                     msg = self.wait_for_tm()
                     self.handle_req(msg)
                 except Exception as e:
-                    # if something is wrong, will be caught when checking connection
                     print(e)
                     self.restart_socket()
-                    print("\nTrying to connect to TM...")
                     self.connect_to_TM()
                     # raise Exception("Something went wrong...")
             else:
                 # connection has ended, restart_socket()
                 print("Connection ended, Restarting...")
                 self.restart_socket()
-                print("\nTrying to connect to TM...")
                 self.connect_to_TM()
                 # self.wait_for_client_connect()
                 # print("Connected to Client! Restarting main loop...\n")
 
 
 # echo-server.py
+try:
+    PORT=int(sys.argv[1])
+except:
+    raise Exception("\nUsage:\n python3 socket_server.py {port}")
+print("PORT =", PORT)
 new_sock = Nick_Socket(HOST, PORT)
 # binds to HOST, PORT.
 while(True):
@@ -209,5 +213,3 @@ while(True):
     except Exception as e:
         print(e)
         new_sock.restart_socket()
-        
-
