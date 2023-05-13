@@ -11,11 +11,19 @@ import json
 import question_bank
 import time
 import sys
+import random
 
 HOST = "localhost"  # Standard loopback interface address (localhost)
 PORT =  8080 # Port to listen on (non-privileged ports are > 1023)
 QBTYPE = "Python"
-QTYPES = ['c', 'p']
+
+# C = in C, P = python. if not in list, will respond with something like "wrong qb, type not found"
+QTYPES = ['C', 'P']
+MARK_HEADER = "M"
+QUESTION_HEADER = "Q"
+ERROR_HEADER = "Error"
+SIGN_OFF = "\r\n\r\n"
+
 class Nick_Socket:
     """ 
     send and receive packets.
@@ -46,7 +54,7 @@ class Nick_Socket:
 
         # connected to TM.
         # sending header.
-        self.send_str("QB" + QBTYPE + "\0")
+        self.send_str("QB" + QBTYPE)
 
         # print("here.")
         # while(True):
@@ -59,34 +67,36 @@ class Nick_Socket:
         # self.send_str("QB" + QBTYPE)
         # self.send_str("QB" + QBTYPE)
 
+    # sends a str, with a double carriage return.
     def send_str(self, msg):
+        msg = msg + SIGN_OFF
         MSGLEN = len(msg)
         byte_msg = msg.encode()
         sent = self.sock.send(byte_msg)
         if (sent != MSGLEN):
             raise RuntimeError("Couldnt send string.")
         
-    # sends string along sock.
+    # sends string along sock
     def send_questions(self, msg):
-        # as per current protocol 3 byte header -- one for type (char), 2 for length (2 byte int)
+        msg = QUESTION_HEADER + msg + SIGN_OFF
         MSGLEN = len(msg)
-        # J for JSON
-        byte_msg = b''.join(["J".encode(), MSGLEN.to_bytes(2, "little"), msg.encode()])
+        byte_msg = msg.encode()
+
         print("\nsending questions:\nMSGLEN:",  MSGLEN, "\nmsg:", msg, "\n")
-        totalsent = 0
+
         sent = self.sock.send(byte_msg)
+        if sent == 0:
+            raise RuntimeError("Socket Connection Broken")
 
     def send_mark(self, Mark):
-        # as per current protocol 1 byte header -- one for type (char)
         # M for Mark
-        byte_msg = b''.join(["M".encode(), Mark.to_bytes(2, "little")])
-        print("\nsending marks:\nmsg:", Mark, "\n")
-        totalsent = 0
-        while totalsent < 3: # only three bytes to send ! double check though
-            sent = self.sock.send(byte_msg)
-            if sent == 0:
-                raise RuntimeError("Socket Connection Broken")
-            totalsent = totalsent + sent
+        msg = MARK_HEADER + str(Mark) + SIGN_OFF
+        byte_msg = msg.encode()
+
+        print("\nsending marks:\nmsg:", msg, "\n")
+        sent = self.sock.send(byte_msg)
+        if sent == 0:
+            raise RuntimeError("Socket Connection Broken")
             
 
     def wait_for_tm(self):
@@ -108,44 +118,44 @@ class Nick_Socket:
             except Exception as e:
                 raise e
             if (msg == b''):
-                raise Exception("broken pipline")
+                raise Exception("Broken Pipeline")
             elif(not msg):
                 print("No req yet...")
                 time.sleep(2)
             else:
                 break
-        print("Msg received!\nMsg:", msg, "\n")
+        print("\nMsg received:", msg, "\n")
         return msg
 
     def handle_req(self, msg):
         # chr converts bytes to unicode.
         mode_req = chr(msg[0])
 
-        if (mode_req == 'm'):
+        if (mode_req == MARK_HEADER):
             qid = chr(msg[1])
-            ans = chr(msg[2:]) # answer can be a string
-
+            ans = msg[2:].decode("utf-8") # answer can be a string
+            mark = random.randint(0,1)
+            print("Marking:\n\tqid =", qid, "\n\tans =", ans, "\n")
             # mark = question_bank.mark(qid, ans)
-            # NOT IMPLEMENTED YET
-            self.send_mark(qid, 1)
-        elif (mode_req == 'q'):
+            self.send_mark(qid, mark)
+        elif (mode_req == QUESTION_HEADER):
             q_type = chr(msg[1])
             # read str
             q_num = int(msg[2:4].decode("utf-8"))
-            # if we choose int.
+            # if we choose int instead of str.
             # q_num = int.from_bytes(msg[2:4], "little")
 
             print("qnum =", q_num)
             if (q_type not in QTYPES):
-                print("Invalid Request. Second val of q req should be in QTYPES.")
+                print("Invalid Request. Second val of q req should be in QTYPES")
+                self.send_str(ERROR_HEADER + ": Type not recognised.")
                 return
             questions = question_bank.get_JSON_qs(q_type, q_num)
             self.send_questions(questions)
         else:
-            # something went wrong.
-            # TODO: maybe maintain a count and close socket after three issues in a row.
+            # TODO: maintain a count and restart socket after three issues in a row or something of the like.
             print("Request doesn't follow protocol, ignoring.")
-            # raise Exception("Protocol broken. closing socket")
+            self.send_str(ERROR_HEADER + ": Type not recognised.")
 
     def check_connection(self):
         try:
@@ -163,7 +173,7 @@ class Nick_Socket:
             return True
         
     def restart_socket(self):
-        # ends socket, ready to be restarted
+        # restarts connection.
         try:
             self.sock.shutdown(socket.SHUT_RDWR)
         except Exception as e:
@@ -177,7 +187,7 @@ class Nick_Socket:
         self.sock = socket.socket()
     
     def main_loop(self):
-        # receive, send... receive, send...
+        # main loop, waiting for TM to send something.
         self.connect_to_TM()
         print("\nBeginning main loop...\n")
         while True:
@@ -189,21 +199,20 @@ class Nick_Socket:
                     print(e)
                     self.restart_socket()
                     self.connect_to_TM()
-                    # raise Exception("Something went wrong...")
             else:
                 # connection has ended, restart_socket()
                 print("Connection ended, Restarting...")
                 self.restart_socket()
                 self.connect_to_TM()
-                # self.wait_for_client_connect()
-                # print("Connected to Client! Restarting main loop...\n")
 
 
 # echo-server.py
 try:
     PORT=int(sys.argv[1])
 except:
-    raise Exception("\nUsage:\n python3 socket_server.py {port}")
+    print("\nUsage:\n python3 socket_server.py {port}")
+    exit()
+
 print("PORT =", PORT)
 new_sock = Nick_Socket(HOST, PORT)
 # binds to HOST, PORT.
