@@ -498,8 +498,6 @@ int main(int argc, char *argv[])
     // Read in the data of students from a csv
     int numStudents = 0;
     char **studentNames = NULL;
-    CHECK_ALLOC(studentNames);
-    printf("HERE\n");
     HASHTABLE *hashtable = hashtable_new();
     getData(hashtable, &numStudents, &studentNames, FILEPATH);
     for(int i = 0; i < numStudents; i++) {
@@ -511,6 +509,6 @@ int main(int argc, char *argv[])
 
     manage_connection(socket);
     // writes any changed data back to the csv when finished
-    writeToCSV(hashtable, numStudents, studentNames, FILEPATH);
+    writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
     return 0;
 }

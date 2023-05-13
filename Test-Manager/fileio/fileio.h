@@ -56,4 +56,4 @@ extern void getData(HASHTABLE *hashtable, int *numStudents, char ***studentNames
 
 // Writes data from the hashtable into the csv at filepath, using the list of students
 // as a reference for the values in the hashtable
-extern void writeToCSV(HASHTABLE *hashtable, int numStudents, char **studentNames, char *filepath);
+extern void writeToCSV(HASHTABLE *hashtable, int *numStudents, char **studentNames, char *filepath);

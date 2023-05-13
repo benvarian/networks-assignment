@@ -95,7 +95,7 @@ void getData(HASHTABLE *hashtable, int *numStudents, char ***studentNames, char 
         strcpy(user, entries);
         // Add student name to the list of names
         if(*numStudents == 0) {
-            *studentNames = malloc(sizeof(char *)); // allocate memory for first string
+            *studentNames = realloc(NULL, sizeof(char *)); // allocate memory for first string
             CHECK_ALLOC(*studentNames);
         }
         else {
@@ -173,11 +173,12 @@ void getData(HASHTABLE *hashtable, int *numStudents, char ***studentNames, char 
     free(buffer);
 }
 
-void writeToCSV(HASHTABLE *hashtable, int numStudents, char **studentNames, char *filepath) {
+void writeToCSV(HASHTABLE *hashtable, int *numStudents, char **studentNames, char *filepath) {
     FILE *fp = openFile(filepath, "w");
     TESTINFO *entry;
     fprintf(fp, "user,pw,qtype,qid,attemptsLeft,correct\n");
-    for (int i = 0; i < numStudents; i++) {
+    for (int i = 0; i < *numStudents; i++) {
+        printf("%s\n", studentNames[i]);
         entry = hashtable_get(hashtable, studentNames[i]);
         char *types;
         char *qid;
@@ -208,7 +209,7 @@ void writeToCSV(HASHTABLE *hashtable, int numStudents, char **studentNames, char
                 sprintf(correct + strlen(correct), "%s", (entry->correct[j] == true) ? "T" : "F");
             }
         }
-        if(i != numStudents - 1) fprintf(fp, "%s,%s,%s,%s,%s,%s\n", entry->user, entry->pw, types, qid, attempts, correct);
+        if(i != *numStudents - 1) fprintf(fp, "%s,%s,%s,%s,%s,%s\n", entry->user, entry->pw, types, qid, attempts, correct);
         else fprintf(fp, "%s,%s,%s,%s,%s,%s", entry->user, entry->pw, types, qid, attempts, correct);
         free(types);
         free(qid);
@@ -228,5 +229,5 @@ int main(void) {
     TESTINFO *mitch = hashtable_get(hashtable, "mitch");
     printf("Username: %s\nPassword: %s\nQID: %i\n\n", mitch->user, mitch->pw, mitch->qid[0]);
     for(int i = 0; i < numStudents; i++) printf("Name: %s\n", studentNames[i]);
-    writeToCSV(hashtable, numStudents, studentNames, FILEPATH);
-}  */
+    writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
+} */
