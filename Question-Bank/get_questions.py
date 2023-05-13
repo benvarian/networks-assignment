@@ -3,7 +3,7 @@ import os
 # Opens csv file and handles errors
 # Returns a dictionary of questions, or None if file not found
 # The key is the question ID
-# The value is a size-2 array: [question, answer]
+# The value is a size-2 array: [q_type, q, ans]
 # NOTE: If a QID is a duplicate or corrupt
 # (e.g. A string instead of an int) the line is skipped
 def get_questions(filePath):

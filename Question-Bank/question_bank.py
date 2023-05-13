@@ -4,13 +4,13 @@ import json
 import sys
 
 key = {
-    'p': "./QuestionCSV/QuestionsP.csv",
-    'c': "./QuestionCSV/QuestionsC.csv"
+    'P': "./QuestionCSV/QuestionsP.csv",
+    'C': "./QuestionCSV/QuestionsC.csv"
 }
 
 class QB_question_database:
     """ 
-        Remembers Questions, implements functions to mark and
+        Stores Questions, implements functions to mark and
         return questions for the QB to use.
     """
 
@@ -48,3 +48,11 @@ class QB_question_database:
 # OTHER MITCH WORK
 def execute_script(type, script):
     return 0
+
+def test():
+    qb = QB_question_database("C")
+    print(qb.questions)
+
+    print(qb.get_q_by_id)
+
+test()
