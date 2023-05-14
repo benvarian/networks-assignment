@@ -248,35 +248,63 @@ void send_403(SOCKET socket)
     const char *c403 = "HTTP/1.1 403 Forbidden\r\n\r\n";
     send(socket, c403, strlen(c403), 0);
 }
-void send_302(SOCKET socket, const char *username)
+void send_302(SOCKET socket, const char *path, const char *username)
 {
-    char c302[52 + strlen(username)];
-    sprintf(c302, "HTTP/1.1 302 Found\r\nLocation: /profile/%s\r\nSet-Cookie: user=%s\r\n\r\n", username, username);
+    char c302[52 + (strlen(path) + 1) + (strlen(username) + 1)];
+    sprintf(c302, "HTTP/1.1 302 Found\r\nLocation: %s\r\nSet-Cookie: %s\r\n\r\n", path, username);
     send(socket, c302, strlen(c302), 0);
 }
 
 void handle_get(SOCKET socket, HTTPRequest request)
 {
     char *path = request.request_line.search(&request.request_line, "uri", strlen("uri"));
-
-    if (strcmp(path, "/") == 0)
+    if (strstr(path, ".."))
     {
-        path = "/index.html";
+        send_400(socket);
+        return;
     }
     if (strlen(path) > 100)
     {
         send_400(socket);
         return;
     }
-    if (strstr(path, ".."))
+
+    if (strcmp(path, "/") == 0)
     {
-        send_400(socket);
-        return;
+        path = "/index.html";
+    }
+    else
+    {
+        char *cookie = request.header_fields.search(&request.header_fields, "Cookie", strlen("Cookie"));
+        if ((cookie && strstr(path, "/login") != NULL))
+        {
+            // makes login a protected path
+            send_302(socket, "/", cookie);
+        }
+        else
+        {
+            if (strcmp(path, "/logout") == 0)
+            {
+                strcat(cookie, "; expires=Thu, 01 Jan 1970 00:00:00 GMT");
+                send_302(socket, "/", cookie);
+                return;
+            }
+            // need this as we arent gonna dynam render pages for each user as dont have enuf time
+            if (strstr(path, "/profile/") != NULL)
+            {
+                strtok(path, "/");
+                strcat(path, "/index.html");
+            }
+            else
+            {
+                strcat(path, ".html");
+            }
+        }
     }
     char full_path[128];
     // ! change this part here to make it work wihtout static files, but we might be able to use static files
     sprintf(full_path, "public%s", path);
-
+    printf("full path: %s\n", full_path);
     FILE *fp = fopen(full_path, "rb");
 
     if (!fp)
@@ -325,14 +353,22 @@ void handle_post(HTTPRequest response, SOCKET socket)
     {
         char *username = (char *)response.body.search(&response.body, "username", strlen("username") * sizeof(char) + 1);
         char *password = (char *)response.body.search(&response.body, "password", strlen("password") * sizeof(char) + 1);
-        printf("%s is attempting to sign in with the password %s\n", username, password);
+        printf("\n%s is attempting to sign in with the password %s\n", username, password);
         TESTINFO *student = hashtable_get(hashtable, username);
         printf("Checking %s against %s and %s against %s\n", username, student->user, password, student->pw);
         if (strcmp(username, student->user) == 0 && strcmp(password, student->pw) == 0)
         {
-            // send_201(socket);
+            // ! assume that the username isnt longer than 18 characters
+            // todo maybe change path to pointer and get it to work with sprintf or strcat
             printf("Sign in success\n");
-            send_302(socket, username);
+            char *path = calloc(1, strlen(student->user) * sizeof(char) + sizeof("/profile/%s") + 1);
+            char *cookie = calloc(1, strlen(student->user) * sizeof(char) + sizeof("user=%s") + 1);
+            CHECK_ALLOC(path);
+            CHECK_ALLOC(cookie);
+            sprintf(path, "/profile/%s", username);
+            sprintf(cookie, "user=%s", username);
+            send_302(socket, path, cookie);
+            free(path);
         }
         else
         {
@@ -380,7 +416,12 @@ void parse_request(char *response_string, SOCKET socket)
     {
         handle_post(response, socket);
     }
-    else printf("Method unknown\n");
+    else
+    {
+        // todo change to a  http response function to indicate we aint got a clue what they are doing
+        // ! lmao github copilot
+        printf("Method unknown\n");
+    }
 }
 
 void received(int new_fd, int numbytes, char *buf)
@@ -394,6 +435,7 @@ void received(int new_fd, int numbytes, char *buf)
     }
     else
     {
+        printf("%s", buf);
         char original[strlen(buf)];
         strcpy(original, buf);
         client_received += numbytes;
@@ -557,15 +599,15 @@ int main(int argc, char *argv[])
     char **studentNames = NULL;
     hashtable = hashtable_new();
     getData(hashtable, &numStudents, &studentNames, FILEPATH);
-   
+
     // Server stuff idk
     SOCKET socket = bind_socket(get_info(argv[1]));
 
     manage_connection(socket);
-    // ! dosnt work on bens machine 
+    // ! dosnt work on bens machine
     // writes any changed data back to the csv when finished
     // writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
-     // for(int i = 0; i < numStudents; i++) {
+    // for(int i = 0; i < numStudents; i++) {
     //     TESTINFO *student = hashtable_get(hashtable, studentNames[i]);
     //     printf("Student data for %s loaded in\n", student->user);
     // }
