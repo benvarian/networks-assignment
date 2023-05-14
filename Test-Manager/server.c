@@ -251,7 +251,7 @@ void send_403(SOCKET socket)
 void send_302(SOCKET socket, const char *path, const char *username)
 {
     char c302[52 + (strlen(path) + 1) + (strlen(username) + 1)];
-    sprintf(c302, "HTTP/1.1 302 Found\r\nLocation: %s\r\nSet-Cookie: user=%s\r\n\r\n", path, username);
+    sprintf(c302, "HTTP/1.1 302 Found\r\nLocation: %s\r\nSet-Cookie: %s\r\n\r\n", path, username);
     send(socket, c302, strlen(c302), 0);
 }
 
@@ -275,23 +275,32 @@ void handle_get(SOCKET socket, HTTPRequest request)
     }
     else
     {
-        if (strcmp(path, "/logout") == 0)
+        char *cookie = request.header_fields.search(&request.header_fields, "Cookie", strlen("Cookie"));
+        if ((cookie && strstr(path, "/login") != NULL))
         {
-            send_302(socket, "/", "null");
-            return;
-        }
-        // need this as we arent gonna dynam render pages for each user as dont have enuf time
-        if (strstr(path, "/profile/") != NULL)
-        {
-            strtok(path, "/");
-            strcat(path, "/index.html");
+            // makes login a protected path
+            send_302(socket, "/", cookie);
         }
         else
         {
-            strcat(path, ".html");
+            if (strcmp(path, "/logout") == 0)
+            {
+                strcat(cookie, "; expires=Thu, 01 Jan 1970 00:00:00 GMT");
+                send_302(socket, "/", cookie);
+                return;
+            }
+            // need this as we arent gonna dynam render pages for each user as dont have enuf time
+            if (strstr(path, "/profile/") != NULL)
+            {
+                strtok(path, "/");
+                strcat(path, "/index.html");
+            }
+            else
+            {
+                strcat(path, ".html");
+            }
         }
     }
-
     char full_path[128];
     // ! change this part here to make it work wihtout static files, but we might be able to use static files
     sprintf(full_path, "public%s", path);
@@ -353,9 +362,12 @@ void handle_post(HTTPRequest response, SOCKET socket)
             // todo maybe change path to pointer and get it to work with sprintf or strcat
             printf("Sign in success\n");
             char *path = calloc(1, strlen(student->user) * sizeof(char) + sizeof("/profile/%s") + 1);
+            char *cookie = calloc(1, strlen(student->user) * sizeof(char) + sizeof("user=%s") + 1);
             CHECK_ALLOC(path);
+            CHECK_ALLOC(cookie);
             sprintf(path, "/profile/%s", username);
-            send_302(socket, path, username);
+            sprintf(cookie, "user=%s", username);
+            send_302(socket, path, cookie);
             free(path);
         }
         else
