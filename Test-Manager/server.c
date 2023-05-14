@@ -248,10 +248,10 @@ void send_403(SOCKET socket)
     const char *c403 = "HTTP/1.1 403 Forbidden\r\n\r\n";
     send(socket, c403, strlen(c403), 0);
 }
-void send_302(SOCKET socket, const char *username)
+void send_302(SOCKET socket, const char *path, const char *username)
 {
-    char c302[52 + strlen(username)];
-    sprintf(c302, "HTTP/1.1 302 Found\r\nLocation: /profile/%s\r\nSet-Cookie: user=%s\r\n\r\n", username, username);
+    char c302[52 + (strlen(path) + 1) + (strlen(username) + 1)];
+    sprintf(c302, "HTTP/1.1 302 Found\r\nLocation: %s\r\nSet-Cookie: user=%s\r\n\r\n", path, username);
     send(socket, c302, strlen(c302), 0);
 }
 
@@ -275,7 +275,21 @@ void handle_get(SOCKET socket, HTTPRequest request)
     }
     else
     {
-        strcat(path, ".html");
+        if (strcmp(path, "/logout") == 0)
+        {
+            send_302(socket, "/", "null");
+            return;
+        }
+        if (strstr(path, "/profile/") != NULL)
+        {
+            strtok(path, "/");
+            strcat(path, "/index.html");
+            printf("%s\n", path);
+        }
+        else
+        {
+            strcat(path, ".html");
+        }
     }
 
     char full_path[128];
@@ -330,14 +344,17 @@ void handle_post(HTTPRequest response, SOCKET socket)
     {
         char *username = (char *)response.body.search(&response.body, "username", strlen("username") * sizeof(char) + 1);
         char *password = (char *)response.body.search(&response.body, "password", strlen("password") * sizeof(char) + 1);
-        printf("%s is attempting to sign in with the password %s\n", username, password);
+        printf("\n%s is attempting to sign in with the password %s\n", username, password);
         TESTINFO *student = hashtable_get(hashtable, username);
         printf("Checking %s against %s and %s against %s\n", username, student->user, password, student->pw);
         if (strcmp(username, student->user) == 0 && strcmp(password, student->pw) == 0)
         {
-            // send_201(socket);
+            // ! assume that the username isnt longer than 18 characters
+            // todo maybe change path to pointer and get it to work with sprintf or strcat
             printf("Sign in success\n");
-            send_302(socket, username);
+            char path[30];
+            sprintf(path, "/profile/%s", username);
+            send_302(socket, path, username);
         }
         else
         {
@@ -386,7 +403,11 @@ void parse_request(char *response_string, SOCKET socket)
         handle_post(response, socket);
     }
     else
+    {
+        // todo change to a  http response function to indicate we aint got a clue what they are doing
+        // ! lmao github copilot
         printf("Method unknown\n");
+    }
 }
 
 void received(int new_fd, int numbytes, char *buf)
@@ -400,6 +421,7 @@ void received(int new_fd, int numbytes, char *buf)
     }
     else
     {
+        printf("%s", buf);
         char original[strlen(buf)];
         strcpy(original, buf);
         client_received += numbytes;
