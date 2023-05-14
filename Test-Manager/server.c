@@ -352,9 +352,11 @@ void handle_post(HTTPRequest response, SOCKET socket)
             // ! assume that the username isnt longer than 18 characters
             // todo maybe change path to pointer and get it to work with sprintf or strcat
             printf("Sign in success\n");
-            char path[30];
+            char *path = calloc(1, strlen(student->user) * sizeof(char) + sizeof("/profile/%s") + 1);
+            CHECK_ALLOC(path);
             sprintf(path, "/profile/%s", username);
             send_302(socket, path, username);
+            free(path);
         }
         else
         {
