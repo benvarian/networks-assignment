@@ -14,7 +14,7 @@ import sys
 import random
 
 HOST = "localhost"  # Standard loopback interface address (localhost)
-PORT =  8080 # Port to listen on (non-privileged ports are > 1023)
+PORT = 8080  # Port to listen on (non-privileged ports are > 1023)
 
 # p for python
 QB_SUBJECT = "PYTHON"
@@ -28,14 +28,15 @@ ERROR_HEADER = "ERROR\r\n"
 END_HEADER = "\r\n"
 SIGNOFF = "\0"
 
+
 class Nick_Socket:
-    """ 
+    """
     send and receive packets.
-    running loop, will listen for requests from TM 
+    running loop, will listen for requests from TM
     """
 
     def __init__(self, HOST, PORT):
-        # inits. 
+        # inits.
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     # binds sock to a port
@@ -45,7 +46,7 @@ class Nick_Socket:
     # waits for TM to connect
     def connect_to_TM(self):
         # self.sock.listen()
-        while(True):
+        while (True):
             try:
                 print("Trying to connect to TM...")
                 self.sock.connect((HOST, PORT))  # connect to the server
@@ -109,7 +110,6 @@ class Nick_Socket:
         sent = self.sock.send(byte_msg)
         if sent == 0:
             raise RuntimeError("Socket Connection Broken")
-            
 
     def wait_for_tm(self):
         # wait for req -- either mark ('m') or get qs ('q').
@@ -123,7 +123,7 @@ class Nick_Socket:
         # msg = self.format(new_sock_receive())
         msg = False
         # loops until a msg is received
-        while(not msg):
+        while (not msg):
             try:
                 print("waiting to receive a message...\n")
                 msg = self.sock.recv(4096)
@@ -133,7 +133,7 @@ class Nick_Socket:
                 # prevents infinite loop of broken pipelines.
                 # temporary.
                 raise Exception("Broken Pipeline")
-            elif(not msg):
+            elif (not msg):
                 print("No req yet...")
                 time.sleep(2)
             else:
@@ -147,8 +147,8 @@ class Nick_Socket:
 
         if (mode_req == MARK_HEADER):
             qid = chr(msg[1])
-            ans = msg[2:].decode("utf-8") # answer can be a string
-            mark = random.randint(0,1)
+            ans = msg[2:].decode("utf-8")  # answer can be a string
+            mark = random.randint(0, 1)
             print("Marking:\n\tqid =", qid, "\n\tans =", ans, "\n")
             # mark = question_bank.mark(qid, ans)
             self.send_mark(qid, mark)
@@ -185,14 +185,14 @@ class Nick_Socket:
             print(e)
             print("\n\n")
             return True
-        
+
     def restart_socket(self):
         # restarts connection.
         try:
             self.sock.shutdown(socket.SHUT_RDWR)
         except Exception as e:
             print(e)
-            
+
         try:
             self.sock.close()
         except Exception as e:
@@ -201,7 +201,7 @@ class Nick_Socket:
         time.sleep(1)
 
         self.sock = socket.socket()
-    
+
     def main_loop(self):
         # main loop, waiting for TM to send something.
         self.connect_to_TM()
@@ -213,6 +213,7 @@ class Nick_Socket:
                     self.handle_req(msg)
                 except Exception as e:
                     print(e)
+                    print("here theres an error")
                     self.restart_socket()
                     self.connect_to_TM()
             else:
