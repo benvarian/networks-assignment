@@ -1,13 +1,18 @@
 import os
-from ctypes import cdll
+from ctypes import cdll, c_char_p
 from distutils.ccompiler import new_compiler
-import subprocess
+from distutils import errors
 
-def execute_script(lang, script):
+# Executes a function passed to it, with a specified language (P for Python C for C)
+# If it runs into an error, it returns the exit code it ran into when running the program
+def execute_function(lang, script):
     if(lang == "P"):
-        exec(script)
-        result = locals().get('function')
-        return result()
+        try:
+            exec(script)
+            result = locals().get('function')
+            if(result == None): return ("Error: Function not named correctly")
+            return result()
+        except Exception as e: return (f"Error: {e}")
     elif (lang == "C"):
         main =  """\n\nint main() {\nchar *result = function();\nprintf("%s", result);\nreturn 0;}"""
         try:
@@ -18,17 +23,22 @@ def execute_script(lang, script):
             compiler.compile(['temp.c'])
             compiler.link_shared_object(['temp.o'], 'temp.so')
             main = cdll.LoadLibrary("./temp.so")
-            subprocess.run(['ls', '-al']) # Just printing out the directory to see if objects are created
-            print(main.function())
+            main.function.restype = c_char_p
             result = main.function()
-            return result
-        finally:
             os.remove('temp.c')
             os.remove('temp.so')
-            print("done")
+            return result.decode('utf-8')
+        except Exception as e: 
+            try:
+                os.remove('temp.c')
+                os.remove('temp.so')
+            except FileNotFoundError: pass
+            return (f"Error: {e}")
     else: return("Error: Invalid Programming Language")
 
-result = execute_script("P", """def function():\n\treturn ("Hello World")""")
+result = execute_function("P", """def functirfefon():\n\treturn ("Hello World")""")
 print(result)
-result = execute_script("C", """#include<stdio.h>\nchar *function() {return("Hello World");}""")
+result = execute_function("C", """#include<stdio.h>\nchar *function() {return("Hello World");}""")
+print(result)
+result = execute_function("P", """hey""")
 print(result)

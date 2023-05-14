@@ -2,6 +2,9 @@ from get_questions import *
 import random
 import json
 import sys
+import os
+from ctypes import cdll, c_char_p
+from distutils.ccompiler import new_compiler
 
 key = {
     'P': "./QuestionCSV/QuestionsP.csv",
@@ -48,7 +51,9 @@ class QB_question_database:
         # programming
         if (q_obj[0] == 'P'):
             # MITCH WORK
-            return execute_script(q_obj[0], q_obj[1])
+            if qid % 2 == 1: language = "P"
+            else: language = "C"
+            return execute_function(language, ans)
         elif(q_obj[0] == 'M'):
             return 1 if q_obj[2] == ans else 0
         # raise error...?
@@ -57,8 +62,38 @@ class QB_question_database:
     # TODO: send answer
 
 # OTHER MITCH WORK
-def execute_script(type, script):
-    return 0
+# Executes a function passed to it, with a specified language (P for Python C for C)
+# If it runs into an error, it returns the exit code it ran into when running the program
+def execute_function(lang, script):
+    if(lang == "P"):
+        try:
+            exec(script)
+            result = locals().get('function')
+            if(result == None): return ("Error: Function not named correctly")
+            return result()
+        except Exception as e: return (f"Error: {e}")
+    elif (lang == "C"):
+        main =  """\n\nint main() {\nchar *result = function();\nprintf("%s", result);\nreturn 0;}"""
+        try:
+            compiler = new_compiler()
+            with open('temp.c', 'w+') as file:
+                file.write(script)
+                file.write(main)
+            compiler.compile(['temp.c'])
+            compiler.link_shared_object(['temp.o'], 'temp.so')
+            main = cdll.LoadLibrary("./temp.so")
+            main.function.restype = c_char_p
+            result = main.function()
+            os.remove('temp.c')
+            os.remove('temp.so')
+            return result.decode('utf-8')
+        except Exception as e: 
+            try:
+                os.remove('temp.c')
+                os.remove('temp.so')
+            except FileNotFoundError: pass
+            return (f"Error: {e}")
+    else: return("Error: Invalid Programming Language")
 
 def test():
     qb = QB_question_database("C")
