@@ -143,32 +143,28 @@ class Nick_Socket:
 
     def handle_req(self, msg):
         # chr converts bytes to unicode.
-        mode_req = chr(msg[0])
+        msg = msg.decode("utf-8").split("\r\n")
+        mode_req = msg[0] + "\r\n"
 
         if (mode_req == MARK_HEADER):
-            qid = chr(msg[1])
-            ans = msg[2:].decode("utf-8")  # answer can be a string
+            qid, ans = msg[1].split(":")
             mark = random.randint(0, 1)
             print("Marking:\n\tqid =", qid, "\n\tans =", ans, "\n")
             # mark = question_bank.mark(qid, ans)
             self.send_mark(qid, mark)
         elif (mode_req == QUESTION_HEADER):
-            q_type = chr(msg[1])
-            # read str
-            q_num = int(msg[2:4].decode("utf-8"))
-            # if we choose int instead of str.
-            # q_num = int.from_bytes(msg[2:4], "little")
+            q_type, q_num = msg[1].split(":")
 
-            print("qnum =", q_num)
+            print("qnum =", int(q_num))
             if (q_type not in QTYPES):
                 print("Invalid Request. Second val of q req should be in QTYPES")
                 self.send_error("q_typeError")
                 return
-            questions = question_bank.get_JSON_qs(q_type, q_num)
+            questions = question_bank.get_JSON_qs(q_type, int(q_num))
             self.send_questions(questions)
         else:
             # TODO: maintain a count and restart socket after three issues in a row or something of the like.
-            print("Request doesn't follow protocol, ignoring.")
+            print("Request doesn't follow protocol, sending Error.")
             self.send_error("q_modeError")
 
     def check_connection(self):
