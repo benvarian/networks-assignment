@@ -55,12 +55,14 @@ void send_400(SOCKET socket);
 
 void send_404(SOCKET socket);
 
-void connection_get(SOCKET socket, const char *path, const char *IPv6_Address);
+void handle_get(SOCKET socket, HTTPRequest request);
 
 //todo change back to HTTPRequest
-void connection_post(int socket, char *response_string);
+void handle_post(HTTPRequest response, SOCKET socket);
 
-void received(int new_fd, int numbytes, char *buf, const char *IPv6_Address);
+void parse_request(char *response_string, SOCKET socket);
+
+void received(int new_fd, int numbytes, char *buf);
 
 void manage_connection(SOCKET sockfd);
 
@@ -76,4 +78,5 @@ void extract_header_fields(HTTPRequest *request, char *header_fields);
 
 void extract_body(HTTPRequest *request, char *body);
 
-// void print_request(HTTPRequest request);
+void handle_post(HTTPRequest response, SOCKET socket);
+
