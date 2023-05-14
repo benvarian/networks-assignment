@@ -258,25 +258,30 @@ void send_302(SOCKET socket, const char *username)
 void handle_get(SOCKET socket, HTTPRequest request)
 {
     char *path = request.request_line.search(&request.request_line, "uri", strlen("uri"));
-
-    if (strcmp(path, "/") == 0)
+    if (strstr(path, ".."))
     {
-        path = "/index.html";
+        send_400(socket);
+        return;
     }
     if (strlen(path) > 100)
     {
         send_400(socket);
         return;
     }
-    if (strstr(path, ".."))
+
+    if (strcmp(path, "/") == 0)
     {
-        send_400(socket);
-        return;
+        path = "/index.html";
     }
+    else
+    {
+        strcat(path, ".html");
+    }
+
     char full_path[128];
     // ! change this part here to make it work wihtout static files, but we might be able to use static files
     sprintf(full_path, "public%s", path);
-
+    printf("full path: %s\n", full_path);
     FILE *fp = fopen(full_path, "rb");
 
     if (!fp)
@@ -380,7 +385,8 @@ void parse_request(char *response_string, SOCKET socket)
     {
         handle_post(response, socket);
     }
-    else printf("Method unknown\n");
+    else
+        printf("Method unknown\n");
 }
 
 void received(int new_fd, int numbytes, char *buf)
@@ -557,15 +563,15 @@ int main(int argc, char *argv[])
     char **studentNames = NULL;
     hashtable = hashtable_new();
     getData(hashtable, &numStudents, &studentNames, FILEPATH);
-   
+
     // Server stuff idk
     SOCKET socket = bind_socket(get_info(argv[1]));
 
     manage_connection(socket);
-    // ! dosnt work on bens machine 
+    // ! dosnt work on bens machine
     // writes any changed data back to the csv when finished
     // writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
-     // for(int i = 0; i < numStudents; i++) {
+    // for(int i = 0; i < numStudents; i++) {
     //     TESTINFO *student = hashtable_get(hashtable, studentNames[i]);
     //     printf("Student data for %s loaded in\n", student->user);
     // }
