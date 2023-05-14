@@ -435,7 +435,6 @@ void received(int new_fd, int numbytes, char *buf)
     }
     else
     {
-        printf("%s", buf);
         char original[strlen(buf)];
         strcpy(original, buf);
         client_received += numbytes;
@@ -462,6 +461,10 @@ void received(int new_fd, int numbytes, char *buf)
             else if (strncmp(buf, "POST", 4) == 0)
             {
                 parse_request(original, new_fd);
+            }
+            else if (strncmp(buf, "QP", 2) == 0)
+            {
+                send(new_fd, "hello qb\0", 9, 0);
             }
             else
             {
