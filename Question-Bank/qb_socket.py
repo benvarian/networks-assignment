@@ -17,14 +17,16 @@ HOST = "localhost"  # Standard loopback interface address (localhost)
 PORT =  8080 # Port to listen on (non-privileged ports are > 1023)
 
 # p for python
-QB_SUBJECT = "P"
-INIT_HEADER = "Q" + QB_SUBJECT
+QB_SUBJECT = "PYTHON"
+QB_HEADER = "QB " + QB_SUBJECT + "\r\n"
 # C = in C, P = python. if not in list, will respond with something like "wrong qb, type not found"
 QTYPES = ['C', 'P']
-MARK_HEADER = "M"
-QUESTION_HEADER = "Q"
-ERROR_HEADER = "Error"
-SIGN_OFF = "\r\n\r\n\0"
+MARK_HEADER = "MARK\r\n"
+QUESTION_HEADER = "QUESTIONS\r\n"
+ERROR_HEADER = "ERROR\r\n"
+
+END_HEADER = "\r\n"
+SIGNOFF = "\0"
 
 class Nick_Socket:
     """ 
@@ -55,7 +57,7 @@ class Nick_Socket:
             time.sleep(2)
         # connected to TM.
         # sending header.
-        self.send_str(INIT_HEADER)
+        self.send_init()
 
         # print("here.")
         # while(True):
@@ -69,17 +71,26 @@ class Nick_Socket:
         # self.send_str("QB" + QBTYPE)
 
     # sends a str, with a double carriage return.
-    def send_str(self, msg):
-        msg = msg + SIGN_OFF
+    def send_init(self):
+        msg = QB_HEADER + END_HEADER + SIGNOFF
         MSGLEN = len(msg)
         byte_msg = msg.encode()
         sent = self.sock.send(byte_msg)
         if (sent != MSGLEN):
             raise RuntimeError("Couldnt send string.")
+
+    def send_error(self, err):
+        msg = QB_HEADER + ERROR_HEADER + "Error:" + err + SIGNOFF
+        MSGLEN = len(msg)
+        byte_msg = msg.encode()
+        sent = self.sock.send(byte_msg)
+        if (sent != MSGLEN):
+            raise RuntimeError("Couldnt send string.")
+
         
     # sends string along sock
     def send_questions(self, msg):
-        msg = QUESTION_HEADER + msg + SIGN_OFF
+        msg = QB_HEADER + QUESTION_HEADER + END_HEADER + msg + SIGNOFF
         MSGLEN = len(msg)
         byte_msg = msg.encode()
 
@@ -89,9 +100,9 @@ class Nick_Socket:
         if sent == 0:
             raise RuntimeError("Socket Connection Broken")
 
-    def send_mark(self, Mark):
-        # M for Mark
-        msg = MARK_HEADER + str(Mark) + SIGN_OFF
+    def send_mark(self, mark):
+        # M for mark
+        msg = QB_HEADER + QUESTION_HEADER + END_HEADER + "MARK:" + str(mark) + SIGNOFF
         byte_msg = msg.encode()
 
         print("\nsending marks:\nmsg:", msg, "\n")
@@ -151,14 +162,14 @@ class Nick_Socket:
             print("qnum =", q_num)
             if (q_type not in QTYPES):
                 print("Invalid Request. Second val of q req should be in QTYPES")
-                self.send_str(ERROR_HEADER + ": Type not recognised.")
+                self.send_error("q_typeError")
                 return
             questions = question_bank.get_JSON_qs(q_type, q_num)
             self.send_questions(questions)
         else:
             # TODO: maintain a count and restart socket after three issues in a row or something of the like.
             print("Request doesn't follow protocol, ignoring.")
-            self.send_str(ERROR_HEADER + ": Type not recognised.")
+            self.send_error("q_modeError")
 
     def check_connection(self):
         try:
