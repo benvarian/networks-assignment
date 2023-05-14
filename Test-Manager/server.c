@@ -7,6 +7,8 @@
 #include "fileio/fileio.h"
 #include "Data-Structures/Queue/Queue.h"
 
+HASHTABLE *hashtable;
+
 // Parses out the request line to retrieve the method, uri, and http version.
 void extract_request_line_fields(struct HTTPRequest *request, char *request_line)
 {
@@ -17,9 +19,8 @@ void extract_request_line_fields(struct HTTPRequest *request, char *request_line
     char *method = strtok(fields, " ");
     char *uri = strtok(NULL, " ");
     char *http_version = strtok(NULL, "\0");
-    // Insert the results into the request object as a dictionary // MITCH CHANGE SIZEOF TO STRLEN
+    // Insert the results into the request object as a dictionary
     struct Dictionary request_line_dict = dictionary_constructor((compare_string_keys));
-    //printf("Adding %s as method, of str len :%li\n", method, strlen(method));
     request_line_dict.insert(&request_line_dict, "method", sizeof("method") + 1, method, strlen(method) * sizeof(char) + 1);
     request_line_dict.insert(&request_line_dict, "uri", sizeof("uri") + 1, uri, strlen(uri) * sizeof(char) + 1);
     request_line_dict.insert(&request_line_dict, "http_version", sizeof("http_version") + 1, http_version, strlen(http_version) * sizeof(char) + 1);
@@ -35,14 +36,14 @@ void extract_request_line_fields(struct HTTPRequest *request, char *request_line
 void extract_header_fields(struct HTTPRequest *request, char *header_fields)
 {
     // Copy the string literal into a local instance.
-    char fields[strlen(header_fields)];
+    char fields[strlen(header_fields) + 1];
     strcpy(fields, header_fields);
     // Save each line of the input into a queue.
     struct Queue headers = queue_constructor();
     char *field = strtok(fields, "\n");
     while (field)
     {
-        headers.push(&headers, field, strlen(field) + 1);
+        headers.push(&headers, field, strlen(field) * sizeof(char) + 1);
         field = strtok(NULL, "\r\n");
     }
     // Initialize the request's header_fields dictionary.
@@ -62,7 +63,7 @@ void extract_header_fields(struct HTTPRequest *request, char *header_fields)
             }
             // printf(":%s\n", value);
             // Push the key value pairs into the request's header_fields dictionary.
-            request->header_fields.insert(&request->header_fields, key, strlen(key) + 1, value, strlen(value) + 1);
+            request->header_fields.insert(&request->header_fields, key, strlen(key) * sizeof(char) + 1, value, strlen(value) * sizeof(char) + 1);
             // Collect the next field from the queue.
         }
         headers.pop(&headers);
@@ -88,7 +89,7 @@ void extract_body(struct HTTPRequest *request, char *body)
             char *field = strtok(body, "&");
             while (field)
             {
-                fields.push(&fields, field, sizeof(char[strlen(field)]));
+                fields.push(&fields, field, strlen(field) * sizeof(char) + 1);
                 // loop over to the next field that is parsed otherwise itll cause a hang as its the same string
                 field = strtok(NULL, "&");
             }
@@ -104,7 +105,7 @@ void extract_body(struct HTTPRequest *request, char *body)
                     value++;
                 }
                 // Insert the key value pair into the dictionary.
-                body_fields.insert(&body_fields, key, sizeof(char[strlen(key)]), value, sizeof(char[strlen(value)]));
+                body_fields.insert(&body_fields, key, strlen(key) * sizeof(char) + 1, value, strlen(value) * sizeof(char) + 1);
                 // Collect the next item in the queue.
                 fields.pop(&fields);
                 field = fields.peek(&fields);
@@ -115,7 +116,7 @@ void extract_body(struct HTTPRequest *request, char *body)
         else
         {
             // Save the data as a single key value pair.
-            body_fields.insert(&body_fields, "data", sizeof("data"), body, sizeof(char[strlen(body)]));
+            body_fields.insert(&body_fields, "data", sizeof("data"), body, strlen(body) * sizeof(char) + 1);
         }
         // Set the request's body dictionary.
         request->body = body_fields;
@@ -319,15 +320,15 @@ void handle_get(SOCKET socket, HTTPRequest request)
 
 void handle_post(HTTPRequest response, SOCKET socket)
 {
-    char *match_user = "ben";
-    char *match_pass = "ben";
     char *url = (char *)response.request_line.search(&response.request_line, "uri", strlen("uri"));
     if (strcmp(url, "/login") == 0)
     {
-        char *username = (char *)response.body.search(&response.body, "username", strlen("username"));
-        char *password = (char *)response.body.search(&response.body, "password", strlen("password"));
-        //printf("%s is attempting to sign in with the password %s\n", username, password);
-        if (strcmp(username, match_user) == 0 && strcmp(password, match_pass) == 0)
+        char *username = (char *)response.body.search(&response.body, "username", strlen("username") * sizeof(char) + 1);
+        char *password = (char *)response.body.search(&response.body, "password", strlen("password") * sizeof(char) + 1);
+        printf("%s is attempting to sign in with the password %s\n", username, password);
+        TESTINFO *student = hashtable_get(hashtable, username);
+        printf("Checking %s against %s and %s against %s\n", username, student->user, password, student->pw);
+        if (strcmp(username, student->user) == 0 && strcmp(password, student->pw) == 0)
         {
             // send_201(socket);
             printf("Sign in success\n");
@@ -335,7 +336,7 @@ void handle_post(HTTPRequest response, SOCKET socket)
         }
         else
         {
-            printf("\n\ndeonst match");
+            printf("\n\ndoenst match\n");
             send_401(socket);
         }
     }
@@ -346,7 +347,7 @@ void parse_request(char *response_string, SOCKET socket)
 {
     HTTPRequest response;
 
-    char duplicate[strlen(response_string)];
+    char duplicate[strlen(response_string) + 1];
     strcpy(duplicate, response_string);
 
     for (int i = 0; i < (int)strlen(response_string) - 1; i++)
@@ -554,7 +555,7 @@ int main(int argc, char *argv[])
     // Read in the data of students from a csv
     int numStudents = 0;
     char **studentNames = NULL;
-    HASHTABLE *hashtable = hashtable_new();
+    hashtable = hashtable_new();
     getData(hashtable, &numStudents, &studentNames, FILEPATH);
    
     // Server stuff idk
