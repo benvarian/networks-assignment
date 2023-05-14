@@ -7,21 +7,23 @@
 #include "fileio/fileio.h"
 #include "Data-Structures/Queue/Queue.h"
 
+HASHTABLE *hashtable;
+
 // Parses out the request line to retrieve the method, uri, and http version.
 void extract_request_line_fields(struct HTTPRequest *request, char *request_line)
 {
-    // Copy the string literal into a local instance.
-    char fields[strlen(request_line)];
+    // Copy the string literal into a local instance. MITCH ADDED +1 FOR \0
+    char fields[strlen(request_line) + 1];
     strcpy(fields, request_line);
     // Separate the string on spaces for each section.
     char *method = strtok(fields, " ");
     char *uri = strtok(NULL, " ");
     char *http_version = strtok(NULL, "\0");
-    // Insert the results into the request object as a dictionary.
+    // Insert the results into the request object as a dictionary
     struct Dictionary request_line_dict = dictionary_constructor((compare_string_keys));
-    request_line_dict.insert(&request_line_dict, "method", sizeof("method"), method, sizeof(char[strlen(method)]));
-    request_line_dict.insert(&request_line_dict, "uri", sizeof("uri"), uri, sizeof(char[strlen(uri)]));
-    request_line_dict.insert(&request_line_dict, "http_version", sizeof("http_version"), http_version, sizeof(char[strlen(http_version)]));
+    request_line_dict.insert(&request_line_dict, "method", sizeof("method") + 1, method, strlen(method) * sizeof(char) + 1);
+    request_line_dict.insert(&request_line_dict, "uri", sizeof("uri") + 1, uri, strlen(uri) * sizeof(char) + 1);
+    request_line_dict.insert(&request_line_dict, "http_version", sizeof("http_version") + 1, http_version, strlen(http_version) * sizeof(char) + 1);
     // Save the dictionary to the request object.
     request->request_line = request_line_dict;
     if (request->request_line.search(&request->request_line, "GET", sizeof("GET")))
@@ -34,14 +36,14 @@ void extract_request_line_fields(struct HTTPRequest *request, char *request_line
 void extract_header_fields(struct HTTPRequest *request, char *header_fields)
 {
     // Copy the string literal into a local instance.
-    char fields[strlen(header_fields)];
+    char fields[strlen(header_fields) + 1];
     strcpy(fields, header_fields);
     // Save each line of the input into a queue.
     struct Queue headers = queue_constructor();
     char *field = strtok(fields, "\n");
     while (field)
     {
-        headers.push(&headers, field, strlen(field) + 1);
+        headers.push(&headers, field, strlen(field) * sizeof(char) + 1);
         field = strtok(NULL, "\r\n");
     }
     // Initialize the request's header_fields dictionary.
@@ -61,7 +63,7 @@ void extract_header_fields(struct HTTPRequest *request, char *header_fields)
             }
             // printf(":%s\n", value);
             // Push the key value pairs into the request's header_fields dictionary.
-            request->header_fields.insert(&request->header_fields, key, strlen(key) + 1, value, strlen(value) + 1);
+            request->header_fields.insert(&request->header_fields, key, strlen(key) * sizeof(char) + 1, value, strlen(value) * sizeof(char) + 1);
             // Collect the next field from the queue.
         }
         headers.pop(&headers);
@@ -87,7 +89,7 @@ void extract_body(struct HTTPRequest *request, char *body)
             char *field = strtok(body, "&");
             while (field)
             {
-                fields.push(&fields, field, sizeof(char[strlen(field)]));
+                fields.push(&fields, field, strlen(field) * sizeof(char) + 1);
                 // loop over to the next field that is parsed otherwise itll cause a hang as its the same string
                 field = strtok(NULL, "&");
             }
@@ -103,7 +105,7 @@ void extract_body(struct HTTPRequest *request, char *body)
                     value++;
                 }
                 // Insert the key value pair into the dictionary.
-                body_fields.insert(&body_fields, key, sizeof(char[strlen(key)]), value, sizeof(char[strlen(value)]));
+                body_fields.insert(&body_fields, key, strlen(key) * sizeof(char) + 1, value, strlen(value) * sizeof(char) + 1);
                 // Collect the next item in the queue.
                 fields.pop(&fields);
                 field = fields.peek(&fields);
@@ -114,7 +116,7 @@ void extract_body(struct HTTPRequest *request, char *body)
         else
         {
             // Save the data as a single key value pair.
-            body_fields.insert(&body_fields, "data", sizeof("data"), body, sizeof(char[strlen(body)]));
+            body_fields.insert(&body_fields, "data", sizeof("data"), body, strlen(body) * sizeof(char) + 1);
         }
         // Set the request's body dictionary.
         request->body = body_fields;
@@ -231,13 +233,31 @@ void send_201(SOCKET socket)
     const char *c201 = "HTTP/1.1 201 Created\r\n"
                        "Location: /\r\n"
                        "Content-Type: text/html\r\n\r\n"
-                       "<div><h1>HELLO WORLD</h1></div";
+                       "<div><h1>CONGRATS</h1></div";
     send(socket, c201, strlen(c201), 0);
 }
 
-void connection_get(SOCKET socket, const char *path, const char *IPv6_Address)
+void send_401(SOCKET socket)
 {
-    printf("Serving path: %s to: %s\n", path, IPv6_Address);
+    const char *c401 = "HTTP/1.1 401 Unauthorized\r\n\r\n";
+    send(socket, c401, strlen(c401), 0);
+}
+
+void send_403(SOCKET socket)
+{
+    const char *c403 = "HTTP/1.1 403 Forbidden\r\n\r\n";
+    send(socket, c403, strlen(c403), 0);
+}
+void send_302(SOCKET socket, const char *username)
+{
+    char c302[52 + strlen(username)];
+    sprintf(c302, "HTTP/1.1 302 Found\r\nLocation: /profile/%s\r\nSet-Cookie: user=%s\r\n\r\n", username, username);
+    send(socket, c302, strlen(c302), 0);
+}
+
+void handle_get(SOCKET socket, HTTPRequest request)
+{
+    char *path = request.request_line.search(&request.request_line, "uri", strlen("uri"));
 
     if (strcmp(path, "/") == 0)
     {
@@ -287,21 +307,49 @@ void connection_get(SOCKET socket, const char *path, const char *IPv6_Address)
     sprintf(buffer, "\r\n");
     send(socket, buffer, strlen(buffer), 0);
 
-    int r = fread(buffer, 1, BSIZE, fp);
+    size_t r = fread(buffer, 1, BSIZE, fp);
     while (r)
     {
         send(socket, buffer, r, 0);
         r = fread(buffer, 1, BSIZE, fp);
     }
     fclose(fp);
+
+    // http_request_destructor(&request);
 }
 
-void connection_post(int socket, char *response_string)
+void handle_post(HTTPRequest response, SOCKET socket)
+{
+    char *url = (char *)response.request_line.search(&response.request_line, "uri", strlen("uri"));
+    if (strcmp(url, "/login") == 0)
+    {
+        char *username = (char *)response.body.search(&response.body, "username", strlen("username") * sizeof(char) + 1);
+        char *password = (char *)response.body.search(&response.body, "password", strlen("password") * sizeof(char) + 1);
+        printf("%s is attempting to sign in with the password %s\n", username, password);
+        TESTINFO *student = hashtable_get(hashtable, username);
+        printf("Checking %s against %s and %s against %s\n", username, student->user, password, student->pw);
+        if (strcmp(username, student->user) == 0 && strcmp(password, student->pw) == 0)
+        {
+            // send_201(socket);
+            printf("Sign in success\n");
+            send_302(socket, username);
+        }
+        else
+        {
+            printf("\n\ndoenst match\n");
+            send_401(socket);
+        }
+    }
+    // http_request_destructor(&response);
+}
+
+void parse_request(char *response_string, SOCKET socket)
 {
     HTTPRequest response;
-    (void)socket;
-    char duplicate[strlen(response_string)];
+
+    char duplicate[strlen(response_string) + 1];
     strcpy(duplicate, response_string);
+
     for (int i = 0; i < (int)strlen(response_string) - 1; i++)
     {
         if (response_string[i] == '\n' && response_string[i + 1] == '\n')
@@ -316,12 +364,26 @@ void connection_post(int socket, char *response_string)
     extract_header_fields(&response, header_fields);
     extract_request_line_fields(&response, request_line);
     extract_body(&response, body);
-    printf("%s:%s\n", (char *)response.body.search(&response.body, "name", strlen("name")), (char *)response.body.search(&response.body, "surname", strlen("surname")));
-
-    send_201(socket);
+    /*! keeping for debugging incase something happens and everything breaks
+    for (int i = 0; i < response.header_fields.keys.length; i++)
+    {
+        printf("%s:%s\n", (char *)response.header_fields.keys.head->data, (char *)response.header_fields.search(&response.header_fields,
+        (char *)response.header_fields.keys.head->data, strlen((char *)response.header_fields.keys.head->data)));
+        response.header_fields.keys.head = response.header_fields.keys.head->next;
+    } */
+    char *method = (char *)response.request_line.search(&response.request_line, "method", strlen("method"));
+    if (strcmp(method, "GET") == 0)
+    {
+        handle_get(socket, response);
+    }
+    else if (strcmp(method, "POST") == 0)
+    {
+        handle_post(response, socket);
+    }
+    else printf("Method unknown\n");
 }
 
-void received(int new_fd, int numbytes, char *buf, const char *IPv6_Address)
+void received(int new_fd, int numbytes, char *buf)
 {
     // todo maybe change up how this is dealt with as its a big messy
     int client_received = 0;
@@ -332,20 +394,18 @@ void received(int new_fd, int numbytes, char *buf, const char *IPv6_Address)
     }
     else
     {
-        printf("%s\n\n", buf);
         char original[strlen(buf)];
         strcpy(original, buf);
         client_received += numbytes;
         buf[client_received] = 0;
         char *res = strstr(buf, "\r\n\r\n");
-
+        // ! double check importance of this if statements and nested stuff later
         if (res)
         {
             *res = 0;
             if (strncmp(buf, "GET", 3) == 0)
             {
                 char *path = buf + 4;
-
                 char *end_path = strstr(path, " ");
                 if (!end_path)
                 {
@@ -354,16 +414,16 @@ void received(int new_fd, int numbytes, char *buf, const char *IPv6_Address)
                 else
                 {
                     *end_path = 0;
-                    connection_get(new_fd, path, IPv6_Address);
+                    parse_request(original, new_fd);
                 }
             }
             else if (strncmp(buf, "POST", 4) == 0)
             {
-                connection_post(new_fd, original);
+                parse_request(original, new_fd);
             }
             else
             {
-                // unknown request figure out how to handle
+                // todo  unknown request figure out how to handle
                 send_400(new_fd);
             }
         }
@@ -375,8 +435,8 @@ void manage_connection(SOCKET sockfd)
 
     struct sockaddr_storage their_addr; // connector's address information
     socklen_t sin_size;
-    int new_fd, numbytes;
-    char s[INET_ADDRSTRLEN];
+    int new_fd;
+    ssize_t numbytes;
     char buf[MAXDATASIZE + 1];
 
     printf("Server: waiting for connections...\n");
@@ -390,9 +450,6 @@ void manage_connection(SOCKET sockfd)
             fprintf(stdout, "Client connection failed\n");
             continue;
         }
-        inet_ntop(their_addr.ss_family,
-                  get_in_addr((struct sockaddr *)&their_addr),
-                  s, sizeof s);
 
         if (!fork())
         {
@@ -405,7 +462,7 @@ void manage_connection(SOCKET sockfd)
             }
             else
             {
-                received(new_fd, numbytes, buf, s);
+                received(new_fd, numbytes, buf);
             }
             close(new_fd);
             exit(0);
@@ -498,17 +555,19 @@ int main(int argc, char *argv[])
     // Read in the data of students from a csv
     int numStudents = 0;
     char **studentNames = NULL;
-    HASHTABLE *hashtable = hashtable_new();
+    hashtable = hashtable_new();
     getData(hashtable, &numStudents, &studentNames, FILEPATH);
-    for(int i = 0; i < numStudents; i++) {
-        TESTINFO *student = hashtable_get(hashtable, studentNames[i]);
-        printf("Student data for %s loaded in\n", student->user);
-    }
+   
     // Server stuff idk
     SOCKET socket = bind_socket(get_info(argv[1]));
 
     manage_connection(socket);
+    // ! dosnt work on bens machine 
     // writes any changed data back to the csv when finished
-    writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
+    // writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
+     // for(int i = 0; i < numStudents; i++) {
+    //     TESTINFO *student = hashtable_get(hashtable, studentNames[i]);
+    //     printf("Student data for %s loaded in\n", student->user);
+    // }
     return 0;
 }
