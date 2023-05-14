@@ -10,18 +10,19 @@
 // Parses out the request line to retrieve the method, uri, and http version.
 void extract_request_line_fields(struct HTTPRequest *request, char *request_line)
 {
-    // Copy the string literal into a local instance.
-    char fields[strlen(request_line)];
+    // Copy the string literal into a local instance. MITCH ADDED +1 FOR \0
+    char fields[strlen(request_line) + 1];
     strcpy(fields, request_line);
     // Separate the string on spaces for each section.
     char *method = strtok(fields, " ");
     char *uri = strtok(NULL, " ");
     char *http_version = strtok(NULL, "\0");
-    // Insert the results into the request object as a dictionary.
+    // Insert the results into the request object as a dictionary // MITCH CHANGE SIZEOF TO STRLEN
     struct Dictionary request_line_dict = dictionary_constructor((compare_string_keys));
-    request_line_dict.insert(&request_line_dict, "method", sizeof("method"), method, sizeof(char[strlen(method)]));
-    request_line_dict.insert(&request_line_dict, "uri", sizeof("uri"), uri, sizeof(char[strlen(uri)]));
-    request_line_dict.insert(&request_line_dict, "http_version", sizeof("http_version"), http_version, sizeof(char[strlen(http_version)]));
+    //printf("Adding %s as method, of str len :%li\n", method, strlen(method));
+    request_line_dict.insert(&request_line_dict, "method", sizeof("method") + 1, method, strlen(method) * sizeof(char) + 1);
+    request_line_dict.insert(&request_line_dict, "uri", sizeof("uri") + 1, uri, strlen(uri) * sizeof(char) + 1);
+    request_line_dict.insert(&request_line_dict, "http_version", sizeof("http_version") + 1, http_version, strlen(http_version) * sizeof(char) + 1);
     // Save the dictionary to the request object.
     request->request_line = request_line_dict;
     if (request->request_line.search(&request->request_line, "GET", sizeof("GET")))
@@ -325,9 +326,11 @@ void handle_post(HTTPRequest response, SOCKET socket)
     {
         char *username = (char *)response.body.search(&response.body, "username", strlen("username"));
         char *password = (char *)response.body.search(&response.body, "password", strlen("password"));
+        //printf("%s is attempting to sign in with the password %s\n", username, password);
         if (strcmp(username, match_user) == 0 && strcmp(password, match_pass) == 0)
         {
             // send_201(socket);
+            printf("Sign in success\n");
             send_302(socket, username);
         }
         else
@@ -360,13 +363,13 @@ void parse_request(char *response_string, SOCKET socket)
     extract_header_fields(&response, header_fields);
     extract_request_line_fields(&response, request_line);
     extract_body(&response, body);
-    // ! keeping for debugging incase something happens and everything breaks
-    // for (int i = 0; i < response.header_fields.keys.length; i++)
-    // {
-    //     printf("%s:%s\n", (char *)response.header_fields.keys.head->data, (char *)response.header_fields.search(&response.header_fields,
-    //     (char *)response.header_fields.keys.head->data, strlen((char *)response.header_fields.keys.head->data)));
-    //     response.header_fields.keys.head = response.header_fields.keys.head->next;
-    // }
+    /*! keeping for debugging incase something happens and everything breaks
+    for (int i = 0; i < response.header_fields.keys.length; i++)
+    {
+        printf("%s:%s\n", (char *)response.header_fields.keys.head->data, (char *)response.header_fields.search(&response.header_fields,
+        (char *)response.header_fields.keys.head->data, strlen((char *)response.header_fields.keys.head->data)));
+        response.header_fields.keys.head = response.header_fields.keys.head->next;
+    } */
     char *method = (char *)response.request_line.search(&response.request_line, "method", strlen("method"));
     if (strcmp(method, "GET") == 0)
     {
@@ -376,6 +379,7 @@ void parse_request(char *response_string, SOCKET socket)
     {
         handle_post(response, socket);
     }
+    else printf("Method unknown\n");
 }
 
 void received(int new_fd, int numbytes, char *buf)
