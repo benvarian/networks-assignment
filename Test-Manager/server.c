@@ -280,11 +280,11 @@ void handle_get(SOCKET socket, HTTPRequest request)
             send_302(socket, "/", "null");
             return;
         }
+        // need this as we arent gonna dynam render pages for each user as dont have enuf time
         if (strstr(path, "/profile/") != NULL)
         {
             strtok(path, "/");
             strcat(path, "/index.html");
-            printf("%s\n", path);
         }
         else
         {
