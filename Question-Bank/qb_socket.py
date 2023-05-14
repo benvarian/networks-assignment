@@ -43,8 +43,6 @@ class Nick_Socket:
     # waits for TM to connect
     def connect_to_TM(self):
         # self.sock.listen()
-        # TODO: this is only to stop annoying infinite loop atm.
-        time.sleep(0.5)
         while(True):
             try:
                 print("Trying to connect to TM...")
@@ -188,6 +186,8 @@ class Nick_Socket:
             self.sock.close()
         except Exception as e:
             print(e)
+        # to prevent it spamming TM
+        time.sleep(1)
 
         self.sock = socket.socket()
     
