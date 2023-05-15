@@ -91,7 +91,7 @@ class Nick_Socket:
         
     # sends string along sock
     def send_questions(self, msg):
-        msg = QB_HEADER + QUESTION_HEADER + END_HEADER + msg + SIGNOFF
+        msg = QB_HEADER + QUESTION_HEADER  + msg + END_HEADER
         MSGLEN = len(msg)
         byte_msg = msg.encode()
 
@@ -110,6 +110,13 @@ class Nick_Socket:
         sent = self.sock.send(byte_msg)
         if sent == 0:
             raise RuntimeError("Socket Connection Broken")
+    def send_response(self):
+        msg = "ACCEPTED PING"
+        byte_msg = msg.encode()
+        sent = self.sock.send(byte_msg)
+        if sent == 0:
+            raise RuntimeError("Socket Connection Broken")
+        
 
     def wait_for_tm(self):
         # wait for req -- either mark ('m') or get qs ('q').
@@ -162,6 +169,11 @@ class Nick_Socket:
                 return
             questions = question_bank.get_JSON_qs(q_type, int(q_num))
             self.send_questions(questions)
+        # handle pings from tm just by making an elif as its a viable header 
+        elif (mode_req == "TM\r\n"):
+            print("TM PINGED QB Responding with ACCEPTED PING")
+            self.send_response()
+            return
         else:
             # TODO: maintain a count and restart socket after three issues in a row or something of the like.
             print("Request doesn't follow protocol, sending Error.")

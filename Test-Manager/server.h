@@ -1,4 +1,4 @@
-#define _POSIX_C_SOURCE     200809L
+#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -33,11 +33,24 @@ enum HTTPMethods
     TRACE
 };
 
-typedef struct HTTPRequest {
+enum QBType
+{
+    PYTHON,
+    C
+};
+
+typedef struct HTTPRequest
+{
     struct Dictionary request_line;
     struct Dictionary header_fields;
     struct Dictionary body;
 } HTTPRequest;
+
+typedef struct QBInformation
+{
+    int socket;
+    enum QBType type;
+} QBInformation;
 
 // define functions
 void usage(void);
@@ -58,7 +71,7 @@ void send_404(SOCKET socket);
 
 void handle_get(SOCKET socket, HTTPRequest request);
 
-//todo change back to HTTPRequest
+// todo change back to HTTPRequest
 void handle_post(HTTPRequest response, SOCKET socket);
 
 void parse_request(char *response_string, SOCKET socket);
@@ -81,3 +94,6 @@ void extract_body(HTTPRequest *request, char *body);
 
 void handle_post(HTTPRequest response, SOCKET socket);
 
+int check_QB(SOCKET socket);
+
+void get_questions(SOCKET qb_socket, SOCKET socket);
