@@ -463,6 +463,10 @@ void received(int new_fd, int numbytes, char *buf)
             {
                 parse_request(original, new_fd);
             }
+            else if (strncmp(buf, "QP", 2) == 0)
+            {
+                send(new_fd, "hello", 4, 0);
+            }
             else
             {
                 // todo  unknown request figure out how to handle
@@ -477,39 +481,81 @@ void manage_connection(SOCKET sockfd)
 
     struct sockaddr_storage their_addr; // connector's address information
     socklen_t sin_size;
+    fd_set current_sockets, ready_sockets;
     int new_fd;
     ssize_t numbytes;
     char buf[MAXDATASIZE + 1];
+
+    FD_ZERO(&current_sockets);
+    FD_SET(sockfd, &current_sockets);
 
     printf("Server: waiting for connections...\n");
 
     while (1)
     {
-        sin_size = sizeof their_addr;
-        new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
-        if (new_fd == -1)
+        ready_sockets = current_sockets;
+        if (select(FD_SETSIZE, &ready_sockets, NULL, NULL, NULL) < 0)
         {
-            fprintf(stdout, "Client connection failed\n");
-            continue;
+            perror("select");
+            exit(EXIT_FAILURE);
         }
 
-        if (!fork())
+        for (int i = 0; i < FD_SETSIZE; i++)
         {
-            close(sockfd);
-
-            if ((numbytes = recv(new_fd, buf, sizeof buf, 0)) == -1)
+            if (FD_ISSET(i, &ready_sockets))
             {
-                perror("recv");
-                exit(1);
+                if (i == sockfd)
+                {
+                    sin_size = sizeof their_addr;
+                    new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
+                    if (new_fd == -1)
+                    {
+                        fprintf(stdout, "Client connection failed\n");
+                        continue;
+                    }
+                    FD_SET(new_fd, &current_sockets);
+                }
+                else
+                {
+                    if ((numbytes = recv(i, buf, sizeof buf, 0)) == -1)
+                    {
+                        perror("recv");
+                        exit(1);
+                    }
+                    else
+                    {
+                        received(i, numbytes, buf);
+                    }
+                    close(i);
+                    FD_CLR(i, &current_sockets);
+                }
             }
-            else
-            {
-                received(new_fd, numbytes, buf);
-            }
-            close(new_fd);
-            exit(0);
         }
-        close(new_fd);
+        // sin_size = sizeof their_addr;
+        // new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
+        // if (new_fd == -1)
+        // {
+        //     fprintf(stdout, "Client connection failed\n");
+        //     continue;
+        // }
+
+        // if (!fork())
+        // {
+        //     close(sockfd);
+
+        //     if ((numbytes = recv(new_fd, buf, sizeof buf, 0)) == -1)
+        //     {
+        //         perror("recv");
+        //         exit(1);
+        //     }
+        //     else
+        //     {
+        //         received(new_fd, numbytes, buf);
+        //     }
+        //     close(new_fd);
+        //     exit(0);
+        // }
+        // close(new_fd);
     }
 }
 
