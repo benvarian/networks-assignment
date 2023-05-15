@@ -13,7 +13,7 @@
 24,P,question12,answer12
 26,P,question13,answer13
 28,P,question14,answer14
-30,P,question15,answer15
+30,P,question15,#include<stdio.h>\nchar *function() {return("Hello World");}
 32,P,question16,answer16
 34,P,question17,answer17
 36,P,question18,answer18

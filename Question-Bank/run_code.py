@@ -17,7 +17,7 @@ def execute_function(lang, script):
         main =  """\n\nint main() {\nchar *result = function();\nprintf("%s", result);\nreturn 0;}"""
         try:
             compiler = new_compiler()
-            with open('temp.c', 'w+') as file:
+            with open('temp.c', 'w') as file:
                 file.write(script)
                 file.write(main)
             compiler.compile(['temp.c'])
@@ -36,7 +36,7 @@ def execute_function(lang, script):
             return (f"Error: {e}")
     else: return("Error: Invalid Programming Language")
 
-result = execute_function("P", """def functirfefon():\n\treturn ("Hello World")""")
+result = execute_function("P", """def function():\n\treturn ("Hello World")""")
 print(result)
 result = execute_function("C", """#include<stdio.h>\nchar *function() {return("Hello World");}""")
 print(result)

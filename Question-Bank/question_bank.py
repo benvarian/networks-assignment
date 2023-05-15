@@ -7,8 +7,8 @@ from ctypes import cdll, c_char_p
 from distutils.ccompiler import new_compiler
 
 key = {
-    'P': "./QuestionCSV/QuestionsP.csv",
-    'C': "./QuestionCSV/QuestionsC.csv"
+    'P': "Question-Bank/QuestionCSV/QuestionsP.csv",
+    'C': "Question-Bank/QuestionCSV/QuestionsC.csv"
 }
 
 class QB_question_database:
@@ -51,9 +51,12 @@ class QB_question_database:
         # programming
         if (q_obj[0] == 'P'):
             # MITCH WORK
-            if qid % 2 == 1: language = "P"
-            else: language = "C"
-            return execute_function(language, ans)
+            if qid % 2 == 1: lang = "P"
+            else: lang = "C"
+            student_ans = execute_function(lang, ans) # holds the error code here for now
+            true_ans = execute_function(lang, q_obj[2])
+            if(true_ans == student_ans): return 1
+            else: return 0
         elif(q_obj[0] == 'M'):
             return 1 if q_obj[2] == ans else 0
         # raise error...?
@@ -65,6 +68,7 @@ class QB_question_database:
 # Executes a function passed to it, with a specified language (P for Python C for C)
 # If it runs into an error, it returns the exit code it ran into when running the program
 def execute_function(lang, script):
+    if(script == ''): return '' # hardcoding out empty string answers, as it causes issues when compiling in C
     if(lang == "P"):
         try:
             exec(script)
@@ -73,16 +77,20 @@ def execute_function(lang, script):
             return result()
         except Exception as e: return (f"Error: {e}")
     elif (lang == "C"):
-        main =  """\n\nint main() {\nchar *result = function();\nprintf("%s", result);\nreturn 0;}"""
+        main =  """\n\nint main() {\nchar *result = function();\nreturn 0;}"""
         try:
+            result = None
+            # Tries to compile the code - should work independently of any C libraries being installed, and across OS's
             compiler = new_compiler()
-            with open('temp.c', 'w+') as file:
+            with open('temp.c', 'w') as file:
+                file.write("#include<stdio.h>\n")
                 file.write(script)
                 file.write(main)
             compiler.compile(['temp.c'])
             compiler.link_shared_object(['temp.o'], 'temp.so')
             main = cdll.LoadLibrary("./temp.so")
             main.function.restype = c_char_p
+            # Runs the code and returns the result in UTF-8 format
             result = main.function()
             os.remove('temp.c')
             os.remove('temp.so')
@@ -119,9 +127,10 @@ def test():
 
     # mark Programming
     print("Not yet implemented:")
-    print("should be 1", qb.mark(30, qb.get_q_by_id(30)[2]))
-    print("should be compilation issue", qb.mark(30, "hey"))
+    print("should be 1", qb.mark(30, """#include<stdio.h>\nchar *function() {return("Hello World");}""")) # suppose student submits proper code
     print("should be 0", qb.mark(30, ""))
+    print("should be 0", qb.mark(30, "hey"))
+    print("should be 0", qb.mark(30, "function"))
     print("")
 
     # test get random qs
@@ -148,4 +157,4 @@ def test():
         print(e)
     print("")
 
-# test()
+#test()
