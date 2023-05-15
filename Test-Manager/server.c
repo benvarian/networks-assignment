@@ -8,7 +8,7 @@
 #include "Data-Structures/Queue/Queue.h"
 
 HASHTABLE *hashtable;
-QBInformation *qb_info;
+QBInformation qb_info;
 
 // Parses out the request line to retrieve the method, uri, and http version.
 void extract_request_line_fields(struct HTTPRequest *request, char *request_line)
@@ -288,6 +288,8 @@ int check_QB(SOCKET socket)
         return 1;
     }
     printf("Received from QB: %s\n", response);
+    qb_info.socket = socket;
+    qb_info.type = 0;
 
     // send(socket, "QUESTIONS\r\nP:2", strlen("QUESTIONS\r\nP:2"), 0);
 
@@ -337,16 +339,21 @@ void handle_get(SOCKET socket, HTTPRequest request)
         }
         if (strcmp(path, "/quiz") == 0)
         {
-            //     /* todo
-            //     ** 1. send request to qb for question/questions
-            //     ** 2. render page with questions
-            //     */
-            //     // check_QB(socket);
+            /* todo
+            ** 1. send request to qb for question/questions
+            ** 2. render page with questions
+            */
             strcat(path, "/index.html");
         }
-        else
+        if (strcmp(path, "/quiz/start") == 0)
         {
+            printf("%d", qb_info.socket);
+            if (qb_info.socket == 0)
+            {
+                send_400(socket);
+            }
             strcat(path, ".html");
+            printf("%d", qb_info.socket);
         }
     }
     char full_path[128];
@@ -496,7 +503,7 @@ void received(int new_fd, int numbytes, char *buf)
             {
                 char *path = buf + 4;
                 char *end_path = strstr(path, " ");
-                printf("%s", end_path);
+                // printf("%s", end_path);
                 if (!end_path)
                 {
                     send_400(new_fd);
