@@ -26,8 +26,11 @@ QUESTION_HEADER = "QUESTIONS\r\n"
 ERROR_HEADER = "ERROR\r\n"
 
 END_HEADER = "\r\n"
-SIGNOFF = "\0"
 
+END_MSG = "\r\n\0"
+
+# init the QB_DB
+QB_DB = question_bank.QB_DB("P")
 
 class Nick_Socket:
     """
@@ -73,7 +76,7 @@ class Nick_Socket:
 
     # sends a str, with a double carriage return.
     def send_init(self):
-        msg = QB_HEADER + END_HEADER + SIGNOFF
+        msg = QB_HEADER + END_HEADER + END_MSG
         MSGLEN = len(msg)
         byte_msg = msg.encode()
         sent = self.sock.send(byte_msg)
@@ -81,7 +84,7 @@ class Nick_Socket:
             raise RuntimeError("Couldnt send string.")
 
     def send_error(self, err):
-        msg = QB_HEADER + ERROR_HEADER + "Error:" + err + SIGNOFF
+        msg = QB_HEADER + ERROR_HEADER + "Error:" + err + END_MSG
         MSGLEN = len(msg)
         byte_msg = msg.encode()
         sent = self.sock.send(byte_msg)
@@ -91,7 +94,8 @@ class Nick_Socket:
         
     # sends string along sock
     def send_questions(self, msg):
-        msg = QB_HEADER + QUESTION_HEADER  + msg + END_HEADER
+        # msg = QB_HEADER + QUESTION_HEADER + END_HEADER + "QUESTIONS:" + msg + END_MSG
+        msg = QB_HEADER + QUESTION_HEADER + END_HEADER  + msg + END_MSG
         MSGLEN = len(msg)
         byte_msg = msg.encode()
 
@@ -103,7 +107,7 @@ class Nick_Socket:
 
     def send_mark(self, mark):
         # M for mark
-        msg = QB_HEADER + QUESTION_HEADER + END_HEADER + "MARK:" + str(mark) + SIGNOFF
+        msg = QB_HEADER + MARK_HEADER + END_HEADER + "MARK:" + str(mark) + END_MSG
         byte_msg = msg.encode()
 
         print("\nsending marks:\nmsg:", msg, "\n")
@@ -155,9 +159,9 @@ class Nick_Socket:
 
         if (mode_req == MARK_HEADER):
             qid, ans = msg[1].split(":")
-            mark = random.randint(0, 1)
+            # mark = random.randint(0, 1)
+            mark = QB_DB.mark(qid, ans)
             print("Marking:\n\tqid =", qid, "\n\tans =", ans, "\n")
-            # mark = question_bank.mark(qid, ans)
             self.send_mark(qid, mark)
         elif (mode_req == QUESTION_HEADER):
             q_type, q_num = msg[1].split(":")
@@ -167,7 +171,7 @@ class Nick_Socket:
                 print("Invalid Request. Second val of q req should be in QTYPES")
                 self.send_error("q_typeError")
                 return
-            questions = question_bank.get_JSON_qs(q_type, int(q_num))
+            questions = ''.join(["qid:{}:type:{}:question:{}".format(q[0], q[1], q[2]) for q in QB_DB.get_rand_qs(int(q_num))])
             self.send_questions(questions)
         # handle pings from tm just by making an elif as its a viable header 
         elif (mode_req == "TM\r\n"):
@@ -230,20 +234,31 @@ class Nick_Socket:
                 self.restart_socket()
                 self.connect_to_TM()
 
-
 # echo-server.py
-try:
-    PORT=int(sys.argv[1])
-except:
-    print("\nUsage:\n python3 qb_socket.py {port}")
-    exit()
-
-print("PORT =", PORT)
-new_sock = Nick_Socket(HOST, PORT)
-# binds to HOST, PORT.
-while(True):
+def main():
     try:
-        new_sock.main_loop()
-    except Exception as e:
-        print(e)
-        new_sock.restart_socket()
+        PORT=int(sys.argv[1])
+    except:
+        print("\nUsage:\n python3 qb_socket.py {port}")
+        exit()
+
+    print("PORT =", PORT)
+    TM_socket = Nick_Socket(HOST, PORT)
+    # binds to HOST, PORT.
+    while(True):
+        try:
+            TM_socket.main_loop()
+        except Exception as e:
+            print(e)
+            TM_socket.restart_socket()
+
+def test():
+    q_num = 5
+    questions = QB_DB.get_rand_qs(int(q_num))
+    questions = ''.join(["qid:{}:type:{}:question:{}".format(q[0], q[1], q[2]) for q in questions])
+    print(questions)
+    msg = QB_HEADER + QUESTION_HEADER + END_HEADER + "QUESTIONS:" + questions + END_MSG
+    print("resulting msg is: \n\n:::\n" + msg)
+
+# test()
+main()
