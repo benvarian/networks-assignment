@@ -1,21 +1,11 @@
-﻿QID,Q,A
-1,question1\nA.\nB.\nC.\nD.,answer1
-3,question2,answer2
-5,question3,answer3
-7,question4,answer4
-9,question5,answer5
-11,question6,answer6
-13,question7,answer7
-15,question8,answer8
-17,question9,answer9
-19,question10,answer10
-21,question11,answer11
-23,question12,answer12
-25,question13,answer13
-27,question14,answer14
-29,question15,answer15
-31,question16,answer16
-33,question17,answer17
-35,question18,answer18
-37,question19,answer19
-39,question20,answer20
+﻿QID,T,Q,A
+1,M,What function is used to print to the console in Python?<br>print()<br>printf()<br>println()<br>echo()<br>,A
+3,M,What is the keyword to define a function in Python?<br>def<br>func<br>function<br>define<br>,A
+5,M,Which of these is not a valid variable name in Python?<br>A)1st_variable<br>B)_variable<br>C)variable1<br>D)Variable<br>,A
+7,M,What is used to create a comment in Python?<br>A)#<br>B)//<br>C)/*<br>D)--<br>,A
+9,M,Which of the following data types is not supported in Python?<br>A)character<br>B)integer<br>C)float<br>D)string<br>,A
+11,P,Write a function named 'function' that takes an array and its size as input and returns the sum of all elements in the array. The function prototype should look like: 'int function(int* arr, int size);',
+13,P,Write a function named 'function' that takes two integers as parameters and returns their product. The function prototype should look like: 'int function(int a, int b);',
+15,P,Write a function named 'function' that takes a null-terminated string as input and returns a new dynamically allocated reversed string. Remember to free memory after use. The function prototype should look like: 'char* function(char* str);',
+17,P,Write a function named 'function' that takes an array of integers and its size as input and returns the maximum value in the array. The function prototype should look like: 'int function(int* arr, int size);',
+19,P,Write a function named 'function' that takes an integer as input and returns 1 if the integer is even, 0 otherwise. The function prototype should look like: 'int function(int num);',

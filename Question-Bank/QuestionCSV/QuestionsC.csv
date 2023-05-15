@@ -1,21 +1,12 @@
 ﻿QID,Q,A
-2,question1,answer1
-4,question2,answer2
-6,question3,answer3
-8,question4,answer4
-10,question5,answer5
-12,question6,answer6
-14,question7,answer7
-16,question8,answer8
-18,question9,answer9
-20,question10,answer10
-22,question11,answer11
-24,question12,answer12
-26,question13,answer13
-28,question14,answer14
-30,question15,answer15
-32,question16,answer16
-34,question17,answer17
-36,question18,answer18
-38,question19,answer19
-40,question20,answer20
+2,M,How do you print to the console in C? <br>A)printf()<br>B)print()<br>C)println()<br>echo()<br>,A
+4,M,Which keyword is used to declare a constant in C?<br>A)const<br>B)constant<br>C)final<br>D)immutable<br>,A
+6,M,What is the correct syntax to declare a pointer in C?<br>A)int *p;<br>B)int p;<br>C)int &p;<br>D)pointer p,A
+8,M,Which function is used to calculate the length of a string in C?<br>A)strlen()<br>B)length()<br>C)len()<br>D)sizeof()<br>,A
+10,M,Which of the following is not a valid data type in C?<br>A)String<br>B)int<br>C)float<br>D)char<br>,A
+12,P,Write a function named 'function' that takes an array and its size as input and returns the sum of all elements in the array. The function prototype should look like: 'int function(int* arr, int size);',
+14,P,Write a function named 'function' that takes two integers as parameters and returns their product. The function prototype should look like: 'int function(int a, int b);',
+16,P,Write a function named 'function' that takes a null-terminated string as input and returns a new dynamically allocated reversed string. Remember to free memory after use. The function prototype should look like: 'char* function(char* str);',
+18,P,Write a function named 'function' that takes an array of integers and its size as input and returns the maximum value in the array. The function prototype should look like: 'int function(int* arr, int size);',
+20,P,Write a function named 'function' that takes an integer as input and returns 1 if the integer is even, 0 otherwise. The function prototype should look like: 'int function(int num);',
+a]]]]
