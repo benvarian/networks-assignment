@@ -407,6 +407,7 @@ void parse_request(char *response_string, SOCKET socket)
         (char *)response.header_fields.keys.head->data, strlen((char *)response.header_fields.keys.head->data)));
         response.header_fields.keys.head = response.header_fields.keys.head->next;
     } */
+    // ! maybe get rid of
     char *method = (char *)response.request_line.search(&response.request_line, "method", strlen("method"));
     if (strcmp(method, "GET") == 0)
     {
@@ -495,9 +496,11 @@ void manage_connection(SOCKET sockfd)
             fprintf(stdout, "Client connection failed\n");
             continue;
         }
-
+        printf("%lu\n", (long)getpid());
         if (!fork())
         {
+            printf("%lu\n", (long)getpid());
+
             close(sockfd);
 
             if ((numbytes = recv(new_fd, buf, sizeof buf, 0)) == -1)
