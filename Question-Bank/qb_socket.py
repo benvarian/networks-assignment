@@ -91,7 +91,7 @@ class Nick_Socket:
         
     # sends string along sock
     def send_questions(self, msg):
-        msg = QB_HEADER + QUESTION_HEADER + END_HEADER + msg + SIGNOFF
+        msg = QB_HEADER + QUESTION_HEADER  + msg + END_HEADER
         MSGLEN = len(msg)
         byte_msg = msg.encode()
 

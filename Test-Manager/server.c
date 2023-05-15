@@ -260,6 +260,27 @@ void send_302(SOCKET socket, const char *path, const char *username)
     drop_client(socket);
 }
 
+void get_questions(SOCKET qb_socket, SOCKET socket)
+{
+    printf("%d:%d\n", qb_socket, socket);
+    char *get_example = "QUESTIONS\r\nP:2\r\n\r\n";
+    char res[MAXDATASIZE + 1];
+    if (send(qb_socket, get_example, strlen(get_example) + 1, 0) == -1)
+    {
+        perror("send");
+        exit(EXIT_FAILURE);
+    }
+
+    if (recv(qb_socket, res, 4096, 0) <= 0)
+    {
+        perror("recv");
+        exit(EXIT_FAILURE);
+    }
+    printf("response: \n%s", res);
+
+    send_404(socket);
+}
+
 int check_QB(SOCKET socket)
 {
 
@@ -351,7 +372,9 @@ void handle_get(SOCKET socket, HTTPRequest request)
             {
                 send_400(socket);
             }
-            strcat(path, ".html");
+            get_questions(qb_info.socket, socket);
+            return;
+            // strcat(path, ".html");
         }
     }
     char full_path[128];

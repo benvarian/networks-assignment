@@ -95,3 +95,5 @@ void extract_body(HTTPRequest *request, char *body);
 void handle_post(HTTPRequest response, SOCKET socket);
 
 int check_QB(SOCKET socket);
+
+void get_questions(SOCKET qb_socket, SOCKET socket);
