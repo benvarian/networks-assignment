@@ -347,13 +347,11 @@ void handle_get(SOCKET socket, HTTPRequest request)
         }
         if (strcmp(path, "/quiz/start") == 0)
         {
-            printf("%d", qb_info.socket);
             if (qb_info.socket == 0)
             {
                 send_400(socket);
             }
             strcat(path, ".html");
-            printf("%d", qb_info.socket);
         }
     }
     char full_path[128];
