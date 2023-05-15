@@ -4,8 +4,80 @@
 6,M,What is the correct syntax to declare a pointer in C?<br>A)int *p;<br>B)int p;<br>C)int &p;<br>D)pointer p,A
 8,M,Which function is used to calculate the length of a string in C?<br>A)strlen()<br>B)length()<br>C)len()<br>D)sizeof()<br>,A
 10,M,Which of the following is not a valid data type in C?<br>A)String<br>B)int<br>C)float<br>D)char<br>,A
-12,P,Write a function named 'function' that takes an array and its size as input and returns the sum of all elements in the array. The function prototype should look like: 'int function(int* arr, int size);',1|1
-14,P,Write a function named 'function' that takes two integers as parameters and returns their product. The function prototype should look like: 'int function(int a, int b);',1|1
-16,P,Write a function named 'function' that takes a null-terminated string as input and returns a new dynamically allocated reversed string. Remember to free memory after use. The function prototype should look like: 'char* function(char* str);',1|1
-18,P,Write a function named 'function' that takes an array of integers and its size as input and returns the maximum value in the array. The function prototype should look like: 'int function(int* arr, int size);',1|1
-20,P,Write a function named 'function' that takes an integer as input and returns 1 if the integer is even, 0 otherwise. The function prototype should look like: 'int function(int num);',1|1
+12,M,Which of the following is not a standard library in C?<br>A)stdio.h<br>B)math.h<br>C)string.h<br>D)graphics.h<br>,D
+14,M,In C, what symbol is used to denote a comment?<br>A)//<br>B)/*<br>C)''<br>D)#<br>,A
+16,M,What is the correct way to declare a pointer in C?<br>A)int* ptr;<br>B)int ptr*;<br>C)ptr* int;<br>D)int ptr;<br>,A
+
+18,M,Given the following function, what will be the output when printf("%d", function(5)); is executed?
+<code>int function(int n) {
+    if (n == 1) {
+        return 1;
+    } else {
+        return n * function(n - 1);
+    }
+}
+</code>
+<br>A)120<br>B)24<br>C)5<br>D)1<br>,A
+
+20,M,What will be the output of the following C code?
+<code>
+int main() {
+    int a = 10;
+    a += a -= a * a;
+    printf("%d",a);
+    return 0;
+}
+</code>
+A)100<br>B)0<br>C)1<br>D)10<br>,B
+
+22,M,Consider the following C function. What will be the output when `printf("%d", function(5));` is executed?
+<code>
+int function(int n) {
+    static int i = 123;
+    if (n == 0) {
+        return i;
+    } else {
+        i = i + n;
+        return function(n - 1);
+    }
+}
+</code>
+A)123<br>B)128<br>C)15<br>D)130<br>,B
+
+24,M,What will be the output of the following C code?
+<code>
+int main() {
+    int a = 5, b = 10;
+    printf("%d", b >= a == b > a);
+    return 0;
+}
+</code>
+A)0<br>B)1<br>C)10<br>D)5<br>,A
+
+26,M,What will be the output of the following C code?
+<code>
+int main() {
+    char str[] = "Hello, World!";
+    printf("%s", str + 7);
+    return 0;
+}
+</code>
+<br>A)Hello, World!<br>B)World!<br>C)Hello,<br>D)!,<br>B
+
+28,M,What will be the output of the following C code?
+<code>
+int main() {
+    int x = 10;
+    int y = x++;
+    printf("%d %d", x, y);
+    return 0;
+}
+</code>
+A)10 10<br>B)11 10<br>C)11 11<br>D)10 11<br>,B
+30,M,What does the "static" keyword do in C?<br>A)It makes a variable or function visible only within the file it's declared.<br>B)It makes a variable or function visible throughout the program.<br>C)It makes a variable or function change its value every time it's accessed.<br>D)It makes a variable or function keep its value between function calls.<br>,A
+
+32,P,Write a function named 'function' that takes an array and its size as input and returns the sum of all elements in the array. The function prototype should look like: 'int function(int* arr, int size);',1|1
+34,P,Write a function named 'function' that takes two integers as parameters and returns their product. The function prototype should look like: 'int function(int a, int b);',1|1
+36,P,Write a function named 'function' that takes a null-terminated string as input and returns a new dynamically allocated reversed string. Remember to free memory after use. The function prototype should look like: 'char* function(char* str);',1|1
+38,P,Write a function named 'function' that takes an array of integers and its size as input and returns the maximum value in the array. The function prototype should look like: 'int function(int* arr, int size);',1|1
+40,P,Write a function named 'function' that takes an integer as input and returns 1 if the integer is even, 0 otherwise. The function prototype should look like: 'int function(int num);',1|1
