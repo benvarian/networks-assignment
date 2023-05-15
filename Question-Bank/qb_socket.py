@@ -14,10 +14,20 @@ import sys
 import random
 
 HOST = "localhost"  # Standard loopback interface address (localhost)
-PORT = 8080  # Port to listen on (non-privileged ports are > 1023)
+# Port to listen on (non-privileged ports are > 1023)
+SUBJECTS = ["PYTHON", "C"]
+try:
+    PORT=int(sys.argv[1])
+    QB_TYPE = str(sys.argv[2])
+    if (QB_TYPE not in subjects): raise Exception("Fail init args")
+except:
+    print("\nUsage:\n python3 qb_socket.py {port} {qb_type}")
+    exit()
+
+
 
 # p for python
-QB_SUBJECT = "PYTHON"
+QB_SUBJECT = QB_TYPE
 QB_HEADER = "QB " + QB_SUBJECT + "\r\n"
 # C = in C, P = python. if not in list, will respond with something like "wrong qb, type not found"
 QTYPES = ['C', 'P']
@@ -30,7 +40,7 @@ END_HEADER = "\r\n"
 END_MSG = "\r\n\0"
 
 # init the QB_DB
-QB_DB = question_bank.QB_DB("P")
+QB_DB = question_bank.QB_DB(QB_SUBJECT[0])
 
 class Nick_Socket:
     """
@@ -114,6 +124,7 @@ class Nick_Socket:
         sent = self.sock.send(byte_msg)
         if sent == 0:
             raise RuntimeError("Socket Connection Broken")
+        
     def send_response(self):
         msg = "ACCEPTED PING"
         byte_msg = msg.encode()
@@ -171,7 +182,7 @@ class Nick_Socket:
                 print("Invalid Request. Second val of q req should be in QTYPES")
                 self.send_error("q_typeError")
                 return
-            questions = ''.join(["qid:{}:type:{}:question:{}".format(q[0], q[1], q[2]) for q in QB_DB.get_rand_qs(int(q_num))])
+            questions = ''.join(["qid:{}&type:{}&question:{}&".format(q[0], q[1], q[2]) for q in QB_DB.get_rand_qs(int(q_num))])
             self.send_questions(questions)
         # handle pings from tm just by making an elif as its a viable header 
         elif (mode_req == "TM\r\n"):
@@ -236,11 +247,6 @@ class Nick_Socket:
 
 # echo-server.py
 def main():
-    try:
-        PORT=int(sys.argv[1])
-    except:
-        print("\nUsage:\n python3 qb_socket.py {port}")
-        exit()
 
     print("PORT =", PORT)
     TM_socket = Nick_Socket(HOST, PORT)
