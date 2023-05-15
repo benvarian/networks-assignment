@@ -7,8 +7,8 @@ from ctypes import cdll, c_char_p
 from distutils.ccompiler import new_compiler
 
 key = {
-    'P': "Question-Bank/QuestionCSV/QuestionsP.csv",
-    'C': "Question-Bank/QuestionCSV/QuestionsC.csv"
+    'P': "./QuestionCSV/QuestionsP.csv",
+    'C': "./QuestionCSV/QuestionsC.csv"
 }
 
 class QB_question_database:
