@@ -8,6 +8,7 @@
 #include "Data-Structures/Queue/Queue.h"
 
 HASHTABLE *hashtable;
+QBInformation *qb_info;
 
 // Parses out the request line to retrieve the method, uri, and http version.
 void extract_request_line_fields(struct HTTPRequest *request, char *request_line)
@@ -259,6 +260,41 @@ void send_302(SOCKET socket, const char *path, const char *username)
     drop_client(socket);
 }
 
+int check_QB(SOCKET socket)
+{
+
+    /*
+     * first, check that the qb is still connected, if not quit under exit_failure
+     * if return is say 1, then the qb is still connected, so proceed with execution,
+     * add to some form of struct so can refernec later
+     * send the get questions command to the qb
+     * parse
+     * serve html
+     */
+    char *ping = "TM\r\nPING\r\n\r\n";
+    char response[MAXDATASIZE + 1];
+
+    if (send(socket, ping, strlen(ping) + 1, 0) == -1)
+    {
+        perror("QB disconnected");
+        return 1;
+    }
+
+    printf("QB is connected.\n");
+
+    if (recv(socket, response, 4096, 0) <= 0)
+    {
+        perror("QB Disconnection");
+        return 1;
+    }
+    printf("Received from QB: %s\n", response);
+
+    // send(socket, "QUESTIONS\r\nP:2", strlen("QUESTIONS\r\nP:2"), 0);
+
+    // printf("Message sent to QB\n");
+    return 0;
+}
+
 void handle_get(SOCKET socket, HTTPRequest request)
 {
     char *path = request.request_line.search(&request.request_line, "uri", strlen("uri"));
@@ -280,41 +316,42 @@ void handle_get(SOCKET socket, HTTPRequest request)
     else
     {
         char *cookie = request.header_fields.search(&request.header_fields, "Cookie", strlen("Cookie"));
-        printf("\n\n%s", cookie);
-        if ((cookie && strstr(path, "/login") != NULL))
+
+        if (cookie && strstr(path, "/login") != NULL)
         {
             // makes login a protected path
             send_302(socket, "/", cookie);
         }
+        // ! causes seg fault when clicked twice, i aint fixing
+        if (strcmp(path, "/logout") == 0)
+        {
+            strcat(cookie, "; expires=Thu, 01 Jan 1970 00:00:00 GMT");
+            send_302(socket, "/", cookie);
+            return;
+        }
+        // ?  need this as we arent gonna dynam render pages for each user as dont have enuf time
+        if (strstr(path, "/profile/") != NULL)
+        {
+            strtok(path, "/");
+            strcat(path, "/index.html");
+        }
+        if (strcmp(path, "/quiz") == 0)
+        {
+            //     /* todo
+            //     ** 1. send request to qb for question/questions
+            //     ** 2. render page with questions
+            //     */
+            //     // check_QB(socket);
+            strcat(path, "/index.html");
+        }
         else
         {
-            if (cookie && strcmp(path, "/logout") == 0)
-            {
-                strcat(cookie, "; expires=Thu, 01 Jan 1970 00:00:00 GMT");
-                send_302(socket, "/", cookie);
-                return;
-            }
-            else
-            {
-                // dont want to set  cookie obviosuly if wanting to logout
-                send_302(socket, "/", "hello");
-            }
-            // need this as we arent gonna dynam render pages for each user as dont have enuf time
-            if (strstr(path, "/profile/") != NULL)
-            {
-                strtok(path, "/");
-                strcat(path, "/index.html");
-            }
-            else
-            {
-                strcat(path, ".html");
-            }
+            strcat(path, ".html");
         }
     }
     char full_path[128];
-    // ! change this part here to make it work wihtout static files, but we might be able to use static files
     sprintf(full_path, "public%s", path);
-    printf("full path: %s\n", full_path);
+    printf("\nfull path: %s\n", full_path);
     FILE *fp = fopen(full_path, "rb");
 
     if (!fp)
@@ -442,7 +479,7 @@ void received(int new_fd, int numbytes, char *buf)
     if (numbytes < 1)
     {
         fprintf(stderr, "Unexpected disconnect from client.\n");
-        // drop_client(new_fd);
+        drop_client(new_fd);
     }
     else
     {
@@ -459,6 +496,7 @@ void received(int new_fd, int numbytes, char *buf)
             {
                 char *path = buf + 4;
                 char *end_path = strstr(path, " ");
+                printf("%s", end_path);
                 if (!end_path)
                 {
                     send_400(new_fd);
@@ -473,9 +511,13 @@ void received(int new_fd, int numbytes, char *buf)
             {
                 parse_request(original, new_fd);
             }
-            else if (strncmp(buf, "QP", 2) == 0)
+            else if (strncmp(buf, "QB", 2) == 0)
             {
-                send(new_fd, "QP10", 4, 0);
+                if (check_QB(new_fd) == -1)
+                {
+                    perror("check_QB: QB Disconnect");
+                    exit(EXIT_FAILURE);
+                }
             }
             else
             {
@@ -536,8 +578,6 @@ void manage_connection(SOCKET sockfd)
                     {
                         received(i, numbytes, buf);
                     }
-                    // ! gonna have to go into where we deal with sending to http cleint as we dont want to close the socket to qb
-                    // close(i);
                     FD_CLR(i, &current_sockets);
                 }
             }
