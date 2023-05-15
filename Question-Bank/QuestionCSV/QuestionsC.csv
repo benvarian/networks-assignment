@@ -4,9 +4,8 @@
 6,M,What is the correct syntax to declare a pointer in C?<br>A)int *p;<br>B)int p;<br>C)int &p;<br>D)pointer p,A
 8,M,Which function is used to calculate the length of a string in C?<br>A)strlen()<br>B)length()<br>C)len()<br>D)sizeof()<br>,A
 10,M,Which of the following is not a valid data type in C?<br>A)String<br>B)int<br>C)float<br>D)char<br>,A
-12,P,Write a function named 'function' that takes an array and its size as input and returns the sum of all elements in the array. The function prototype should look like: 'int function(int* arr, int size);',
-14,P,Write a function named 'function' that takes two integers as parameters and returns their product. The function prototype should look like: 'int function(int a, int b);',
-16,P,Write a function named 'function' that takes a null-terminated string as input and returns a new dynamically allocated reversed string. Remember to free memory after use. The function prototype should look like: 'char* function(char* str);',
-18,P,Write a function named 'function' that takes an array of integers and its size as input and returns the maximum value in the array. The function prototype should look like: 'int function(int* arr, int size);',
-20,P,Write a function named 'function' that takes an integer as input and returns 1 if the integer is even, 0 otherwise. The function prototype should look like: 'int function(int num);',
-a]]]]
+12,P,Write a function named 'function' that takes an array and its size as input and returns the sum of all elements in the array. The function prototype should look like: 'int function(int* arr, int size);',1|1
+14,P,Write a function named 'function' that takes two integers as parameters and returns their product. The function prototype should look like: 'int function(int a, int b);',1|1
+16,P,Write a function named 'function' that takes a null-terminated string as input and returns a new dynamically allocated reversed string. Remember to free memory after use. The function prototype should look like: 'char* function(char* str);',1|1
+18,P,Write a function named 'function' that takes an array of integers and its size as input and returns the maximum value in the array. The function prototype should look like: 'int function(int* arr, int size);',1|1
+20,P,Write a function named 'function' that takes an integer as input and returns 1 if the integer is even, 0 otherwise. The function prototype should look like: 'int function(int num);',1|1

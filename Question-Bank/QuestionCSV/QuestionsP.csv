@@ -4,8 +4,8 @@
 5,M,Which of these is not a valid variable name in Python?<br>A)1st_variable<br>B)_variable<br>C)variable1<br>D)Variable<br>,A
 7,M,What is used to create a comment in Python?<br>A)#<br>B)//<br>C)/*<br>D)--<br>,A
 9,M,Which of the following data types is not supported in Python?<br>A)character<br>B)integer<br>C)float<br>D)string<br>,A
-11,P,Write a function named 'function' that takes an array and its size as input and returns the sum of all elements in the array. The function prototype should look like: 'int function(int* arr, int size);',
-13,P,Write a function named 'function' that takes two integers as parameters and returns their product. The function prototype should look like: 'int function(int a, int b);',
-15,P,Write a function named 'function' that takes a null-terminated string as input and returns a new dynamically allocated reversed string. Remember to free memory after use. The function prototype should look like: 'char* function(char* str);',
-17,P,Write a function named 'function' that takes an array of integers and its size as input and returns the maximum value in the array. The function prototype should look like: 'int function(int* arr, int size);',
-19,P,Write a function named 'function' that takes an integer as input and returns 1 if the integer is even, 0 otherwise. The function prototype should look like: 'int function(int num);',
+11,P,Write a function named 'function' that takes an array and its size as input and returns the sum of all elements in the array. The function prototype should look like: 'int function(int* arr, int size);',1|1
+13,P,Write a function named 'function' that takes two integers as parameters and returns their product. The function prototype should look like: 'int function(int a, int b);',1|1
+15,P,Write a function named 'function' that takes a null-terminated string as input and returns a new dynamically allocated reversed string. Remember to free memory after use. The function prototype should look like: 'char* function(char* str);',1|1
+17,P,Write a function named 'function' that takes an array of integers and its size as input and returns the maximum value in the array. The function prototype should look like: 'int function(int* arr, int size);',1|1
+19,P,Write a function named 'function' that takes an integer as input and returns 1 if the integer is even, 0 otherwise. The function prototype should look like: 'int function(int num);',1|1
