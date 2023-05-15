@@ -1,6 +1,5 @@
 from get_questions import *
 import random
-import json
 import sys
 import os
 from ctypes import cdll, c_char_p
@@ -11,7 +10,7 @@ key = {
     'C': "./QuestionCSV/QuestionsC.csv"
 }
 
-class QB_question_database:
+class QB_DB:
     """ 
         Stores Questions, implements functions to mark and
         return questions for the QB to use.
@@ -32,7 +31,7 @@ class QB_question_database:
             return None
         
 
-    def get_random_qs(self, q_num):
+    def get_rand_qs(self, q_num):
         # returns q_num questions as json array. -- unsure if json is the play for now.
         qids = self.questions.keys()
         if (q_num > len(qids)):
@@ -40,9 +39,8 @@ class QB_question_database:
         elif (q_num <= 0):
             raise Exception("Too few questions requested, cannot comply.")
         rand_ids = random.sample(list(qids), q_num)
-        rand_qs = [self.questions[id] for id in rand_ids]
-        json_qs = json.dumps(random.sample(rand_qs, q_num))
-        return json_qs
+        rand_qs = [[id] + self.questions[id] for id in rand_ids]
+        return rand_qs
 
     def mark(self, qid, ans):
         # [type, q, a]
