@@ -207,7 +207,7 @@ void send_200(SOCKET socket)
     const char *c200 = "HTTP/1.1 200 OK\r\n"
                        "Content-Type: text/html\r\n";
     send(socket, c200, strlen(c200), 0);
-    // drop_client(socket);
+    drop_client(socket);
 }
 
 void send_400(SOCKET socket)
@@ -216,7 +216,7 @@ void send_400(SOCKET socket)
                        "Connection: close\r\n"
                        "Content-Length: 11\r\n\r\nBad Request";
     send(socket, c400, strlen(c400), 0);
-    // drop_client(socket);
+    drop_client(socket);
 }
 
 void send_404(SOCKET socket)
@@ -225,7 +225,7 @@ void send_404(SOCKET socket)
                        "Connection: close\r\n"
                        "Content-Length: 9\r\n\r\nPage Not Found";
     send(socket, c404, strlen(c404), 0);
-    // drop_client(socket);
+    drop_client(socket);
 }
 
 void send_201(SOCKET socket)
@@ -235,24 +235,28 @@ void send_201(SOCKET socket)
                        "Content-Type: text/html\r\n\r\n"
                        "<div><h1>CONGRATS</h1></div";
     send(socket, c201, strlen(c201), 0);
+    drop_client(socket);
 }
 
 void send_401(SOCKET socket)
 {
     const char *c401 = "HTTP/1.1 401 Unauthorized\r\n\r\n";
     send(socket, c401, strlen(c401), 0);
+    drop_client(socket);
 }
 
 void send_403(SOCKET socket)
 {
     const char *c403 = "HTTP/1.1 403 Forbidden\r\n\r\n";
     send(socket, c403, strlen(c403), 0);
+    drop_client(socket);
 }
 void send_302(SOCKET socket, const char *path, const char *username)
 {
     char c302[52 + (strlen(path) + 1) + (strlen(username) + 1)];
     sprintf(c302, "HTTP/1.1 302 Found\r\nLocation: %s\r\nSet-Cookie: %s\r\n\r\n", path, username);
     send(socket, c302, strlen(c302), 0);
+    drop_client(socket);
 }
 
 void handle_get(SOCKET socket, HTTPRequest request)
@@ -276,6 +280,7 @@ void handle_get(SOCKET socket, HTTPRequest request)
     else
     {
         char *cookie = request.header_fields.search(&request.header_fields, "Cookie", strlen("Cookie"));
+        printf("\n\n%s", cookie);
         if ((cookie && strstr(path, "/login") != NULL))
         {
             // makes login a protected path
@@ -283,11 +288,16 @@ void handle_get(SOCKET socket, HTTPRequest request)
         }
         else
         {
-            if (strcmp(path, "/logout") == 0)
+            if (cookie && strcmp(path, "/logout") == 0)
             {
                 strcat(cookie, "; expires=Thu, 01 Jan 1970 00:00:00 GMT");
                 send_302(socket, "/", cookie);
                 return;
+            }
+            else
+            {
+                // dont want to set  cookie obviosuly if wanting to logout
+                send_302(socket, "/", "hello");
             }
             // need this as we arent gonna dynam render pages for each user as dont have enuf time
             if (strstr(path, "/profile/") != NULL)
@@ -520,13 +530,14 @@ void manage_connection(SOCKET sockfd)
                     if ((numbytes = recv(i, buf, sizeof buf, 0)) == -1)
                     {
                         perror("recv");
-                        exit(1);
+                        exit(EXIT_FAILURE);
                     }
                     else
                     {
                         received(i, numbytes, buf);
                     }
-                    close(i);
+                    // ! gonna have to go into where we deal with sending to http cleint as we dont want to close the socket to qb
+                    // close(i);
                     FD_CLR(i, &current_sockets);
                 }
             }
