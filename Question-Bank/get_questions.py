@@ -28,6 +28,16 @@ def get_questions(filePath):
                     row[1] = row[1].replace("\\n", "\n")
                     row[2] = row[2].replace("\\n", "\n")
                     row[3] = row[3].replace("\\n", "\n")
+
+                    # \y is a new line in coding questions.
+                    row[1] = row[1].replace("\y", "\n")
+                    row[2] = row[2].replace("\y", "\n")
+                    row[3] = row[3].replace("\y", "\n")
+
+                    # \c is a comma in coding questions.
+                    row[1] = row[1].replace("\c", ",")
+                    row[2] = row[2].replace("\c", ",")
+                    row[3] = row[3].replace("\c", ",")
                     questions[row[0]] = [row[1], row[2], row[3]]
             return questions
         
