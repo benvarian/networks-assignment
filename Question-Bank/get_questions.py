@@ -3,13 +3,13 @@ import os
 # Opens csv file and handles errors
 # Returns a dictionary of questions, or None if file not found
 # The key is the question ID
-# The value is a size-2 array: [question, answer]
+# The value is a size-2 array: [q_type, q, ans]
 # NOTE: If a QID is a duplicate or corrupt
 # (e.g. A string instead of an int) the line is skipped
 def get_questions(filePath):
     try:
         with open(filePath, 'r', encoding='utf-8-sig') as data:
-            questions = []
+            questions = { }
             lines = data.readlines()
             # Iterate over each row, adding to the dictionary
             for row in lines[1:]:
@@ -27,7 +27,8 @@ def get_questions(filePath):
                     # question/answer formatting
                     row[1] = row[1].replace("\\n", "\n")
                     row[2] = row[2].replace("\\n", "\n")
-                    questions.append([row[1], row[2]])
+                    row[3] = row[3].replace("\\n", "\n")
+                    questions[row[0]] = [row[1], row[2], row[3]]
             return questions
         
     # File Path not found

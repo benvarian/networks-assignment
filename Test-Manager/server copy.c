@@ -4,27 +4,23 @@
 **/
 
 #include "server.h"
-#include "fileio/fileio.h"
 #include "Data-Structures/Queue/Queue.h"
-
-HASHTABLE *hashtable;
-QBInformation qb_info;
 
 // Parses out the request line to retrieve the method, uri, and http version.
 void extract_request_line_fields(struct HTTPRequest *request, char *request_line)
 {
-    // Copy the string literal into a local instance. MITCH ADDED +1 FOR \0
-    char fields[strlen(request_line) + 1];
+    // Copy the string literal into a local instance.
+    char fields[strlen(request_line)];
     strcpy(fields, request_line);
     // Separate the string on spaces for each section.
     char *method = strtok(fields, " ");
     char *uri = strtok(NULL, " ");
     char *http_version = strtok(NULL, "\0");
-    // Insert the results into the request object as a dictionary
+    // Insert the results into the request object as a dictionary.
     struct Dictionary request_line_dict = dictionary_constructor((compare_string_keys));
-    request_line_dict.insert(&request_line_dict, "method", sizeof("method") + 1, method, strlen(method) * sizeof(char) + 1);
-    request_line_dict.insert(&request_line_dict, "uri", sizeof("uri") + 1, uri, strlen(uri) * sizeof(char) + 1);
-    request_line_dict.insert(&request_line_dict, "http_version", sizeof("http_version") + 1, http_version, strlen(http_version) * sizeof(char) + 1);
+    request_line_dict.insert(&request_line_dict, "method", sizeof("method"), method, sizeof(char[strlen(method)]));
+    request_line_dict.insert(&request_line_dict, "uri", sizeof("uri"), uri, sizeof(char[strlen(uri)]));
+    request_line_dict.insert(&request_line_dict, "http_version", sizeof("http_version"), http_version, sizeof(char[strlen(http_version)]));
     // Save the dictionary to the request object.
     request->request_line = request_line_dict;
     if (request->request_line.search(&request->request_line, "GET", sizeof("GET")))
@@ -37,14 +33,14 @@ void extract_request_line_fields(struct HTTPRequest *request, char *request_line
 void extract_header_fields(struct HTTPRequest *request, char *header_fields)
 {
     // Copy the string literal into a local instance.
-    char fields[strlen(header_fields) + 1];
+    char fields[strlen(header_fields)];
     strcpy(fields, header_fields);
     // Save each line of the input into a queue.
     struct Queue headers = queue_constructor();
     char *field = strtok(fields, "\n");
     while (field)
     {
-        headers.push(&headers, field, strlen(field) * sizeof(char) + 1);
+        headers.push(&headers, field, strlen(field) + 1);
         field = strtok(NULL, "\r\n");
     }
     // Initialize the request's header_fields dictionary.
@@ -64,7 +60,7 @@ void extract_header_fields(struct HTTPRequest *request, char *header_fields)
             }
             // printf(":%s\n", value);
             // Push the key value pairs into the request's header_fields dictionary.
-            request->header_fields.insert(&request->header_fields, key, strlen(key) * sizeof(char) + 1, value, strlen(value) * sizeof(char) + 1);
+            request->header_fields.insert(&request->header_fields, key, strlen(key) + 1, value, strlen(value) + 1);
             // Collect the next field from the queue.
         }
         headers.pop(&headers);
@@ -90,7 +86,7 @@ void extract_body(struct HTTPRequest *request, char *body)
             char *field = strtok(body, "&");
             while (field)
             {
-                fields.push(&fields, field, strlen(field) * sizeof(char) + 1);
+                fields.push(&fields, field, sizeof(char[strlen(field)]));
                 // loop over to the next field that is parsed otherwise itll cause a hang as its the same string
                 field = strtok(NULL, "&");
             }
@@ -106,7 +102,7 @@ void extract_body(struct HTTPRequest *request, char *body)
                     value++;
                 }
                 // Insert the key value pair into the dictionary.
-                body_fields.insert(&body_fields, key, strlen(key) * sizeof(char) + 1, value, strlen(value) * sizeof(char) + 1);
+                body_fields.insert(&body_fields, key, sizeof(char[strlen(key)]), value, sizeof(char[strlen(value)]));
                 // Collect the next item in the queue.
                 fields.pop(&fields);
                 field = fields.peek(&fields);
@@ -117,7 +113,7 @@ void extract_body(struct HTTPRequest *request, char *body)
         else
         {
             // Save the data as a single key value pair.
-            body_fields.insert(&body_fields, "data", sizeof("data"), body, strlen(body) * sizeof(char) + 1);
+            body_fields.insert(&body_fields, "data", sizeof("data"), body, sizeof(char[strlen(body)]));
         }
         // Set the request's body dictionary.
         request->body = body_fields;
@@ -208,7 +204,7 @@ void send_200(SOCKET socket)
     const char *c200 = "HTTP/1.1 200 OK\r\n"
                        "Content-Type: text/html\r\n";
     send(socket, c200, strlen(c200), 0);
-    drop_client(socket);
+    // drop_client(socket);
 }
 
 void send_400(SOCKET socket)
@@ -217,7 +213,7 @@ void send_400(SOCKET socket)
                        "Connection: close\r\n"
                        "Content-Length: 11\r\n\r\nBad Request";
     send(socket, c400, strlen(c400), 0);
-    drop_client(socket);
+    // drop_client(socket);
 }
 
 void send_404(SOCKET socket)
@@ -226,7 +222,7 @@ void send_404(SOCKET socket)
                        "Connection: close\r\n"
                        "Content-Length: 9\r\n\r\nPage Not Found";
     send(socket, c404, strlen(c404), 0);
-    drop_client(socket);
+    // drop_client(socket);
 }
 
 void send_201(SOCKET socket)
@@ -234,158 +230,32 @@ void send_201(SOCKET socket)
     const char *c201 = "HTTP/1.1 201 Created\r\n"
                        "Location: /\r\n"
                        "Content-Type: text/html\r\n\r\n"
-                       "<div><h1>CONGRATS</h1></div";
+                       "<div><h1>HELLO WORLD</h1></div";
     send(socket, c201, strlen(c201), 0);
-    drop_client(socket);
 }
 
-void send_401(SOCKET socket)
+void connection_get(SOCKET socket, const char *path, const char *IPv6_Address)
 {
-    const char *c401 = "HTTP/1.1 401 Unauthorized\r\n\r\n";
-    send(socket, c401, strlen(c401), 0);
-    drop_client(socket);
-}
+    printf("Serving path: %s to: %s\n", path, IPv6_Address);
 
-void send_403(SOCKET socket)
-{
-    const char *c403 = "HTTP/1.1 403 Forbidden\r\n\r\n";
-    send(socket, c403, strlen(c403), 0);
-    drop_client(socket);
-}
-void send_302(SOCKET socket, const char *path, const char *username)
-{
-    char c302[52 + (strlen(path) + 1) + (strlen(username) + 1)];
-    sprintf(c302, "HTTP/1.1 302 Found\r\nLocation: %s\r\nSet-Cookie: %s\r\n\r\n", path, username);
-    send(socket, c302, strlen(c302), 0);
-    drop_client(socket);
-}
-
-void get_questions(SOCKET qb_socket, SOCKET socket)
-{
-    printf("%d:%d\n", qb_socket, socket);
-    char *get_example = "QUESTIONS\r\nP:2\r\n\r\n";
-    char res[MAXDATASIZE + 1];
-    if (send(qb_socket, get_example, strlen(get_example) + 1, 0) == -1)
+    if (strcmp(path, "/") == 0)
     {
-        perror("send");
-        exit(EXIT_FAILURE);
-    }
-
-    if (recv(qb_socket, res, 4096, 0) <= 0)
-    {
-        perror("recv");
-        exit(EXIT_FAILURE);
-    }
-    printf("response: \n%s", res);
-
-    send_404(socket);
-}
-
-int check_QB(SOCKET socket)
-{
-
-    /*
-     * first, check that the qb is still connected, if not quit under exit_failure
-     * if return is say 1, then the qb is still connected, so proceed with execution,
-     * add to some form of struct so can refernec later
-     * send the get questions command to the qb
-     * parse
-     * serve html
-     */
-    char *ping = "TM\r\nPING\r\n\r\n";
-    char response[MAXDATASIZE + 1];
-
-    if (send(socket, ping, strlen(ping) + 1, 0) == -1)
-    {
-        perror("QB disconnected");
-        return 1;
-    }
-
-    printf("QB is connected.\n");
-
-    if (recv(socket, response, 4096, 0) <= 0)
-    {
-        perror("QB Disconnection");
-        return 1;
-    }
-    printf("Received from QB: %s\n", response);
-    qb_info.socket = socket;
-    qb_info.type = 0;
-
-    return 0;
-}
-
-void handle_get(SOCKET socket, HTTPRequest request)
-{
-    char *path = request.request_line.search(&request.request_line, "uri", strlen("uri"));
-    if (strstr(path, ".."))
-    {
-        send_400(socket);
-        return;
+        path = "/index.html";
     }
     if (strlen(path) > 100)
     {
         send_400(socket);
         return;
     }
-
-    if (strcmp(path, "/") == 0)
+    if (strstr(path, ".."))
     {
-        path = "/index.html";
-    }
-    else
-    {
-        char *cookie = request.header_fields.search(&request.header_fields, "Cookie", strlen("Cookie"));
-
-        if (cookie && strcmp(path, "/login") == 0)
-        {
-            // makes login a protected path
-            send_302(socket, "/", cookie);
-        }
-        else if (strcmp(path, "/login") == 0 && cookie == NULL)
-        {
-            path = "/login.html";
-        }
-
-        if (strcmp(path, "/logout") == 0 && cookie != NULL)
-        {
-            strcat(cookie, "; expires=Thu, 01 Jan 1970 00:00:00 GMT");
-            send_302(socket, "/", cookie);
-            return;
-        }
-        else if (strcmp(path, "/logout") == 0 && cookie == NULL)
-        {
-            send_302(socket, "/", "user=; expires=Thu, 01 Jan 1970 00:00:00 GMT");
-            return;
-        }
-        // ?  need this as we arent gonna dynam render pages for each user as dont have enuf time
-        if (strstr(path, "/profile/") != NULL)
-        {
-            strtok(path, "/");
-            strcat(path, "/index.html");
-        }
-        if (strcmp(path, "/quiz") == 0)
-        {
-            /* todo
-            ** 1. send request to qb for question/questions
-            ** 2. render page with questions
-            */
-            strcat(path, "/index.html");
-        }
-        if (strcmp(path, "/quiz/start") == 0)
-        {
-            if (qb_info.socket == 0)
-            {
-                send_400(socket);
-            }
-            get_questions(qb_info.socket, socket);
-            return;
-            // strcat(path, ".html");
-        }
+        send_400(socket);
+        return;
     }
     char full_path[128];
+    // ! change this part here to make it work wihtout static files, but we might be able to use static files
     sprintf(full_path, "public%s", path);
-    printf("\nfull path: %s\n", full_path);
+
     FILE *fp = fopen(full_path, "rb");
 
     if (!fp)
@@ -416,57 +286,21 @@ void handle_get(SOCKET socket, HTTPRequest request)
     sprintf(buffer, "\r\n");
     send(socket, buffer, strlen(buffer), 0);
 
-    size_t r = fread(buffer, 1, BSIZE, fp);
+    int r = fread(buffer, 1, BSIZE, fp);
     while (r)
     {
         send(socket, buffer, r, 0);
         r = fread(buffer, 1, BSIZE, fp);
     }
     fclose(fp);
-
-    // http_request_destructor(&request);
 }
 
-void handle_post(HTTPRequest response, SOCKET socket)
-{
-    char *url = (char *)response.request_line.search(&response.request_line, "uri", strlen("uri"));
-    if (strcmp(url, "/login") == 0)
-    {
-        char *username = (char *)response.body.search(&response.body, "username", strlen("username") * sizeof(char) + 1);
-        char *password = (char *)response.body.search(&response.body, "password", strlen("password") * sizeof(char) + 1);
-        printf("\n%s is attempting to sign in with the password %s\n", username, password);
-        TESTINFO *student = hashtable_get(hashtable, username);
-        printf("Checking %s against %s and %s against %s\n", username, student->user, password, student->pw);
-        if (strcmp(username, student->user) == 0 && strcmp(password, student->pw) == 0)
-        {
-            // ! assume that the username isnt longer than 18 characters
-            // todo maybe change path to pointer and get it to work with sprintf or strcat
-            printf("Sign in success\n");
-            char *path = calloc(1, strlen(student->user) * sizeof(char) + sizeof("/profile/%s") + 1);
-            char *cookie = calloc(1, strlen(student->user) * sizeof(char) + sizeof("user=%s") + 1);
-            CHECK_ALLOC(path);
-            CHECK_ALLOC(cookie);
-            sprintf(path, "/profile/%s", username);
-            sprintf(cookie, "user=%s", username);
-            send_302(socket, path, cookie);
-            free(path);
-        }
-        else
-        {
-            printf("\n\ndoenst match\n");
-            send_401(socket);
-        }
-    }
-    // http_request_destructor(&response);
-}
-
-void parse_request(char *response_string, SOCKET socket)
+void connection_post(int socket, char *response_string)
 {
     HTTPRequest response;
-
-    char duplicate[strlen(response_string) + 1];
+    (void)socket;
+    char duplicate[strlen(response_string)];
     strcpy(duplicate, response_string);
-
     for (int i = 0; i < (int)strlen(response_string) - 1; i++)
     {
         if (response_string[i] == '\n' && response_string[i + 1] == '\n')
@@ -481,56 +315,37 @@ void parse_request(char *response_string, SOCKET socket)
     extract_header_fields(&response, header_fields);
     extract_request_line_fields(&response, request_line);
     extract_body(&response, body);
-    /*! keeping for debugging incase something happens and everything breaks
-    for (int i = 0; i < response.header_fields.keys.length; i++)
-    {
-        printf("%s:%s\n", (char *)response.header_fields.keys.head->data, (char *)response.header_fields.search(&response.header_fields,
-        (char *)response.header_fields.keys.head->data, strlen((char *)response.header_fields.keys.head->data)));
-        response.header_fields.keys.head = response.header_fields.keys.head->next;
-    } */
-    // ! maybe get rid of
-    char *method = (char *)response.request_line.search(&response.request_line, "method", strlen("method"));
-    if (strcmp(method, "GET") == 0)
-    {
-        handle_get(socket, response);
-    }
-    else if (strcmp(method, "POST") == 0)
-    {
-        handle_post(response, socket);
-    }
-    else
-    {
-        // todo change to a  http response function to indicate we aint got a clue what they are doing
-        // ! lmao github copilot
-        printf("Method unknown\n");
-    }
+    printf("%s:%s\n", (char *)response.body.search(&response.body, "name", strlen("name")), (char *)response.body.search(&response.body, "surname", strlen("surname")));
+
+    send_201(socket);
 }
 
-void received(int new_fd, int numbytes, char *buf)
+void received(int new_fd, int numbytes, char *buf, const char *IPv6_Address)
 {
     // todo maybe change up how this is dealt with as its a big messy
     int client_received = 0;
     if (numbytes < 1)
     {
         fprintf(stderr, "Unexpected disconnect from client.\n");
-        drop_client(new_fd);
+        // drop_client(new_fd);
     }
     else
     {
+        printf("%s\n\n", buf);
         char original[strlen(buf)];
         strcpy(original, buf);
         client_received += numbytes;
         buf[client_received] = 0;
         char *res = strstr(buf, "\r\n\r\n");
-        // ! double check importance of this if statements and nested stuff later
+
         if (res)
         {
             *res = 0;
             if (strncmp(buf, "GET", 3) == 0)
             {
                 char *path = buf + 4;
+
                 char *end_path = strstr(path, " ");
-                // printf("%s", end_path);
                 if (!end_path)
                 {
                     send_400(new_fd);
@@ -538,24 +353,16 @@ void received(int new_fd, int numbytes, char *buf)
                 else
                 {
                     *end_path = 0;
-                    parse_request(original, new_fd);
+                    connection_get(new_fd, path, IPv6_Address);
                 }
             }
             else if (strncmp(buf, "POST", 4) == 0)
             {
-                parse_request(original, new_fd);
-            }
-            else if (strncmp(buf, "QB", 2) == 0)
-            {
-                if (check_QB(new_fd) == -1)
-                {
-                    perror("check_QB: QB Disconnect");
-                    exit(EXIT_FAILURE);
-                }
+                connection_post(new_fd, original);
             }
             else
             {
-                // todo  unknown request figure out how to handle
+                // unknown request figure out how to handle
                 send_400(new_fd);
             }
         }
@@ -567,78 +374,52 @@ void manage_connection(SOCKET sockfd)
 
     struct sockaddr_storage their_addr; // connector's address information
     socklen_t sin_size;
-    fd_set current_sockets, ready_sockets;
-    int new_fd;
-    ssize_t numbytes;
+    int new_fd, numbytes;
+    char s[INET_ADDRSTRLEN];
     char buf[MAXDATASIZE + 1];
-
-    FD_ZERO(&current_sockets);
-    FD_SET(sockfd, &current_sockets);
 
     printf("Server: waiting for connections...\n");
 
     while (1)
     {
-        ready_sockets = current_sockets;
-        if (select(FD_SETSIZE, &ready_sockets, NULL, NULL, NULL) < 0)
+        sin_size = sizeof their_addr;
+        new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
+        if (new_fd == -1)
         {
-            perror("select");
-            exit(EXIT_FAILURE);
+            fprintf(stdout, "Client connection failed\n");
+            continue;
         }
-
-        for (int i = 0; i < FD_SETSIZE; i++)
-        {
-            if (FD_ISSET(i, &ready_sockets))
-            {
-                if (i == sockfd)
-                {
-                    sin_size = sizeof their_addr;
-                    new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
-                    if (new_fd == -1)
-                    {
-                        fprintf(stdout, "Client connection failed\n");
-                        continue;
-                    }
-                    FD_SET(new_fd, &current_sockets);
-                }
-                else
-                {
-                    if ((numbytes = recv(i, buf, sizeof buf, 0)) == -1)
-                    {
-                        perror("recv");
-                        exit(EXIT_FAILURE);
-                    }
-                    else
-                    {
-                        received(i, numbytes, buf);
-                    }
-                    FD_CLR(i, &current_sockets);
-                }
-            }
-        }
-        // sin_size = sizeof their_addr;
-        // new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
-        // if (new_fd == -1)
-        // {
-        //     fprintf(stdout, "Client connection failed\n");
-        //     continue;
-        // }
+        inet_ntop(their_addr.ss_family,
+                  get_in_addr((struct sockaddr *)&their_addr),
+                  s, sizeof s);
 
         // if (!fork())
         // {
-        //     close(sockfd);
+            // close(sockfd);
+            while(1) {
 
-        //     if ((numbytes = recv(new_fd, buf, sizeof buf, 0)) == -1)
-        //     {
-        //         perror("recv");
-        //         exit(1);
-        //     }
-        //     else
-        //     {
-        //         received(new_fd, numbytes, buf);
-        //     }
-        //     close(new_fd);
-        //     exit(0);
+            if ((numbytes = recv(new_fd, buf, sizeof buf, 0)) == -1)
+            {
+                // perror("recv");
+                // printf("%s\n", buf);
+                // exit(1);
+                close(sockfd);
+                close(new_fd);
+                break;
+            }
+            else
+            {
+                printf("msg: %s", buf);
+                sleep(1);
+                // Q = question, P = python, 1 = number. similarly, QP10 would be for ten qs.
+                // since every QB only has one subject, the P isnt actually required.
+                char *req = "QP1";
+                send(new_fd, req, strlen(req), 0);
+                // received(new_fd, numbytes, buf, s);
+            }
+            // close(new_fd);
+            // exit(0);
+            }
         // }
         // close(new_fd);
     }
@@ -725,22 +506,10 @@ int main(int argc, char *argv[])
     {
         usage();
     }
-    // Read in the data of students from a csv
-    int numStudents = 0;
-    char **studentNames = NULL;
-    hashtable = hashtable_new();
-    getData(hashtable, &numStudents, &studentNames, FILEPATH);
 
-    // Server stuff idk
     SOCKET socket = bind_socket(get_info(argv[1]));
 
     manage_connection(socket);
-    // ! dosnt work on bens machine
-    // writes any changed data back to the csv when finished
-    // writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
-    // for(int i = 0; i < numStudents; i++) {
-    //     TESTINFO *student = hashtable_get(hashtable, studentNames[i]);
-    //     printf("Student data for %s loaded in\n", student->user);
-    // }
+
     return 0;
 }

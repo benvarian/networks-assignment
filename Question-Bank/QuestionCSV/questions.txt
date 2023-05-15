@@ -1,0 +1,10 @@
+What is the keyword used in C to declare a variable?: var:int:float:double:int
+Which of the following operators is used for pointer access in C?: :&:->::->
+What is the format specifier for a character in C?: %c:%d:%s:%f:%c
+What is the function used to read input from the user in C?: read():scanf():gets():getchar():scanf()
+Which of the following data types can store only whole numbers in C?: int:float:double:char:int
+What is the loop construct used in C to repeat a block of code until a condition is met?: for:while:do-while:switch:while
+What is the symbol used for a single line comment in C?: //:#:/://
+What is the difference between a function and a procedure in C?: A function returns a value, while a procedure does not.:A procedure returns a value, while a function does not.:A function has arguments, while a procedure does not.:A procedure has arguments, while a function does not.A function returns a value, while a procedure does not.
+Which of the following is used to exit from a loop in C?: break:continue:exit:return:break
+What is the keyword used in C to define a constant?: const:define:constant:constval:const
