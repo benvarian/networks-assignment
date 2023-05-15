@@ -465,7 +465,7 @@ void received(int new_fd, int numbytes, char *buf)
             }
             else if (strncmp(buf, "QP", 2) == 0)
             {
-                send(new_fd, "hello", 4, 0);
+                send(new_fd, "QP10", 4, 0);
             }
             else
             {
