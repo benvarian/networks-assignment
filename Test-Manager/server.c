@@ -312,9 +312,6 @@ int check_QB(SOCKET socket)
     qb_info.socket = socket;
     qb_info.type = 0;
 
-    // send(socket, "QUESTIONS\r\nP:2", strlen("QUESTIONS\r\nP:2"), 0);
-
-    // printf("Message sent to QB\n");
     return 0;
 }
 
@@ -340,16 +337,25 @@ void handle_get(SOCKET socket, HTTPRequest request)
     {
         char *cookie = request.header_fields.search(&request.header_fields, "Cookie", strlen("Cookie"));
 
-        if (cookie && strstr(path, "/login") != NULL)
+        if (cookie && strcmp(path, "/login") == 0)
         {
             // makes login a protected path
             send_302(socket, "/", cookie);
         }
-        // ! causes seg fault when clicked twice, i aint fixing
-        if (strcmp(path, "/logout") == 0)
+        else if (strcmp(path, "/login") == 0 && cookie == NULL)
+        {
+            path = "/login.html";
+        }
+
+        if (strcmp(path, "/logout") == 0 && cookie != NULL)
         {
             strcat(cookie, "; expires=Thu, 01 Jan 1970 00:00:00 GMT");
             send_302(socket, "/", cookie);
+            return;
+        }
+        else if (strcmp(path, "/logout") == 0 && cookie == NULL)
+        {
+            send_302(socket, "/", "user=; expires=Thu, 01 Jan 1970 00:00:00 GMT");
             return;
         }
         // ?  need this as we arent gonna dynam render pages for each user as dont have enuf time
