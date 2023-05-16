@@ -272,12 +272,13 @@ void send_302(SOCKET socket, const char *path, const char *username)
 
     returns 0 if successful, -1 if not
 */
-int get_questions(char *student, SOCKET socket)
+int get_questions(char *student, SOCKET socket) 
 {
     // Check connection to both TMs
     for(int i = 0; i < NUM_QB; i++) {
         if(ping_QB(qb_info[i].socket) == -1) return -1;
     }
+    printf("student requesting: %s\n", student); // JUST TO GET COMPILER OFF MY BACK UNTIL I START USING THIS
     // Get how many questions of each language are being asked
     int c_questions = (rand() % NUM_QUESTIONS);
     int p_questions = NUM_QUESTIONS - c_questions;
@@ -313,6 +314,7 @@ int get_questions(char *student, SOCKET socket)
                 exit(EXIT_FAILURE);
             }
         }
+    }
     printf("C response: \n%s\n\n Python response:\n%s\n\n", c_response, p_response);
     free(c_response);
     free(p_response);
@@ -406,7 +408,6 @@ void handle_get(SOCKET socket, HTTPRequest request)
     else
     {
         char *cookie = request.header_fields.search(&request.header_fields, "Cookie", strlen("Cookie"));
-
         if (cookie && strcmp(path, "/login") == 0)
         {
             // makes login a protected path
@@ -449,8 +450,9 @@ void handle_get(SOCKET socket, HTTPRequest request)
             {
                 send_400(socket);
             }
-
-            //get_questions(qb_info.socket, socket);
+            char *student = cookie + 5; // plus 5 because cookie starts with 'user=XXXXX'
+            printf("\nStudent requesting to start quiz: %s\n", student);
+            if(get_questions(student, socket) == -1) perror("Cannot retrieve questions: Missing QB Connection\n");
             return;
             // strcat(path, ".html");
         }
@@ -508,7 +510,6 @@ void handle_post(HTTPRequest response, SOCKET socket)
         char *password = (char *)response.body.search(&response.body, "password", strlen("password") * sizeof(char) + 1);
         printf("\n%s is attempting to sign in with the password %s\n", username, password);
         TESTINFO *student = hashtable_get(hashtable, username);
-        printf("Checking %s against %s and %s against %s\n", username, student->user, password, student->pw);
         if (strcmp(username, student->user) == 0 && strcmp(password, student->pw) == 0)
         {
             // ! assume that the username isnt longer than 18 characters
