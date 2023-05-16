@@ -8,7 +8,7 @@
 #include "Data-Structures/Queue/Queue.h"
 
 HASHTABLE *hashtable;
-QBInformation qb_info;
+QBInformation *qb_info;
 
 // Parses out the request line to retrieve the method, uri, and http version.
 void extract_request_line_fields(struct HTTPRequest *request, char *request_line)
@@ -281,7 +281,7 @@ void get_questions(SOCKET qb_socket, SOCKET socket)
     send_404(socket);
 }
 
-int check_QB(SOCKET socket)
+int check_QB(SOCKET socket, enum QBType type)
 {
 
     /*
@@ -309,8 +309,19 @@ int check_QB(SOCKET socket)
         return 1;
     }
     printf("Received from QB: %s\n", response);
-    qb_info.socket = socket;
-    qb_info.type = 0;
+    bool assigned = false;
+    // Check if there is an available slot to host the QB
+    for(int i = 0; i < NUM_QB; i++) {
+        if(qb_info[i].socket == 0) { // slot is available
+            qb_info[i].socket = socket;
+            qb_info[i].type = type;
+            assigned = true;
+        }
+    }
+    if (assigned == false) {
+        printf("Cannot assign question bank: Already connected to 2 QBs\n");
+        return 1;
+    }
 
     return 0;
 }
@@ -517,8 +528,9 @@ void received(int new_fd, int numbytes, char *buf)
     }
     else
     {
-        char original[strlen(buf)];
+        char original[strlen(buf) + 1];
         strcpy(original, buf);
+        printf("BUFFER: %s\n", original);
         client_received += numbytes;
         buf[client_received] = 0;
         char *res = strstr(buf, "\r\n\r\n");
@@ -547,7 +559,15 @@ void received(int new_fd, int numbytes, char *buf)
             }
             else if (strncmp(buf, "QB", 2) == 0)
             {
-                if (check_QB(new_fd) == -1)
+                enum QBType type;
+                // See if QB is Python or C
+                if(strstr(buf, "PYTHON") != NULL) type = PYTHON;
+                else if(strstr(buf, "C") != NULL) type = C;
+                else {
+                    perror("QB is of unknown language");
+                    exit(EXIT_FAILURE);
+                }
+                if (check_QB(new_fd, type) == -1)
                 {
                     perror("check_QB: QB Disconnect");
                     exit(EXIT_FAILURE);
@@ -730,6 +750,9 @@ int main(int argc, char *argv[])
     char **studentNames = NULL;
     hashtable = hashtable_new();
     getData(hashtable, &numStudents, &studentNames, FILEPATH);
+    // Allocation for Question Banks
+    qb_info = (QBInformation *) calloc(NUM_QB, sizeof(struct QBInformation));
+    CHECK_ALLOC(qb_info);
     for (int i = 0; i < numStudents; i++)
     {
         TESTINFO *student = hashtable_get(hashtable, studentNames[i]);

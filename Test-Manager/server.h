@@ -19,6 +19,7 @@
 #define MAXDATASIZE 4095
 #define BSIZE 1024
 #define SOCKET int
+#define NUM_QB  2
 
 enum HTTPMethods
 {
@@ -94,6 +95,6 @@ void extract_body(HTTPRequest *request, char *body);
 
 void handle_post(HTTPRequest response, SOCKET socket);
 
-int check_QB(SOCKET socket);
+int check_QB(SOCKET socket, enum QBType type);
 
 void get_questions(SOCKET qb_socket, SOCKET socket);
