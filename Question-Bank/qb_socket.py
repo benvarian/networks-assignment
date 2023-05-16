@@ -13,8 +13,8 @@ import time
 import sys
 import random
 
-HOST = "localhost"  # Standard loopback interface address (localhost)
-PORT = 8080  # Port to listen on (non-privileged ports are > 1023)
+# HOST = "localhost"  # Standard loopback interface address (localhost)
+# PORT = 8080  # Port to listen on (non-privileged ports are > 1023)
 
 # p for python
 QB_SUBJECT = "PYTHON"
@@ -171,7 +171,7 @@ class Nick_Socket:
                 print("Invalid Request. Second val of q req should be in QTYPES")
                 self.send_error("q_typeError")
                 return
-            questions = ''.join(["qid:{}:type:{}:question:{}".format(q[0], q[1], q[2]) for q in QB_DB.get_rand_qs(int(q_num))])
+            questions = ''.join(["qid:{}&type:{}&question:{}".format(q[0], q[1], q[2]) for q in QB_DB.get_rand_qs(int(q_num))])
             self.send_questions(questions)
         # handle pings from tm just by making an elif as its a viable header 
         elif (mode_req == "TM\r\n"):
@@ -237,11 +237,12 @@ class Nick_Socket:
 # echo-server.py
 def main():
     try:
-        PORT=int(sys.argv[1])
+        HOST = sys.argv[1]
+        PORT=int(sys.argv[2])
     except:
-        print("\nUsage:\n python3 qb_socket.py {port}")
+        print("\nUsage:\n python3 qb_socket.py {IP-address} {port}")
         exit()
-
+    print("IP = ", HOST)
     print("PORT =", PORT)
     TM_socket = Nick_Socket(HOST, PORT)
     # binds to HOST, PORT.
