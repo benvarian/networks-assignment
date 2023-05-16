@@ -200,7 +200,6 @@ void writeToCSV(HASHTABLE *hashtable, int *numStudents, char **studentNames, cha
     fprintf(fp, "user,pw,qtype,qid,attemptsLeft,correct\n");
     for (int i = 0; i < *numStudents; i++)
     {
-        printf("%s\n", studentNames[i]);
         entry = hashtable_get(hashtable, studentNames[i]);
         char *types;
         char *qid;

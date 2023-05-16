@@ -9,6 +9,8 @@
 
 HASHTABLE *hashtable;
 QBInformation *qb_info;
+int numStudents = 0;
+char **studentNames;
 
 // Parses out the request line to retrieve the method, uri, and http version.
 void extract_request_line_fields(struct HTTPRequest *request, char *request_line)
@@ -281,7 +283,7 @@ void get_questions(SOCKET qb_socket, SOCKET socket)
     send_404(socket);
 }
 
-int check_QB(SOCKET socket, enum QBType type)
+int ping_QB(SOCKET socket)
 {
 
     /*
@@ -298,7 +300,7 @@ int check_QB(SOCKET socket, enum QBType type)
     if (send(socket, ping, strlen(ping) + 1, 0) == -1)
     {
         perror("QB disconnected");
-        return 1;
+        return -1;
     }
 
     printf("QB is connected.\n");
@@ -306,23 +308,43 @@ int check_QB(SOCKET socket, enum QBType type)
     if (recv(socket, response, 4096, 0) <= 0)
     {
         perror("QB Disconnection");
-        return 1;
+        return -1;
     }
     printf("Received from QB: %s\n", response);
-    bool assigned = false;
-    // Check if there is an available slot to host the QB
+
+    return 0;
+}
+
+int connect_QB(SOCKET socket, enum QBType type) {
+    // first make sure qb is alive
+    if (ping_QB(socket) != 0) {
+        perror("Cannot connect to QB");
+        return -1;
+    }
+    
+    // check any existing connections to ensure no QB has disconnected
+    bool space_available = false;
     for(int i = 0; i < NUM_QB; i++) {
-        if(qb_info[i].socket == 0) { // slot is available
-            qb_info[i].socket = socket;
-            qb_info[i].type = type;
-            assigned = true;
+        if (ping_QB(qb_info[i].socket) == -1) {
+            qb_info[i].type = NONE;
+            space_available = true;
         }
     }
-    if (assigned == false) {
-        printf("Cannot assign question bank: Already connected to 2 QBs\n");
-        return 1;
+    // assign QB to an open space
+    if(space_available) {
+        for(int i = 0; i < NUM_QB; i++) {
+            if(qb_info[i].type == NONE) {
+                qb_info[i].socket = socket;
+                qb_info[i].type = type;
+                break;
+            }
+        }
     }
-
+    else {
+        printf("Cannot assign question bank: Already connected to 2 QBs\n");
+        return -1;
+    }
+    printf("QB INFORMATION:\nQB SLOT 1 TYPE: %d\nQB SLOT 2 TYPE: %d\n", qb_info[0].type, qb_info[1].type);
     return 0;
 }
 
@@ -385,11 +407,13 @@ void handle_get(SOCKET socket, HTTPRequest request)
         }
         if (strcmp(path, "/quiz/start") == 0)
         {
-            if (qb_info.socket == 0)
+            // check both QBs are connected first
+            if (qb_info[0].socket == 0 || qb_info[1].socket == 0)
             {
                 send_400(socket);
             }
-            get_questions(qb_info.socket, socket);
+
+            //get_questions(qb_info.socket, socket);
             return;
             // strcat(path, ".html");
         }
@@ -530,7 +554,6 @@ void received(int new_fd, int numbytes, char *buf)
     {
         char original[strlen(buf) + 1];
         strcpy(original, buf);
-        printf("BUFFER: %s\n", original);
         client_received += numbytes;
         buf[client_received] = 0;
         char *res = strstr(buf, "\r\n\r\n");
@@ -565,12 +588,11 @@ void received(int new_fd, int numbytes, char *buf)
                 else if(strstr(buf, "C") != NULL) type = C;
                 else {
                     perror("QB is of unknown language");
-                    exit(EXIT_FAILURE);
                 }
-                if (check_QB(new_fd, type) == -1)
+                // Try to connect to QB
+                if (connect_QB(new_fd, type) == -1)
                 {
-                    perror("check_QB: QB Disconnect");
-                    exit(EXIT_FAILURE);
+                    perror("Failed to connect to new QB");
                 }
             }
             else
@@ -595,7 +617,7 @@ void manage_connection(SOCKET sockfd)
     FD_ZERO(&current_sockets);
     FD_SET(sockfd, &current_sockets);
 
-    printf("Server: waiting for connections...\n");
+    printf("Server: waiting for connections...\n\n");
 
     while (1)
     {
@@ -746,25 +768,26 @@ int main(int argc, char *argv[])
         usage();
     }
     // Read in the data of students from a csv
-    int numStudents = 0;
-    char **studentNames = NULL;
     hashtable = hashtable_new();
     getData(hashtable, &numStudents, &studentNames, FILEPATH);
     // Allocation for Question Banks
     qb_info = (QBInformation *) calloc(NUM_QB, sizeof(struct QBInformation));
     CHECK_ALLOC(qb_info);
+    for (int i = 0; i < NUM_QB; i++) {
+        qb_info[i].socket = 0;
+        qb_info[i].type = NONE;
+    }
     for (int i = 0; i < numStudents; i++)
     {
         TESTINFO *student = hashtable_get(hashtable, studentNames[i]);
         printf("Student data for %s loaded in\n", student->user);
     }
-    writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
+    printf("\n");
     // Server stuff idk
     SOCKET socket = bind_socket(get_info(argv[1]));
 
     manage_connection(socket);
-    // ! dosnt work on bens machine
     // writes any changed data back to the csv when finished
-
+    writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
     return 0;
 }

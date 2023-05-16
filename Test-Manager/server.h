@@ -36,6 +36,7 @@ enum HTTPMethods
 
 enum QBType
 {
+    NONE,
     PYTHON,
     C
 };
@@ -95,6 +96,8 @@ void extract_body(HTTPRequest *request, char *body);
 
 void handle_post(HTTPRequest response, SOCKET socket);
 
-int check_QB(SOCKET socket, enum QBType type);
+int ping_QB(SOCKET socket);
+
+int connect_QB(SOCKET socket, enum QBType type);
 
 void get_questions(SOCKET qb_socket, SOCKET socket);
