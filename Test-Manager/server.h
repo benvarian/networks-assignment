@@ -100,4 +100,4 @@ int ping_QB(SOCKET socket);
 
 int connect_QB(SOCKET socket, enum QBType type);
 
-void get_questions(SOCKET qb_socket, SOCKET socket);
+int get_questions(char *student, SOCKET socket);

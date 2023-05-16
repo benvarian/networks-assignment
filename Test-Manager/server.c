@@ -262,25 +262,62 @@ void send_302(SOCKET socket, const char *path, const char *username)
     drop_client(socket);
 }
 
-void get_questions(SOCKET qb_socket, SOCKET socket)
+/*  Gets two random integers that add up to NUM_QUESTIONS
+    and requests that many questions from the two QBs
+    after checking both QBs are connected
+
+    Sends the questions to be added to the hashtable
+
+    takes the student name who is requesting the questions
+
+    returns 0 if successful, -1 if not
+*/
+int get_questions(char *student, SOCKET socket)
 {
-    printf("%d:%d\n", qb_socket, socket);
+    // Check connection to both TMs
+    for(int i = 0; i < NUM_QB; i++) {
+        if(ping_QB(qb_info[i].socket) == -1) return -1;
+    }
+    // Get how many questions of each language are being asked
+    int c_questions = (rand() % NUM_QUESTIONS);
+    int p_questions = NUM_QUESTIONS - c_questions;
+    printf("Getting %i C questions and %i Python questions", c_questions, p_questions);
     char *get_example = "QUESTIONS\r\nP:2\r\n\r\n";
-    char res[MAXDATASIZE + 1];
-    if (send(qb_socket, get_example, strlen(get_example) + 1, 0) == -1)
-    {
-        perror("send");
-        exit(EXIT_FAILURE);
-    }
-
-    if (recv(qb_socket, res, 4096, 0) <= 0)
-    {
-        perror("recv");
-        exit(EXIT_FAILURE);
-    }
-    printf("response: \n%s", res);
-
+    char *c_response = calloc(1, MAXDATASIZE + 1);
+    CHECK_ALLOC(c_response);
+    char *p_response = calloc(1, MAXDATASIZE + 1);
+    CHECK_ALLOC(p_response);
+    // Ask for questions from QB
+    for(int i = 0; i < NUM_QB; i++) {
+        if(qb_info[i].type == PYTHON) {
+            if (send(qb_info[i].socket, get_example, strlen(get_example) + 1, 0) == -1)
+            {
+                perror("send");
+                exit(EXIT_FAILURE);
+            }
+            if (recv(qb_info[i].socket, p_response, 4096, 0) <= 0)
+            {
+                perror("recv");
+                exit(EXIT_FAILURE);
+            }
+        }
+        else if(qb_info[i].type == C) {
+            if (send(qb_info[i].socket, get_example, strlen(get_example) + 1, 0) == -1)
+            {
+                perror("send");
+                exit(EXIT_FAILURE);
+            }
+            if (recv(qb_info[i].socket, c_response, 4096, 0) <= 0)
+            {
+                perror("recv");
+                exit(EXIT_FAILURE);
+            }
+        }
+    printf("C response: \n%s\n\n Python response:\n%s\n\n", c_response, p_response);
+    free(c_response);
+    free(p_response);
     send_404(socket);
+    return 0;
 }
 
 int ping_QB(SOCKET socket)
