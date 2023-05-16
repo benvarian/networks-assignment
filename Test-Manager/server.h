@@ -12,6 +12,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <sys/select.h>
+#include <time.h>
 
 #include "Data-Structures/Dictionary/Dictionary.h"
 
