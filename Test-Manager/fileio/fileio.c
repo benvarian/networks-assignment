@@ -130,11 +130,11 @@ void getData(HASHTABLE *hashtable, int *numStudents, char ***studentNames, char 
         for (int i = 0; i < NUM_QUESTIONS; i++)
         {
             if (strcmp(typetok, "M") == 0)
-                types[i] = (enum qType)M;
+                types[i] = (enum qType) M;
             else if (strcmp(typetok, "P") == 0)
-                types[i] = (enum qType)P;
+                types[i] = (enum qType) P;
             else
-                types[i] = (enum qType)N; // ERROR: SHOULD BE M OR P NOT NOTHING
+                types[i] = (enum qType) N; // ERROR: SHOULD BE M OR P NOT NOTHING
             typetok = strtok_r(NULL, "$", &savetype);
         }
 

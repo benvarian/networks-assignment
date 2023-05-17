@@ -28,7 +28,8 @@ QB_HEADER = "QB " + QB_SUBJECT + "\r\n"
 MARK_HEADER = "MARK\r\n"
 QUESTION_HEADER = "QUESTIONS\r\n"
 ERROR_HEADER = "ERROR\r\n"
-
+ANSWER_HEADER = "ANSWER\r\n"
+GETQUESTION_HEADER = "GETQUESTION\r\n"
 END_HEADER = "\r\n"
 
 END_MSG = "\r\n\0"
@@ -137,6 +138,44 @@ class QB_Socket_Connection:
         if sent == 0:
             raise RuntimeError("Socket Connection Broken")
 
+    def send_question(self, msg):
+        """Sends a single question to the TM
+            In form:
+            "QB {subject}
+             GETQUESTION
+             
+             {question string}
+             \0"
+
+        Args:
+            msg (String): msg to be sent
+
+        Raises:
+            RuntimeError: if socket connection is broken
+        """
+        # msg = QB_HEADER + QUESTION_HEADER + END_HEADER + "QUESTIONS:" + msg + END_MSG
+        msg = QB_HEADER + GETQUESTION_HEADER + END_HEADER  + msg + END_MSG
+        MSGLEN = len(msg)
+        byte_msg = msg.encode()
+        print("\nsending questions:\nMSGLEN:",  MSGLEN, "\nmsg:", msg, "\n")
+
+        sent = self.sock.send(byte_msg)
+        if sent == 0:
+            raise RuntimeError("Socket Connection Broken")
+        
+        
+    # sends string along sock
+    def send_answer(self, msg):
+        msg = QB_HEADER + ANSWER_HEADER + END_HEADER + msg + END_MSG
+        MSGLEN = len(msg)
+        byte_msg = msg.encode()
+
+        print("\nsending questions:\nMSGLEN:",  MSGLEN, "\nmsg:", msg, "\n")
+
+        sent = self.sock.send(byte_msg)
+        if sent == 0:
+            raise RuntimeError("Socket Connection Broken")
+
     def send_mark(self, mark):
         """Sends mark of question to TM.
             of form:
@@ -221,7 +260,7 @@ class QB_Socket_Connection:
         """
         msg = msg.decode("utf-8").split("\r\n")
         mode_req = msg[0] + "\r\n"
-
+        print(f"MESSAGE RECEIVED: {msg}")
         if (mode_req == MARK_HEADER):
             qid, ans = msg[1].split(":")
             # mark = random.randint(0, 1)
@@ -237,9 +276,21 @@ class QB_Socket_Connection:
                 self.send_error("q_typeError")
                 return
             # mandatory extra long one-liner in order to be more 'pythonic'
-            questions = ''.join(["qid:{}&type:{}&question:{}&".format(q[0], q[1], q[2]) for q in QB_DB.get_rand_qs(int(q_num))])[:-1]
+            questions = ''.join(["&{}:{}".format(q[0], q[1]) for q in QB_DB.get_rand_qs(int(q_num))])
+            questions.join("&")
             self.send_questions(questions)
-        # handle pings from tm
+        elif(mode_req == ANSWER_HEADER):
+            # removes null terminator
+            qid = int(msg[1][:-1])
+            question = QB_DB.get_q_by_id(qid)
+            answer = question[2]
+            self.send_answer(answer)
+        # handle pings from tm just by making an elif as its a viable header 
+        elif(mode_req == GETQUESTION_HEADER):
+            # removes null terminator
+            qid = int(msg[1][:-1])
+            question = QB_DB.get_q_by_id(qid)
+            self.send_question(question[1])
         elif (mode_req == "TM\r\n"):
             print("TM PINGED QB, Responding with ACCEPTED PING")
             self.send_response()
