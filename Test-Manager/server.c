@@ -222,7 +222,8 @@ void send_400(SOCKET socket)
     drop_client(socket);
 }
 
-void send_QB_disconnected(SOCKET socket) {
+void send_QB_disconnected(SOCKET socket)
+{
     const char *c400 = "HTTP/1.1 400 Bad Request\r\n"
                        "Connection: close\r\n"
                        "Content-Length: 35\r\n\r\nCannot Start Quiz: QB Not Connected";
@@ -280,11 +281,13 @@ void send_302(SOCKET socket, const char *path, const char *username)
 
     returns 0 if successful, -1 if not
 */
-int get_questions(char *student, SOCKET socket) 
+int get_questions(char *student, SOCKET socket)
 {
     // Check connection to both TMs
-    for(int i = 0; i < NUM_QB; i++) {
-        if(ping_QB(qb_info[i].socket) == -1) return -1;
+    for (int i = 0; i < NUM_QB; i++)
+    {
+        if (ping_QB(qb_info[i].socket) == -1)
+            return -1;
     }
     printf("student requesting: %s\n", student); // JUST TO GET COMPILER OFF MY BACK UNTIL I START USING THIS
     // Get how many questions of each language are being asked
@@ -298,8 +301,10 @@ int get_questions(char *student, SOCKET socket)
     char *p_response = calloc(1, MAXDATASIZE + 1);
     CHECK_ALLOC(p_response);
     // Ask for questions from QB
-    for(int i = 0; i < NUM_QB; i++) {
-        if(qb_info[i].type == PYTHON) {
+    for (int i = 0; i < NUM_QB; i++)
+    {
+        if (qb_info[i].type == PYTHON)
+        {
             // create the request string, with the language and number of questions needed
             char p_request[64];
             sprintf(p_request, "QUESTIONS\r\n%s:%i\r\n\r\n", "P", p_questions);
@@ -315,7 +320,8 @@ int get_questions(char *student, SOCKET socket)
                 exit(EXIT_FAILURE);
             }
         }
-        else if(qb_info[i].type == C) {
+        else if (qb_info[i].type == C)
+        {
             // create the request string, with the language and number of questions needed
             char c_request[64];
             sprintf(c_request, "QUESTIONS\r\n%s:%i\r\n\r\n", "C", c_questions);
@@ -342,15 +348,6 @@ int get_questions(char *student, SOCKET socket)
 
 int ping_QB(SOCKET socket)
 {
-
-    /*
-     * first, check that the qb is still connected, if not quit under exit_failure
-     * if return is say 1, then the qb is still connected, so proceed with execution,
-     * add to some form of struct so can refernec later
-     * send the get questions command to the qb
-     * parse
-     * serve html
-     */
     char *ping = "TM\r\nPING\r\n\r\n";
     char response[MAXDATASIZE + 1];
 
@@ -372,32 +369,40 @@ int ping_QB(SOCKET socket)
     return 0;
 }
 
-int connect_QB(SOCKET socket, enum QBType type) {
+int connect_QB(SOCKET socket, enum QBType type)
+{
     // first make sure qb is alive
-    if (ping_QB(socket) != 0) {
+    if (ping_QB(socket) != 0)
+    {
         perror("Cannot connect to QB");
         return -1;
     }
-    
+
     // check any existing connections to ensure no QB has disconnected
     bool space_available = false;
-    for(int i = 0; i < NUM_QB; i++) {
-        if (ping_QB(qb_info[i].socket) == -1) {
+    for (int i = 0; i < NUM_QB; i++)
+    {
+        if (ping_QB(qb_info[i].socket) == -1)
+        {
             qb_info[i].type = NONE;
             space_available = true;
         }
     }
     // assign QB to an open space
-    if(space_available) {
-        for(int i = 0; i < NUM_QB; i++) {
-            if(qb_info[i].type == NONE) {
+    if (space_available)
+    {
+        for (int i = 0; i < NUM_QB; i++)
+        {
+            if (qb_info[i].type == NONE)
+            {
                 qb_info[i].socket = socket;
                 qb_info[i].type = type;
                 break;
             }
         }
     }
-    else {
+    else
+    {
         printf("Cannot assign question bank: Already connected to 2 QBs\n");
         return -1;
     }
@@ -455,10 +460,6 @@ void handle_get(SOCKET socket, HTTPRequest request)
         }
         if (strcmp(path, "/quiz") == 0)
         {
-            /* todo
-            ** 1. send request to qb for question/questions
-            ** 2. render page with questions
-            */
             strcat(path, "/index.html");
         }
         if (strcmp(path, "/quiz/start") == 0)
@@ -468,9 +469,11 @@ void handle_get(SOCKET socket, HTTPRequest request)
             {
                 send_QB_disconnected(socket);
             }
-            char *student = cookie + 5; // plus 5 because cookie starts with 'user=XXXXX'
+            // plus 5 because cookie starts with 'user=XXXXX'
+            char *student = cookie + 5;
             printf("\nStudent requesting to start quiz: %s\n", student);
-            if(get_questions(student, socket) == -1) {
+            if (get_questions(student, socket) == -1)
+            {
                 printf("Cannot retrieve questions: Missing QB Connection\n");
                 send_QB_disconnected(socket);
             }
@@ -533,8 +536,6 @@ void handle_post(HTTPRequest response, SOCKET socket)
         TESTINFO *student = hashtable_get(hashtable, username);
         if (strcmp(username, student->user) == 0 && strcmp(password, student->pw) == 0)
         {
-            // ! assume that the username isnt longer than 18 characters
-            // todo maybe change path to pointer and get it to work with sprintf or strcat
             printf("Sign in success\n");
             char *path = calloc(1, strlen(student->user) * sizeof(char) + sizeof("/profile/%s") + 1);
             char *cookie = calloc(1, strlen(student->user) * sizeof(char) + sizeof("user=%s") + 1);
@@ -582,7 +583,6 @@ void parse_request(char *response_string, SOCKET socket)
         (char *)response.header_fields.keys.head->data, strlen((char *)response.header_fields.keys.head->data)));
         response.header_fields.keys.head = response.header_fields.keys.head->next;
     } */
-    // ! maybe get rid of
     char *method = (char *)response.request_line.search(&response.request_line, "method", strlen("method"));
     if (strcmp(method, "GET") == 0)
     {
@@ -595,14 +595,13 @@ void parse_request(char *response_string, SOCKET socket)
     else
     {
         // todo change to a  http response function to indicate we aint got a clue what they are doing
-        // ! lmao github copilot
         printf("Method unknown\n");
     }
 }
 
 void received(int new_fd, int numbytes, char *buf)
 {
-    // todo maybe change up how this is dealt with as its a big messy
+    // ! maybe change up how this is dealt with as its a big messy
     int client_received = 0;
     if (numbytes < 1)
     {
@@ -643,9 +642,12 @@ void received(int new_fd, int numbytes, char *buf)
             {
                 enum QBType type;
                 // See if QB is Python or C
-                if(strstr(buf, "PYTHON") != NULL) type = PYTHON;
-                else if(strstr(buf, "C") != NULL) type = C;
-                else {
+                if (strstr(buf, "PYTHON") != NULL)
+                    type = PYTHON;
+                else if (strstr(buf, "C") != NULL)
+                    type = C;
+                else
+                {
                     perror("QB is of unknown language");
                 }
                 // Try to connect to QB
@@ -830,9 +832,10 @@ int main(int argc, char *argv[])
     hashtable = hashtable_new();
     getData(hashtable, &numStudents, &studentNames, FILEPATH);
     // Allocation for Question Banks
-    qb_info = (QBInformation *) calloc(NUM_QB, sizeof(struct QBInformation));
+    qb_info = (QBInformation *)calloc(NUM_QB, sizeof(struct QBInformation));
     CHECK_ALLOC(qb_info);
-    for (int i = 0; i < NUM_QB; i++) {
+    for (int i = 0; i < NUM_QB; i++)
+    {
         qb_info[i].socket = 0;
         qb_info[i].type = NONE;
     }
