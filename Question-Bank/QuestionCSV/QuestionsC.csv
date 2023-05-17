@@ -14,8 +14,13 @@
 26,M,What will be the output of the following C code?\y<code>\yint main() {\y    char str[] = "Hello\c World!";\y    printf("%s"\c str + 7);\y    return 0;\y}\y</code>\y<br>A)Hello\c World!<br>B)World!<br>C)Hello\c<br>D)!,B
 28,M,What will be the output of the following C code?\y<code>\yint main() {\y    int x = 10;\y    int y = x++;\y    printf("%d %d"\c x\c y);\y    return 0;\y}\y</code>\y<br>A)10 10<br>B)11 10<br>C)11 11<br>D)10 11<br>,B
 30,M,What does the "static" keyword do in C?<br>A)It makes a variable or function visible only within the file it's declared.<br>B)It makes a variable or function visible throughout the program.<br>C)It makes a variable or function change its value every time it's accessed.<br>D)It makes a variable or function keep its value between function calls.<br>,A
-32,P,Write a function named 'function' that takes an array and its size as input and returns the sum of all elements in the array. The function prototype should look like: 'int function(int* arr\c int size);',1|1
-34,P,Write a function named 'function' that takes two integers as parameters and returns their product. The function prototype should look like: 'int function(int a\c int b);',1|1
-36,P,Write a function named 'function' that takes a null-terminated string as input and returns a new dynamically allocated reversed string. Remember to free memory after use. The function prototype should look like: 'char* function(char* str);',1|1
-38,P,Write a function named 'function' that takes an array of integers and its size as input and returns the maximum value in the array. The function prototype should look like: 'int function(int* arr\c int size);',1|1
-40,P,Write a function named 'function' that takes an integer as input and returns 1 if the integer is even\c 0 otherwise. The function prototype should look like: 'int function(int num);',1|1
+32,P,Write a function named 'function' that returns a string containing the 5th Fibonacci number.,#include<stdio.h>\nchar *function() {return("5");}
+34,P,Write a function named 'function' that returns a string containing the sum of the first 10 natural numbers.,#include<stdio.h>\nchar *function() {return("55");}
+36,P,Write a function named 'function' that returns a string containing the factorial of 7.,#include<stdio.h>\nchar *function() {return("5040");}
+38,P,Write a function named 'function' that returns a string containing the first 10 numbers in the sequence of square numbers (starting from 1) with no space between numbers.,#include<stdio.h>\nchar *function() {return("149162536496481100");}
+40,P,Write a function named 'function' that returns a string containing the string "Hello\c Wrold!".,#include<stdio.h>\nchar *function() {return("Hello\c World");}
+42,P,Write a function named 'function' that returns a string containing the result of 5 raised to the power of 3.,#include<stdio.h>\nchar *function() {return("125");}
+44,P,Write a function named 'function' that returns a string containing a string of the first ten prime numbers.,#include<stdio.h>\nchar *function() {return("2357111317192329");}
+46,P,Write a function named 'function' that returns a string containing the sum of squares of numbers from 1 to 5.,#include<stdio.h>\nchar *function() {return("55");}
+48,P,Write a function named 'function' that returns a string containing the first ten even numbers with no spaces between numbers.,#include<stdio.h>\nchar *function() {return("2468101214161820");}
+50,P,Write a function named 'function' that returns a string containing the sum of the digits in the number 12345.,#include<stdio.h>\nchar *function() {return("15");}
