@@ -636,6 +636,66 @@ char *get_answer(int qid)
     return answer;
 }
 
+char *get_mark(int qid, char *ans)
+{
+    char request[MAXDATASIZE];
+    char *response = calloc(1, MAXDATASIZE + 1);
+    CHECK_ALLOC(response);
+    sprintf(request, "MARK\r\n%i:%s", qid, ans);
+    if (qid % 2 == 1)
+    {
+        // Question is a Python question, so ask from a Python QB
+        for (int i = 0; i < NUM_QB; i++)
+        {
+            ping_QB(qb_info[i].socket, i);
+            if (qb_info[i].type == PYTHON)
+            {
+                // send/receive request
+                if (send(qb_info[i].socket, request, strlen(request) + 1, 0) == -1)
+                {
+                    perror("send");
+                    exit(EXIT_FAILURE);
+                }
+                if (recv(qb_info[i].socket, response, 4096, 0) <= 0)
+                {
+                    perror("recv");
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+    }
+    else
+    {
+        // Question is a C question, so ask from a C QB
+        for (int i = 0; i < NUM_QB; i++)
+        {
+            ping_QB(qb_info[i].socket, i);
+            if (qb_info[i].type == C)
+            {
+                // send/receive request
+                if (send(qb_info[i].socket, request, strlen(request) + 1, 0) == -1)
+                {
+                    perror("send");
+                    exit(EXIT_FAILURE);
+                }
+                if (recv(qb_info[i].socket, response, 4096, 0) <= 0)
+                {
+                    perror("recv");
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+    }
+    // Handle Response - strtok twice to get question
+    // printf("Response: %s\n*endresponse\n", response);
+
+    char *mark = strtok(response, "\r\n");
+    mark = strtok(NULL, "\0");
+
+    // printf("GOT mark FOR QID %i: %s \n", qid, mark);
+    return mark;
+}
+
 void handle_question_increase(SOCKET socket, char *student_name)
 {
     // check both QBs are connected first
@@ -836,7 +896,7 @@ void handle_post(HTTPRequest response, SOCKET socket)
     }
     if (strcmp(url, "/quiz/start") == 0)
     {
-        get_answer(40);
+        // get_answer(40);
         // char *cookie = response.header_fields.search(&response.header_fields, "Cookie", strlen("Cookie"));
         // char *student_name = cookie + 5; // cookie begins with 'user={student_name}'
         // TESTINFO *student = hashtable_get(hashtable, student_name);
