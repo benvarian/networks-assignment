@@ -5,6 +5,47 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+
+      let slides = document.getElementsByClassName("slide");
+      let qtnArea = document.getElementsByClassName("Question-Area");
+      let sumArea = document.getElementsByClassName("Summary-Area");
+      let quizArea = document.getElementsByClassName("Quiz-Area");
+      let submitBtn = document.getElementsByClassName("submit-button");
+
+      let textAns = document.getElementsByClassName("codeInput");
+
+      let textAnsArea = document.getElementsByClassName("Text-Answer-Area");
+      let radioAnsArea = document.getElementsByClassName("Half-Answer-Area");
+
+      let sumQtnDisplay = document.getElementsByClassName("sumQtnDisplay");
+      let sumAnsDisplay = document.getElementsByClassName("sumAnsDisplay");
+
+      let answers = [];
+
+      const addAnswer = (qID, answer) => {
+        answers.push({"qtn":qID, "ans":answer});
+      }
+
+      const submit = async (answers) => {
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "http://localhost/ben/quiz", true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        await xhr.send(JSON.stringify({
+            answers[0];
+        }));
+
+      }
+
+      //function called when the submit button is pressed
+      function submitPressed() {
+
+        if(textAns[i].value != "") {
+          addAnswer(1,textAns[i].value);
+          submit(answers);
+        }
+      }
+    </script>
 
   </head>
   <body onload="populateQuestions()">
@@ -57,7 +98,7 @@
       height: 14%;
       margin: 0 3%;">
 
-        <input class="bottom-button" onclick="plusSlides(1)" type="submit" name="" value="Next" style="width: 40%;
+        <input class="bottom-button" onclick="submitPressed()" type="submit" name="" value="Next" style="width: 40%;
         height: 100%;
         width: 80%;
         margin: 0 10%;
