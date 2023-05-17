@@ -1,4 +1,4 @@
-﻿﻿QID,Q,A
+﻿QID,Q,A
 2,M,<h5>How do you print to the console in C? </h5><ul><li>A)printf()</li><li>B)print()</li><li>C)println()</li><li>D)echo()<\li>,A
 4,M,<h5>Which keyword is used to declare a constant in C?</h5><ul><li>A)const</li><li>B)constant</li><li>C)final</li><li>D)immutable<\li>,A
 6,M,<h5>What is the correct syntax to declare a pointer in C?</h5><ul><li>A)int *p;</li><li>B)int p;</li><li>C)int &p;</li><li>D)pointer p,<h5>A
