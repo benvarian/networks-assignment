@@ -1,12 +1,16 @@
 import os
 
-# Opens csv file and handles errors
-# Returns a dictionary of questions, or None if file not found
-# The key is the question ID
-# The value is a size-2 array: [q_type, q, ans]
-# NOTE: If a QID is a duplicate or corrupt
-# (e.g. A string instead of an int) the line is skipped
 def get_questions(filePath):
+    """Opens and parses question csv file. '\c' maps to ',' and '\y' maps to newline.
+
+    Args:
+        filePath (String): path to csv to be opened
+
+    Returns:
+        dict: dictionary of arrays representing questions. 
+            Key is Qid, array is [type, question, answer]
+    """
+    
     try:
         with open(filePath, 'r', encoding='utf-8-sig') as data:
             questions = { }
@@ -45,9 +49,3 @@ def get_questions(filePath):
     except FileNotFoundError:
         print(f"""Filepath "{filePath}" not found""")
         return None
-
-# # TESTING
-# if __name__ == "__main__":
-#     pythonDict = getQuestions("QuestionCSV\QuestionsP.csv")
-#     for key in pythonDict:
-#         print(f"Question ID: {key}\nQuestion: {pythonDict[key][0]}\nAnswer: {pythonDict[key][1]}\n")
