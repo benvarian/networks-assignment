@@ -42,6 +42,12 @@ def get_questions(filePath):
                     row[1] = row[1].replace("\c", ",")
                     row[2] = row[2].replace("\c", ",")
                     row[3] = row[3].replace("\c", ",")
+
+                    
+                    # \t doesn't otherwise parse as tab
+                    row[1] = row[1].replace("\\t", "\t")
+                    row[2] = row[2].replace("\\t", "\t")
+                    row[3] = row[3].replace("\\t", "\t")
                     questions[row[0]] = [row[1], row[2], row[3]]
             return questions
         
