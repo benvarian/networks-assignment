@@ -2,7 +2,7 @@ from get_questions import *
 import random
 import sys
 import os
-from ctypes import cdll, c_char_p
+from ctypes import c_char_p, CDLL
 from distutils.ccompiler import new_compiler
 
 key = {
@@ -82,6 +82,7 @@ class QB_DB:
         """
         # [type, q, a]
         q_obj = self.get_q_by_id(qid)
+        ans = ans.rstrip('\x00')
         # TODO: if q_obj is none
         # programming
         try:
@@ -101,6 +102,7 @@ class QB_DB:
         # something went wrong.
         return 0
 
+
 # Executes a function passed to it, with a specified language (P for Python C for C)
 # If it runs into an error, it returns the exit code it ran into when running the program
 def execute_function(lang, script):
@@ -113,6 +115,16 @@ def execute_function(lang, script):
             return result()
         except Exception as e: return (f"Error: {e}")
     elif (lang == "C"):
+        try:
+            os.remove('temp.c')
+        except FileNotFoundError: pass
+        try:
+            os.remove('temp.so')
+        except FileNotFoundError: pass
+        try:
+            os.remove('temp.o')
+        except FileNotFoundError: pass
+
         main =  """\n\nint main() {\nchar *result = function();\nreturn 0;}"""
         try:
             result = None
@@ -124,17 +136,26 @@ def execute_function(lang, script):
                 file.write(main)
             compiler.compile(['temp.c'])
             compiler.link_shared_object(['temp.o'], 'temp.so')
-            main = cdll.LoadLibrary("./temp.so")
+            main = CDLL("./temp.so")
             main.function.restype = c_char_p
             # Runs the code and returns the result in UTF-8 format
             result = main.function()
+            # while isLoaded('./temp.so'):
+            CDLL(None).dlclose(main._handle)
             os.remove('temp.c')
             os.remove('temp.so')
+            os.remove('temp.o')
             return result.decode('utf-8')
         except Exception as e: 
+            pass
             try:
                 os.remove('temp.c')
+            except FileNotFoundError: pass
+            try:
                 os.remove('temp.so')
+            except FileNotFoundError: pass
+            try:
+                os.remove('temp.o')
             except FileNotFoundError: pass
             return (f"Error: {e}")
     else: return("Error: Invalid Programming Language")
