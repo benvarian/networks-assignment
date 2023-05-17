@@ -1,6 +1,5 @@
 from get_questions import *
 import random
-import json
 import sys
 import os
 from ctypes import cdll, c_char_p
@@ -11,20 +10,36 @@ key = {
     'C': "./QuestionCSV/QuestionsC.csv"
 }
 
-class QB_question_database:
+class QB_DB:
     """ 
         Stores Questions, implements functions to mark and
         return questions for the QB to use.
     """
 
-    def __init__(self, type):
-        self.type = type
-        if (type not in key):
-            raise ValueError("type of q not recognised.")
-        self.questions = get_questions(key[type])
+    def __init__(self, subject):
+        """inits QB_DB
+
+        Args:
+            type (String): The subject of the QB_DB (Python/C)
+
+        Raises:
+            ValueError: If subject is not recognised
+        """
+        self.type = subject
+        if (subject not in key):
+            raise ValueError("subject of q not recognised.")
+        self.questions = get_questions(key[subject])
 
     def get_q_by_id(self, qid):
-        # returns q, or none if it does not exist
+        """gets question
+
+        Args:
+            qid (int): question id to get
+
+        Returns:
+            Array: [type, question, answer]
+                or None if question doesn't exist
+        """
         try:
             return self.questions[qid]
         except:
@@ -32,7 +47,19 @@ class QB_question_database:
             return None
         
 
-    def get_random_qs(self, q_num):
+    def get_rand_qs(self, q_num):
+        """gets random questions
+
+        Args:
+            q_num (int): Number of questions to get
+
+        Raises:
+            Exception: Too many questions requested
+            Exception: Too few questions requested
+
+        Returns:
+            array: array of questions
+        """
         # returns q_num questions as json array. -- unsure if json is the play for now.
         qids = self.questions.keys()
         if (q_num > len(qids)):
@@ -40,17 +67,24 @@ class QB_question_database:
         elif (q_num <= 0):
             raise Exception("Too few questions requested, cannot comply.")
         rand_ids = random.sample(list(qids), q_num)
-        rand_qs = [self.questions[id] for id in rand_ids]
-        json_qs = json.dumps(random.sample(rand_qs, q_num))
-        return json_qs
+        rand_qs = [[id] + self.questions[id] for id in rand_ids]
+        return rand_qs
 
     def mark(self, qid, ans):
+        """marks a question
+
+        Args:
+            qid (int): question id
+            ans (String): answer to be marked
+
+        Returns:
+            integer: mark of answer
+        """
         # [type, q, a]
         q_obj = self.get_q_by_id(qid)
         # TODO: if q_obj is none
         # programming
         if (q_obj[0] == 'P'):
-            # MITCH WORK
             if qid % 2 == 1: lang = "P"
             else: lang = "C"
             student_ans = execute_function(lang, ans) # holds the error code here for now
@@ -61,10 +95,7 @@ class QB_question_database:
             return 1 if q_obj[2] == ans else 0
         # raise error...?
         return
-    
-    # TODO: send answer
 
-# OTHER MITCH WORK
 # Executes a function passed to it, with a specified language (P for Python C for C)
 # If it runs into an error, it returns the exit code it ran into when running the program
 def execute_function(lang, script):
@@ -104,7 +135,7 @@ def execute_function(lang, script):
     else: return("Error: Invalid Programming Language")
 
 def test():
-    qb = QB_question_database("C")
+    qb = QB_DB("C")
     print(qb.questions, "\n")
 
     # test get q by id.

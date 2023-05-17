@@ -1,11 +1,3 @@
-# send vs write, read vs recv, flush.
-# send retruns how many bytse were sent through, this is our responsibility to handle. otherwise not all will go throguh.
-# will want either a header containing how many bytes to send through, or a footer saying 'done'
-# if recv returns 0, the connecting is closed on the otherside, or is in the process of closing.
-# make sure to always end in sock.close()
-# socket.setblocking(False) -- no blocking. research more.
-# send seems better than sendall.
-
 import socket
 import json
 import question_bank
@@ -13,73 +5,130 @@ import time
 import sys
 import random
 
-HOST = "localhost"  # Standard loopback interface address (localhost)
-PORT =  8080 # Port to listen on (non-privileged ports are > 1023)
+SUBJECTS = ["PYTHON", "C"]
 
-# p for python
-QB_SUBJECT = "P"
-INIT_HEADER = "Q" + QB_SUBJECT
-# C = in C, P = python. if not in list, will respond with something like "wrong qb, type not found"
+try:
+    # Init input params
+    HOST = sys.argv[1]
+    PORT=int(sys.argv[2])
+    QB_TYPE = str(sys.argv[3])
+    if (QB_TYPE not in SUBJECTS): raise Exception("Fail init args")
+except:
+    print("\nUsage:\n python3 qb_socket.py {TM-IP-address} {port} {qb_type}")
+    exit()
+print("TM ADDRESS = ", str(HOST) + ":" + str(PORT))
+
+# C = in C, P = python
 QTYPES = ['C', 'P']
-MARK_HEADER = "M"
-QUESTION_HEADER = "Q"
-ERROR_HEADER = "Error"
-SIGN_OFF = "\r\n\r\n\0"
 
-class Nick_Socket:
-    """ 
-    send and receive packets.
-    running loop, will listen for requests from TM 
+# Header variables for managing QB protocol
+QB_SUBJECT = QB_TYPE
+QB_HEADER = "QB " + QB_SUBJECT + "\r\n"
+
+MARK_HEADER = "MARK\r\n"
+QUESTION_HEADER = "QUESTIONS\r\n"
+ERROR_HEADER = "ERROR\r\n"
+ANSWER_HEADER = "ANSWER\r\n"
+GETQUESTION_HEADER = "GETQUESTION\r\n"
+END_HEADER = "\r\n"
+
+END_MSG = "\r\n\0"
+
+# init Qb question database
+QB_DB = question_bank.QB_DB(QB_SUBJECT[0])
+
+class QB_Socket_Connection:
+    """Socket for handling TM connection.
+        TM listens for QB connection request
+        connection stays open, and TM requests from
+        QB as needed.
     """
 
     def __init__(self, HOST, PORT):
-        # inits. 
+        """init 
+
+        Args:
+            HOST (int): TM's host
+            PORT (int): TM's port
+        """
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    # binds sock to a port
-    # def bind(self):
-        # self.sock.bind((self.HOST, self.PORT))
-
-    # waits for TM to connect
     def connect_to_TM(self):
-        # self.sock.listen()
-        while(True):
+        """Attempts to connect to the TM at given address.
+            If it fails, tries again every 2 seconds.
+        """
+        while (True):
             try:
                 print("Trying to connect to TM...")
-                self.sock.connect((HOST, PORT))  # connect to the server
+                self.sock.connect((HOST, PORT))
                 break
             except Exception as e:
-                # timeout or some other error
                 print(e)
+            # connection failed
             print("Fail: Could not connect to TM, Trying again in 2 seconds.\n")
             time.sleep(2)
         # connected to TM.
         # sending header.
-        self.send_str(INIT_HEADER)
+        self.send_init()
 
-        # print("here.")
-        # while(True):
-        #     print(self.sock.recv(4096))
-        #     time.sleep(0.5)
-        #     print("here.")
-        #     self.send_str("Hiya there.")
-        #     time.sleep(1)
-        # time.sleep(1)
-        # self.send_str("QB" + QBTYPE)
-        # self.send_str("QB" + QBTYPE)
+    def send_init(self):
+        """Sends init HEADER to TM, to ensure everything is working correctly
+            Format: 
+            "QB {subject}
+             
+            \0"
 
-    # sends a str, with a double carriage return.
-    def send_str(self, msg):
-        msg = msg + SIGN_OFF
+        Raises:
+            RuntimeError: failure to send a string, results in restarting of socket.
+        """
+        msg = QB_HEADER + END_HEADER + END_MSG
         MSGLEN = len(msg)
         byte_msg = msg.encode()
         sent = self.sock.send(byte_msg)
         if (sent != MSGLEN):
             raise RuntimeError("Couldnt send string.")
-        
-    # sends string along sock
+
+    def send_error(self, err):
+        """Sends an error to TM, to let it know that something has gone wrong
+            with it's request.
+            Primarily used as a debugging tool.
+
+            In form:
+            "QB {subject}
+             ERROR
+             Error:typeOfError
+             \0"
+
+        Args:
+            err (String): String describing the error.
+
+        Raises:
+            RuntimeError: Failure to send string, results in restarting of socket.
+        """
+        msg = QB_HEADER + ERROR_HEADER + "Error:" + err + END_MSG
+        MSGLEN = len(msg)
+        byte_msg = msg.encode()
+        sent = self.sock.send(byte_msg)
+        if (sent != MSGLEN):
+            raise RuntimeError("Couldnt send string.")
+
     def send_questions(self, msg):
-        msg = QUESTION_HEADER + msg + SIGN_OFF
+        """Sends Questions to the TM
+            In form:
+            "QB {subject}
+             QUESTIONS
+             
+             qid:{qid}&type:{type}&question:{question}&{same for other questions...}
+             \0"
+
+        Args:
+            msg (String): msg to be sent
+
+        Raises:
+            RuntimeError: if socket connection is broken
+        """
+        # msg = QB_HEADER + QUESTION_HEADER + END_HEADER + "QUESTIONS:" + msg + END_MSG
+        msg = QB_HEADER + QUESTION_HEADER + END_HEADER  + msg + END_MSG
         MSGLEN = len(msg)
         byte_msg = msg.encode()
 
@@ -89,40 +138,102 @@ class Nick_Socket:
         if sent == 0:
             raise RuntimeError("Socket Connection Broken")
 
-    def send_mark(self, Mark):
-        # M for Mark
-        msg = MARK_HEADER + str(Mark) + SIGN_OFF
+    def send_question(self, msg):
+        """Sends a single question to the TM
+            In form:
+            "QB {subject}
+             GETQUESTION
+             
+             {question string}
+             \0"
+
+        Args:
+            msg (String): msg to be sent
+
+        Raises:
+            RuntimeError: if socket connection is broken
+        """
+        # msg = QB_HEADER + QUESTION_HEADER + END_HEADER + "QUESTIONS:" + msg + END_MSG
+        msg = QB_HEADER + GETQUESTION_HEADER + END_HEADER  + msg + END_MSG
+        MSGLEN = len(msg)
+        byte_msg = msg.encode()
+        print("\nsending questions:\nMSGLEN:",  MSGLEN, "\nmsg:", msg, "\n")
+
+        sent = self.sock.send(byte_msg)
+        if sent == 0:
+            raise RuntimeError("Socket Connection Broken")
+        
+        
+    # sends string along sock
+    def send_answer(self, msg):
+        msg = QB_HEADER + ANSWER_HEADER + END_HEADER + msg + END_MSG
+        MSGLEN = len(msg)
+        byte_msg = msg.encode()
+
+        print("\nsending questions:\nMSGLEN:",  MSGLEN, "\nmsg:", msg, "\n")
+
+        sent = self.sock.send(byte_msg)
+        if sent == 0:
+            raise RuntimeError("Socket Connection Broken")
+
+    def send_mark(self, mark):
+        """Sends mark of question to TM.
+            of form:
+            "QB {subject}
+            MARK
+
+            {mark (as string)}
+            \0"
+
+        Args:
+            mark (int): mark to be sent.
+
+        Raises:
+            RuntimeError: Error if socket connection is broken.
+        """
+        msg = QB_HEADER + MARK_HEADER + END_HEADER + "MARK:" + str(mark) + END_MSG
         byte_msg = msg.encode()
 
         print("\nsending marks:\nmsg:", msg, "\n")
         sent = self.sock.send(byte_msg)
         if sent == 0:
             raise RuntimeError("Socket Connection Broken")
-            
+        
+    def send_response(self):
+        """Sends a response to TM's init p
+
+        Raises:
+            RuntimeError: if socket connection is broken
+        """
+        msg = "ACCEPTED PING"
+        byte_msg = msg.encode()
+        sent = self.sock.send(byte_msg)
+        if sent == 0:
+            raise RuntimeError("Socket Connection Broken")
+        
 
     def wait_for_tm(self):
-        # wait for req -- either mark ('m') or get qs ('q').
-        # if m -- get qid, answer to send back mark.
-        # if q -- get q_num, q_type.
-        # chunks = []
-        # bytes_recd = 0
-        # if we need request id's of some sort, then we can include studentID or something of the type.
+        """Waits on the TM to send a request, 
+            either for marks or for questions.
 
-        # waits till receive anything.
-        # msg = self.format(new_sock_receive())
+        Raises:
+            e: Broken socket.
+            Exception: Broken socket.
+
+        Returns:
+            _type_: msg received.
+        """
         msg = False
         # loops until a msg is received
-        while(not msg):
+        while (not msg):
             try:
                 print("waiting to receive a message...\n")
                 msg = self.sock.recv(4096)
             except Exception as e:
                 raise e
             if (msg == b''):
-                # prevents infinite loop of broken pipelines.
-                # temporary.
                 raise Exception("Broken Pipeline")
-            elif(not msg):
+            elif (not msg):
                 print("No req yet...")
                 time.sleep(2)
             else:
@@ -131,36 +242,67 @@ class Nick_Socket:
         return msg
 
     def handle_req(self, msg):
-        # chr converts bytes to unicode.
-        mode_req = chr(msg[0])
+        """Handles msg sent by TM
+            Mark req in form:
+                "MARK
+                {qid}:{ans}
+                "
+            Question req in form:
+                "QUESTIONS
+                {subject}:{num}
+                "
+            req Answer in form:
+                "ANSWER
+                {qid}
+                "
+        Args:
+            msg (String): Message sent by TM
+        """
+        msg = msg.decode("utf-8").split("\r\n")
+        mode_req = msg[0] + "\r\n"
 
         if (mode_req == MARK_HEADER):
-            qid = chr(msg[1])
-            ans = msg[2:].decode("utf-8") # answer can be a string
-            mark = random.randint(0,1)
+            qid, ans = msg[1].split(":")
+            # mark = random.randint(0, 1)
+            mark = QB_DB.mark(qid, ans)
             print("Marking:\n\tqid =", qid, "\n\tans =", ans, "\n")
-            # mark = question_bank.mark(qid, ans)
             self.send_mark(qid, mark)
         elif (mode_req == QUESTION_HEADER):
-            q_type = chr(msg[1])
-            # read str
-            q_num = int(msg[2:4].decode("utf-8"))
-            # if we choose int instead of str.
-            # q_num = int.from_bytes(msg[2:4], "little")
+            q_type, q_num = msg[1].split(":")
 
-            print("qnum =", q_num)
+            print("qnum =", int(q_num))
             if (q_type not in QTYPES):
                 print("Invalid Request. Second val of q req should be in QTYPES")
-                self.send_str(ERROR_HEADER + ": Type not recognised.")
+                self.send_error("q_typeError")
                 return
-            questions = question_bank.get_JSON_qs(q_type, q_num)
+            # mandatory extra long one-liner in order to be more 'pythonic'
+            questions = ''.join(["qid:{}&type:{}&question:{}&".format(q[0], q[1], q[2]) for q in QB_DB.get_rand_qs(int(q_num))])[:-1]
             self.send_questions(questions)
+        elif(mode_req == ANSWER_HEADER):
+            qid = int(msg[1])
+            question = question_bank.get_q_by_id(qid)
+            answer = question[2]
+            self.send_answer(answer)
+        # handle pings from tm just by making an elif as its a viable header 
+        elif(mode_req == GETQUESTION_HEADER):
+            qid = int(msg[1])
+            question = question_bank.get_q_by_id(qid)
+            self.send_question(question[1])
+        elif (mode_req == "TM\r\n"):
+            print("TM PINGED QB, Responding with ACCEPTED PING")
+            self.send_response()
+            return
         else:
             # TODO: maintain a count and restart socket after three issues in a row or something of the like.
-            print("Request doesn't follow protocol, ignoring.")
-            self.send_str(ERROR_HEADER + ": Type not recognised.")
+            print("Request doesn't follow protocol, sending Error.")
+            self.send_error("q_modeError")
 
     def check_connection(self):
+        """Checks connection with TM.
+
+        Returns:
+            Boolean: true if connection is working.
+        """
         try:
             # tries to read bytes without blocking without removing them from buffer (peek & don't wait)
             data = self.sock.recv(16, socket.MSG_DONTWAIT | socket.MSG_PEEK)
@@ -173,24 +315,29 @@ class Nick_Socket:
             print("Unexpected Exception when checking if socket is connected:")
             print(e)
             print("\n\n")
-            return True
-        
+            return False
+
     def restart_socket(self):
-        # restarts connection.
+        """Restarts the socket
+        """
         try:
             self.sock.shutdown(socket.SHUT_RDWR)
         except Exception as e:
             print(e)
-            
+
         try:
             self.sock.close()
         except Exception as e:
             print(e)
+        # prevents it spamming TM if TM 
+        # closes pipelines as they start.
+        time.sleep(1)
 
         self.sock = socket.socket()
-    
+
     def main_loop(self):
-        # main loop, waiting for TM to send something.
+        """The main operation loop for handling the socket.
+        """
         self.connect_to_TM()
         print("\nBeginning main loop...\n")
         while True:
@@ -208,20 +355,24 @@ class Nick_Socket:
                 self.restart_socket()
                 self.connect_to_TM()
 
+def main():
+    TM_socket = QB_Socket_Connection(HOST, PORT)
+    while(True):
+        try:
+            TM_socket.main_loop()
+        except Exception as e:
+            print(e)
+            TM_socket.restart_socket()
 
-# echo-server.py
-try:
-    PORT=int(sys.argv[1])
-except:
-    print("\nUsage:\n python3 qb_socket.py {port}")
-    exit()
+def test():
+    """Testing script for various functions in the QB.
+    """
+    q_num = 5
+    questions = QB_DB.get_rand_qs(int(q_num))
+    # questions = ''.join(["qid:{}:type:{}:question:{}".format(q[0], q[1], q[2]) for q in questions])
+    print(questions)
+    msg = QB_HEADER + QUESTION_HEADER + END_HEADER + "QUESTIONS:" + questions + END_MSG
+    print("resulting msg is: \n\n:::\n" + msg)
 
-print("PORT =", PORT)
-new_sock = Nick_Socket(HOST, PORT)
-# binds to HOST, PORT.
-while(True):
-    try:
-        new_sock.main_loop()
-    except Exception as e:
-        print(e)
-        new_sock.restart_socket()
+# test() # only use when testing
+main()
