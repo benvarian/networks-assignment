@@ -264,13 +264,11 @@ class QB_Socket_Connection:
         if (mode_req == MARK_HEADER):
             qid, ans = msg[1].split(":")
             
-            print("qid == " + qid)
-            print("ans == " + ans)    
-            # mark = random.randint(0, 1)
-
-            mark = QB_DB.mark(int(q_num), ans)
-            print("Marking:\n\tqid =", qid, "\n\tans =", ans, "\n")
-            self.send_mark(qid, mark)
+            # print("qid == " + qid)
+            # print("ans == " + ans)
+            print("Marking:\n\tqid =", qid, "\n\tans =", ans, "\nasdf")
+            mark = QB_DB.mark(int(qid), ans)
+            self.send_mark(mark)
         elif (mode_req == QUESTION_HEADER):
             q_type, q_num = msg[1].split(":")
 
