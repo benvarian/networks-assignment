@@ -212,8 +212,12 @@ class QB_Socket_Connection:
                 "QUESTIONS
                 {subject}:{num}
                 "
-            Specific Question in form:
-                "QUESTION
+            req Answer in form:
+                "ANSWER
+                {qid}
+                "
+            req Specific Question in form:
+                "GETQUESTION
                 {qid}
                 "
         Args:
@@ -281,8 +285,7 @@ class QB_Socket_Connection:
             self.sock.close()
         except Exception as e:
             print(e)
-        # to prevent it spamming TM if TM 
-        # closes pipelines as they start.
+        # prevents it spamming TM if TM 
         time.sleep(1)
 
         self.sock = socket.socket()
