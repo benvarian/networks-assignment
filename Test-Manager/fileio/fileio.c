@@ -40,6 +40,7 @@ void hashtable_add(HASHTABLE *hashtable, char *username, char *passw, enum qType
     hashtable[h]->qid = qid;
     hashtable[h]->attemptsLeft = attemptsLeft;
     hashtable[h]->correct = correct;
+    hashtable[h]->currentq = 0; // start at question 0
 }
 
 /*  DETERMINE IF A USER EXISTS IN THE HASHTABLE AND
@@ -233,10 +234,11 @@ void writeToCSV(HASHTABLE *hashtable, int *numStudents, char **studentNames, cha
                 sprintf(correct + strlen(correct), "%s", (entry->correct[j] == true) ? "T" : "F");
             }
         }
+        // NOTE: Question tracker is always set to 0, because a student should always start at q1
         if (i != *numStudents - 1)
-            fprintf(fp, "%s,%s,%s,%s,%s,%s\n", entry->user, entry->pw, types, qid, attempts, correct);
+            fprintf(fp, "%s,%s,%s,%s,%s,%s,0\n", entry->user, entry->pw, types, qid, attempts, correct);
         else
-            fprintf(fp, "%s,%s,%s,%s,%s,%s", entry->user, entry->pw, types, qid, attempts, correct);
+            fprintf(fp, "%s,%s,%s,%s,%s,%s,0", entry->user, entry->pw, types, qid, attempts, correct);
         free(types);
         free(qid);
         free(attempts);
