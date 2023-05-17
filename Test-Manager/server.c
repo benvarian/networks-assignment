@@ -161,7 +161,7 @@ void send_webpage(SOCKET socket, char *question)
 {
     char *web_page = calloc(1, 8095 + 1);
     CHECK_ALLOC(web_page);
-    static const char *first = "<!DOCTYPE html>\n<html lang='en' dir='ltr'>\n  <head>\n    <meta charset='utf-8'>\n    <meta name='viewport' content='width=device-width, initial-scale=1.0' />\n    <script src='https://cdn.tailwindcss.com'></script>\n    <script>\n      let qtnArea = document.getElementsByClassName('Question-Area');\n      let quizArea = document.getElementsByClassName('Quiz-Area');\n      let submitBtn = document.getElementsByClassName('submit-button');\n      let radio = document.getElementsByName('q');\n      let radioAnsArea = document.getElementsByClassName('Half-Answer-Area');\n      let answers = [];\n      const addAnswer = (question, answer) => {\n        answers.push({'qtn':question, 'ans':answer});\n      }\n      const submit = async (answers) => {\n        console.log(window.location.href);\n        var xhr = new XMLHttpRequest();\n        xhr.open('POST', window.location.href, true);\n        xhr.setRequestHeader('Content-Type', 'application/json');\nawait xhr.send('&qid:'+answers.qtn+'&ans:'+answers.ans+''); console.log(answers)}\nfunction submitPressed() {\n        let selections = ['a','b','c','d'];for(let k = 0; k < 4; k++) {  if(radio[k].checked) {    addAnswer(1,selections[k]);    submit(answers[0]);  }}\n      }\n    </script>\n  </head>\n  <body>\n    <div>\n      <nav class='bg-slate-100 shadow flex justify-between sticky top-0 z-50 place-items-center w-full'>\n        <div class='flex justify-center'><h1 class='mx-4'>CITS3002 Project</h1><button class='ml-4'>logout</button><a class='ml-4' href='profile.html'>back</a>\n        </div>\n      </nav>\n    </div>\n    <div class='Quiz-Area' style='flex: justify-center;\n    width: 60%;\n    height: 500px;\n    margin: 100px 20% 0 20%;\n    border-radius: 10px;\n    background: rgba(0,0,0,0.1);\n    box-shadow: 0 0 10px 2px rgba(100,100,100,0.1);\n    overflow: auto;\n'>      <div style='display: block;'class='Quiz-Header slide'>\n<h1 style='font-size: 30px;\n        color: #3d3d3d;\n        text-align: center;'>Question 1 / 10</h1><br>\n        <div class='Question-Area' style='width: 90%;\n        height: 70%;\n        border-bottom: 2px solid #3d3d3d;\n        margin: 0 5%;'>";
+    static const char *first = "<!DOCTYPE html>\n<html lang='en' dir='ltr'>\n  <head>\n    <meta charset='utf-8'>\n    <meta name='viewport' content='width=device-width, initial-scale=1.0' />\n    <script src='https://cdn.tailwindcss.com'></script>\n    <script>\n      let qtnArea = document.getElementsByClassName('Question-Area');\n      let quizArea = document.getElementsByClassName('Quiz-Area');\n      let submitBtn = document.getElementsByClassName('submit-button');\n      let radio = document.getElementsByName('q');\n      let radioAnsArea = document.getElementsByClassName('Half-Answer-Area');\n      let answers = [];\n      const addAnswer = (question, answer) => {\n        answers.push({'qtn':question, 'ans':answer});\n      }\n      const submit = async (answers) => {\n        console.log(window.location.href);\n        var xhr = new XMLHttpRequest();\n        xhr.open('POST', window.location.href, true);\n        xhr.setRequestHeader('Content-Type', 'application/json');\nawait xhr.send('qid:'+answers.qtn+'&ans:'+answers.ans + '\\n'); console.log('qid:'+answers.qtn+'&ans:'+answers.ans+'&')}\nfunction submitPressed() {\n        let selections = ['a','b','c','d'];for(let k = 0; k < 4; k++) {  if(radio[k].checked) {    addAnswer(1,selections[k]);    submit(answers[0]);  }}\n      }\n    </script>\n  </head>\n  <body>\n    <div>\n      <nav class='bg-slate-100 shadow flex justify-between sticky top-0 z-50 place-items-center w-full'>\n        <div class='flex justify-center'><h1 class='mx-4'>CITS3002 Project</h1><button class='ml-4'>logout</button><a class='ml-4' href='profile.html'>back</a>\n        </div>\n      </nav>\n    </div>\n    <div class='Quiz-Area' style='flex: justify-center;\n    width: 60%;\n    height: 500px;\n    margin: 100px 20% 0 20%;\n    border-radius: 10px;\n    background: rgba(0,0,0,0.1);\n    box-shadow: 0 0 10px 2px rgba(100,100,100,0.1);\n    overflow: auto;\n'>      <div style='display: block;'class='Quiz-Header slide'>\n<h1 style='font-size: 30px;\n        color: #3d3d3d;\n        text-align: center;'>Question 1 / 10</h1><br>\n        <div class='Question-Area' style='width: 90%;\n        height: 70%;\n        border-bottom: 2px solid #3d3d3d;\n        margin: 0 5%;'>";
     static const char *last = "</div>\n        <div class='Answer-Area' style='display: flex;\n        width: 90%;\n        height: 20%;\n        margin: 0 5%;'><div class='Half-Answer-Area' style='width: 50%;height: 100%;margin: 0;'>  <ul style='list-style-type: none;  padding: 0;'>    <li style='font-size: 1.2rem;    height: 20%;    margin: 2% 8%;'>      <input type='radio' name='q' id='1a' class='answer'>      <label for='1a' id='a_text'>A</label>    </li>    <li style='font-size: 1.2rem;    height: 20%;    margin: 2% 8%;'>      <input type='radio' name='q' id='1b' class='answer'>      <label for='1b' id='a_text'>B</label>    </li>  </ul style='list-style-type: none;  padding: 0;'></div><div class='Half-Answer-Area' style='width: 50%;height: 100%;margin: 0;'>  <ul style='list-style-type: none;  padding: 0;'>    <li style='font-size: 1.2rem;    height: 20%;    margin: 2% 8%;'>      <input type='radio' name='q' id='1c' class='answer'>      <label for='1c' id='a_text'>C</label>    </li>    <li style='font-size: 1.2rem;    height: 20%;    margin: 2% 8%;'>      <input type='radio' name='q' id='1d' class='answer'>      <label for='1d' id='a_text'>D</label>    </li>  </ul></div>\n\n        </div>\n\n      </div>\n\n      <div class='Quiz-Bottom' style='\n      width: 94%;\n      height: 14%;\n      margin: 0 3%;'>\n\n        <input class='bottom-button' onclick='submitPressed()' type='submit' name='' value='Submit' style='width: 40%;\n        height: 100%;\n        width: 80%;\n        margin: 0 10%;\n        background-color: #80d9ff;\n        cursor: pointer;\n        border-radius: 10px;\n'>\n<button onclick=\"window.location.reload()\">Next question</button>\n </div>\n\n    </div>\n\n  </body>\n</html>\n";
     strcat(web_page, first);
     strcat(web_page, question);
@@ -679,18 +679,7 @@ void handle_get(SOCKET socket, HTTPRequest request)
         }
         if (strcmp(path, "/quiz/start") == 0)
         {
-            char *method = (char *)request.request_line.search(&request.request_line, "method", strlen("method"));
-    
-            if (strcmp(method, "GET") == 0) {
-                handle_question_increase(socket, student_name);
-            }
-            else if (strcmp(method, "POST") == 0) {
-                // handle answer checking.
-
-            }
-            else {
-                handle_question_increase(socket, student_name);
-            }
+            handle_question_increase(socket, student_name);
             // // check both QBs are connected first
             // if (qb_info[0].socket == 0 || qb_info[1].socket == 0)
             // {
@@ -786,9 +775,17 @@ void handle_post(HTTPRequest response, SOCKET socket)
     }
     if (strcmp(url, "/quiz/start") == 0)
     {
-        char *cookie = response.header_fields.search(&response.header_fields, "Cookie", strlen("Cookie"));
-        char *user = cookie + 5;
-        handle_question_increase(socket, user);
+        // char *cookie = response.header_fields.search(&response.header_fields, "Cookie", strlen("Cookie"));
+        // char *student_name = cookie + 5; // cookie begins with 'user={student_name}'
+        // TESTINFO *student = hashtable_get(hashtable, student_name);
+        
+        // char *ans = response.;
+        // char *qid = ;
+        // for (int i = 0; i < response.header_fields.keys.length; i++)
+        // {
+        //     printf("%s:::::%s\n", (char *)response.header_fields.keys.head->data, (char *)response.header_fields.search(&response.header_fields, (char *)response.header_fields.keys.head->data, strlen((char *)response.header_fields.keys.head->data)));
+        //     response.header_fields.keys.head = response.header_fields.keys.head->next;
+        // }
     }
     // http_request_destructor(&response);
 }
