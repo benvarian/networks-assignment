@@ -281,7 +281,7 @@ class QB_Socket_Connection:
             self.sock.close()
         except Exception as e:
             print(e)
-        # to prevent it spamming TM if TM 
+        # prevents it spamming TM if TM 
         # closes pipelines as they start.
         time.sleep(1)
 
