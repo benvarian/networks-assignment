@@ -7,9 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
 
-      let slides = document.getElementsByClassName("slide");
       let qtnArea = document.getElementsByClassName("Question-Area");
-      let sumArea = document.getElementsByClassName("Summary-Area");
       let quizArea = document.getElementsByClassName("Quiz-Area");
       let submitBtn = document.getElementsByClassName("submit-button");
 
@@ -32,7 +30,7 @@
         xhr.open("POST", "http://localhost/ben/quiz", true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         await xhr.send(JSON.stringify({
-            answers[0];
+            answers
         }));
 
       }
@@ -40,15 +38,15 @@
       //function called when the submit button is pressed
       function submitPressed() {
 
-        if(textAns[i].value != "") {
-          addAnswer(1,textAns[i].value);
+        if(textAns[0].value != "") {
+          addAnswer(1,textAns[0].value);
           submit(answers);
         }
       }
     </script>
 
   </head>
-  <body onload="populateQuestions()">
+  <body>
     <div>
       <nav class="bg-slate-100 shadow flex justify-between sticky top-0 z-50 place-items-center w-full">
         <div class="flex justify-center">

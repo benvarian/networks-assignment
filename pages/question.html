@@ -6,10 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-
-      let slides = document.getElementsByClassName("slide");
       let qtnArea = document.getElementsByClassName("Question-Area");
-      let sumArea = document.getElementsByClassName("Summary-Area");
       let quizArea = document.getElementsByClassName("Quiz-Area");
       let submitBtn = document.getElementsByClassName("submit-button");
 
@@ -18,6 +15,7 @@
       let radioAnsArea = document.getElementsByClassName("Half-Answer-Area");
 
       let answers = [];
+
       const addAnswer = (question, answer) => {
         answers.push({"qtn":question, "ans":answer});
       }
@@ -40,6 +38,7 @@
 
           for(let k = 0; k < 4; k++) {
             if(radio[k].checked) {
+
               addAnswer(1,selections[k]);
               submit(answers[0]);
             }
@@ -49,7 +48,7 @@
     </script>
 
   </head>
-  <body onload="populateQuestions()">
+  <body>
     <div>
       <nav class="bg-slate-100 shadow flex justify-between sticky top-0 z-50 place-items-center w-full">
         <div class="flex justify-center">
