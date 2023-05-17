@@ -626,18 +626,15 @@ char *get_answer(int qid)
         }
     }
     // Handle Response - strtok twice to get question
-    // printf("Response: %s\n*endresponse\n", response);
-
-    char *answer = strtok(response, "\r\n\r\n");
-    answer = strtok(NULL, "\r\n");
-    answer = strtok(NULL, "\n");
-    answer = strtok(NULL, "\r\n\r\n");
-
+    
+    char *answer = strstr(response, "\r\n\r\n") + 4;
+    // remove final padding
+    answer[strlen(answer)-3] = 0;
     printf("GOT answer FOR QID %i: %s\n", qid, answer);
     return answer;
 }
 
-char *get_mark(int qid, char *ans)
+int get_mark(int qid, char *ans)
 {
     char request[MAXDATASIZE];
     char *response = calloc(1, MAXDATASIZE + 1);
@@ -688,13 +685,9 @@ char *get_mark(int qid, char *ans)
         }
     }
     // Handle Response - strtok twice to get question
-    // printf("Response: %s\n*endresponse\n", response);
-
-    char *mark = strtok(response, "\r\n");
-    mark = strtok(NULL, "\0");
-
-    // printf("GOT mark FOR QID %i: %s \n", qid, mark);
-    return mark;
+    char *mark = strtok(response, ":");
+    mark = strtok(NULL, "\r\n");
+    return atoi(mark);
 }
 
 void handle_question_increase(SOCKET socket, char *student_name)
@@ -897,8 +890,20 @@ void handle_post(HTTPRequest response, SOCKET socket)
     }
     if (strcmp(url, "/quiz/start") == 0)
     {
-        // printf("ANSWER :: %s\n\n", get_answer(2));
-        // printf("MARK :: %s\n\n", get_mark(2, get_answer(2)));
+        printf("ANSWER :: %s\n\n", get_answer(2));
+        // printf("MARK :: %d\nendmark\n", get_mark(2, "A"));
+        // printf("MARK :: %d\nendmark\n", get_mark(3, "A"));
+        // printf("MARK :: %d\nendmark\n", get_mark(3, "B"));
+        // int mark1 = get_mark(40, get_answer(40));
+        // int mark2 = get_mark(40, get_answer(42));
+        // int mark3 = get_mark(42, get_answer(42));
+        // int mark4 = get_mark(42, get_answer(40));
+
+        // int mark5 = get_mark(46, get_answer(46));
+        // int mark6 = get_mark(48, get_answer(48));
+        
+        
+        // printf("MARKS:: should be 1:%d 0:%d 1:%d 0:%d 1:%d 1:%d\n", mark1, mark2, mark3, mark4, mark5, mark6);
         // char *cookie = response.header_fields.search(&response.header_fields, "Cookie", strlen("Cookie"));
         // char *student_name = cookie + 5; // cookie begins with 'user={student_name}'
         // TESTINFO *student = hashtable_get(hashtable, student_name);
