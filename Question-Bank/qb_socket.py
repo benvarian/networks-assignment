@@ -155,6 +155,10 @@ class Nick_Socket:
                 return
             questions = question_bank.get_JSON_qs(q_type, q_num)
             self.send_questions(questions)
+        elif(mode_req == "QUESTION\r\n"):
+            qid = int(msg[1])
+            question = question_bank.get_q_by_id(qid)
+            self.send_questions(question)
         else:
             # TODO: maintain a count and restart socket after three issues in a row or something of the like.
             print("Request doesn't follow protocol, ignoring.")
