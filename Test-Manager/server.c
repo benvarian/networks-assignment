@@ -433,8 +433,10 @@ void handle_get(SOCKET socket, HTTPRequest request)
         char *cookie = request.header_fields.search(&request.header_fields, "Cookie", strlen("Cookie"));
         if (cookie && strcmp(path, "/login") == 0)
         {
-            // makes login a protected path
-            send_302(socket, "/", cookie);
+            char new_path[124];
+            sprintf(new_path, "/profile/%s", cookie + 5);
+            strcat(cookie, ";");
+            send_302(socket, new_path, cookie);
         }
         else if (strcmp(path, "/login") == 0 && cookie == NULL)
         {
@@ -452,7 +454,6 @@ void handle_get(SOCKET socket, HTTPRequest request)
             send_302(socket, "/", "user=; expires=Thu, 01 Jan 1970 00:00:00 GMT");
             return;
         }
-        // ?  need this as we arent gonna dynam render pages for each user as dont have enuf time
         if (strstr(path, "/profile/") != NULL)
         {
             strtok(path, "/");
@@ -478,7 +479,6 @@ void handle_get(SOCKET socket, HTTPRequest request)
                 send_QB_disconnected(socket);
             }
             return;
-            // strcat(path, ".html");
         }
     }
     char full_path[128];
@@ -545,6 +545,7 @@ void handle_post(HTTPRequest response, SOCKET socket)
             sprintf(cookie, "user=%s", username);
             send_302(socket, path, cookie);
             free(path);
+            free(cookie);
         }
         else
         {
@@ -644,9 +645,8 @@ void received(int new_fd, int numbytes, char *buf)
                 // See if QB is Python or C
                 if (strstr(buf, "PYTHON") != NULL)
                     type = PYTHON;
-                else if (strstr(buf, "C") != NULL)
-                    type = C;
                 else
+                    type = C;
                 {
                     perror("QB is of unknown language");
                 }
