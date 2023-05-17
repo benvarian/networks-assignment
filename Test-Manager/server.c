@@ -575,6 +575,65 @@ char *get_question(int qid)
     return question;
 }
 
+char *get_answer(int qid)
+{
+    char request[64];
+    char *response = calloc(1, MAXDATASIZE + 1);
+    CHECK_ALLOC(response);
+    sprintf(request, "ANSWER\r\n%i", qid);
+    if (qid % 2 == 1)
+    {
+        // Question is a Python question, so ask from a Python QB
+        for (int i = 0; i < NUM_QB; i++)
+        {
+            ping_QB(qb_info[i].socket, i);
+            if (qb_info[i].type == PYTHON)
+            {
+                // send/receive request
+                if (send(qb_info[i].socket, request, strlen(request) + 1, 0) == -1)
+                {
+                    perror("send");
+                    exit(EXIT_FAILURE);
+                }
+                if (recv(qb_info[i].socket, response, 4096, 0) <= 0)
+                {
+                    perror("recv");
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+    }
+    else
+    {
+        // Question is a C question, so ask from a C QB
+        for (int i = 0; i < NUM_QB; i++)
+        {
+            ping_QB(qb_info[i].socket, i);
+            if (qb_info[i].type == C)
+            {
+                // send/receive request
+                if (send(qb_info[i].socket, request, strlen(request) + 1, 0) == -1)
+                {
+                    perror("send");
+                    exit(EXIT_FAILURE);
+                }
+                if (recv(qb_info[i].socket, response, 4096, 0) <= 0)
+                {
+                    perror("recv");
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+    }
+    // Handle Response - strtok twice to get question
+
+    char *answer = strtok(response, "\r\n");
+    strtok(NULL, "\r\n");
+    answer = strtok(NULL, "\r\n");
+    // printf("GOT answer FOR QID %i: %s\n", qid, answer);
+    return answer;
+}
+
 void handle_question_increase(SOCKET socket, char *student_name)
 {
     // check both QBs are connected first
