@@ -279,14 +279,16 @@ class QB_Socket_Connection:
             questions = ''.join(["qid:{}&type:{}&question:{}&".format(q[0], q[1], q[2]) for q in QB_DB.get_rand_qs(int(q_num))])[:-1]
             self.send_questions(questions)
         elif(mode_req == ANSWER_HEADER):
-            qid = int(msg[1])
-            question = question_bank.get_q_by_id(qid)
+            # removes null terminator
+            qid = int(msg[1][:-1])
+            question = QB_DB.get_q_by_id(qid)
             answer = question[2]
             self.send_answer(answer)
         # handle pings from tm just by making an elif as its a viable header 
         elif(mode_req == GETQUESTION_HEADER):
-            qid = int(msg[1])
-            question = question_bank.get_q_by_id(qid)
+            # removes null terminator
+            qid = int(msg[1][:-1])
+            question = QB_DB.get_q_by_id(qid)
             self.send_question(question[1])
         elif (mode_req == "TM\r\n"):
             print("TM PINGED QB, Responding with ACCEPTED PING")
