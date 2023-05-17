@@ -104,3 +104,5 @@ void ping_QB(SOCKET socket, int qb_num);
 int connect_QB(SOCKET socket, enum QBType type);
 
 int get_questions(char *student);
+
+void send_webpage(SOCKET socket, char *question);
