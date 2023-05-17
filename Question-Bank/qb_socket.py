@@ -261,7 +261,7 @@ class QB_Socket_Connection:
         msg = msg.decode("utf-8").split("\r\n", 1)
         mode_req = msg[0] + "\r\n"
         if (mode_req == MARK_HEADER):
-            qid, ans = msg[1].split(":")
+            qid, ans = msg[1].split(":", 1)
             
             # print("qid == " + qid)
             # print("ans == " + ans)
