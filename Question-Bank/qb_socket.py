@@ -29,6 +29,7 @@ MARK_HEADER = "MARK\r\n"
 QUESTION_HEADER = "QUESTIONS\r\n"
 ERROR_HEADER = "ERROR\r\n"
 ANSWER_HEADER = "ANSWER\r\n"
+GETQUESTION_HEADER = "GETQUESTION\r\n"
 END_HEADER = "\r\n"
 
 END_MSG = "\r\n\0"
@@ -131,6 +132,31 @@ class QB_Socket_Connection:
         MSGLEN = len(msg)
         byte_msg = msg.encode()
 
+        print("\nsending questions:\nMSGLEN:",  MSGLEN, "\nmsg:", msg, "\n")
+
+        sent = self.sock.send(byte_msg)
+        if sent == 0:
+            raise RuntimeError("Socket Connection Broken")
+
+    def send_question(self, msg):
+        """Sends a single question to the TM
+            In form:
+            "QB {subject}
+             GETQUESTION
+             
+             {question string}
+             \0"
+
+        Args:
+            msg (String): msg to be sent
+
+        Raises:
+            RuntimeError: if socket connection is broken
+        """
+        # msg = QB_HEADER + QUESTION_HEADER + END_HEADER + "QUESTIONS:" + msg + END_MSG
+        msg = QB_HEADER + GETQUESTION_HEADER + END_HEADER  + msg + END_MSG
+        MSGLEN = len(msg)
+        byte_msg = msg.encode()
         print("\nsending questions:\nMSGLEN:",  MSGLEN, "\nmsg:", msg, "\n")
 
         sent = self.sock.send(byte_msg)
@@ -258,6 +284,10 @@ class QB_Socket_Connection:
             answer = question[2]
             self.send_answer(answer)
         # handle pings from tm just by making an elif as its a viable header 
+        elif(mode_req == GETQUESTION_HEADER):
+            qid = int(msg[1])
+            question = question_bank.get_q_by_id(qid)
+            self.send_question(question[1])
         elif (mode_req == "TM\r\n"):
             print("TM PINGED QB, Responding with ACCEPTED PING")
             self.send_response()
