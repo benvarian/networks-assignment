@@ -292,7 +292,6 @@ void addq_to_hashtable(char *student_name, int qnum, char *qid, char *type) {
     returns 0 if successful, -1 if not
 */
 int populate_questions(char *student_name) 
-int get_questions(char *student, SOCKET socket)
 {
     // Check connection to both TMs
     for(int i = 0; i < NUM_QB; i++) {
