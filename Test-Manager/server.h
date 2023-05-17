@@ -12,6 +12,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <sys/select.h>
+#include <time.h>
 
 #include "Data-Structures/Dictionary/Dictionary.h"
 
@@ -19,6 +20,7 @@
 #define MAXDATASIZE 4095
 #define BSIZE 1024
 #define SOCKET int
+#define NUM_QB  2
 
 enum HTTPMethods
 {
@@ -35,6 +37,7 @@ enum HTTPMethods
 
 enum QBType
 {
+    NONE,
     PYTHON,
     C
 };
@@ -94,6 +97,8 @@ void extract_body(HTTPRequest *request, char *body);
 
 void handle_post(HTTPRequest response, SOCKET socket);
 
-int check_QB(SOCKET socket);
+int ping_QB(SOCKET socket);
 
-void get_questions(SOCKET qb_socket, SOCKET socket);
+int connect_QB(SOCKET socket, enum QBType type);
+
+int get_questions(char *student, SOCKET socket);

@@ -8,7 +8,9 @@
 #include "Data-Structures/Queue/Queue.h"
 
 HASHTABLE *hashtable;
-QBInformation qb_info;
+QBInformation *qb_info;
+int numStudents = 0;
+char **studentNames;
 
 // Parses out the request line to retrieve the method, uri, and http version.
 void extract_request_line_fields(struct HTTPRequest *request, char *request_line)
@@ -220,6 +222,14 @@ void send_400(SOCKET socket)
     drop_client(socket);
 }
 
+void send_QB_disconnected(SOCKET socket) {
+    const char *c400 = "HTTP/1.1 400 Bad Request\r\n"
+                       "Connection: close\r\n"
+                       "Content-Length: 35\r\n\r\nCannot Start Quiz: QB Not Connected";
+    send(socket, c400, strlen(c400), 0);
+    drop_client(socket);
+}
+
 void send_404(SOCKET socket)
 {
     const char *c404 = "HTTP/1.1 404 Not Found\r\n"
@@ -260,28 +270,77 @@ void send_302(SOCKET socket, const char *path, const char *username)
     drop_client(socket);
 }
 
-void get_questions(SOCKET qb_socket, SOCKET socket)
+/*  Gets two random integers that add up to NUM_QUESTIONS
+    and requests that many questions from the two QBs
+    after checking both QBs are connected
+
+    Sends the questions to be added to the hashtable
+
+    takes the student name who is requesting the questions
+
+    returns 0 if successful, -1 if not
+*/
+int get_questions(char *student, SOCKET socket) 
 {
-    printf("%d:%d\n", qb_socket, socket);
+    // Check connection to both TMs
+    for(int i = 0; i < NUM_QB; i++) {
+        if(ping_QB(qb_info[i].socket) == -1) return -1;
+    }
+    printf("student requesting: %s\n", student); // JUST TO GET COMPILER OFF MY BACK UNTIL I START USING THIS
+    // Get how many questions of each language are being asked
+    srand(time(NULL));
+    int c_questions = (rand() % NUM_QUESTIONS);
+    int p_questions = NUM_QUESTIONS - c_questions;
+    printf("Getting %i C questions and %i Python questions\n", c_questions, p_questions);
     char *get_example = "QUESTIONS\r\nP:2\r\n\r\n";
-    char res[MAXDATASIZE + 1];
-    if (send(qb_socket, get_example, strlen(get_example) + 1, 0) == -1)
-    {
-        perror("send");
-        exit(EXIT_FAILURE);
+    char *c_response = calloc(1, MAXDATASIZE + 1);
+    CHECK_ALLOC(c_response);
+    char *p_response = calloc(1, MAXDATASIZE + 1);
+    CHECK_ALLOC(p_response);
+    // Ask for questions from QB
+    for(int i = 0; i < NUM_QB; i++) {
+        if(qb_info[i].type == PYTHON) {
+            // create the request string, with the language and number of questions needed
+            char p_request[64];
+            sprintf(p_request, "QUESTIONS\r\n%s:%i\r\n\r\n", "P", p_questions);
+            // send/receive request
+            if (send(qb_info[i].socket, p_request, strlen(get_example) + 1, 0) == -1)
+            {
+                perror("send");
+                exit(EXIT_FAILURE);
+            }
+            if (recv(qb_info[i].socket, p_response, 4096, 0) <= 0)
+            {
+                perror("recv");
+                exit(EXIT_FAILURE);
+            }
+        }
+        else if(qb_info[i].type == C) {
+            // create the request string, with the language and number of questions needed
+            char c_request[64];
+            sprintf(c_request, "QUESTIONS\r\n%s:%i\r\n\r\n", "C", c_questions);
+            if (send(qb_info[i].socket, c_request, strlen(get_example) + 1, 0) == -1)
+            {
+                perror("send");
+                exit(EXIT_FAILURE);
+            }
+            if (recv(qb_info[i].socket, c_response, 4096, 0) <= 0)
+            {
+                perror("recv");
+                exit(EXIT_FAILURE);
+            }
+        }
     }
-
-    if (recv(qb_socket, res, 4096, 0) <= 0)
-    {
-        perror("recv");
-        exit(EXIT_FAILURE);
-    }
-    printf("response: \n%s", res);
-
+    printf("C response: \n%s\n\nPython response:\n%s\n\n", c_response, p_response);
+    // SEND C RESPONSE OFF TO PARSE AND ADD TO HASHTABLE
+    free(c_response);
+    // SEND P RESPONSE OFF TO PARSE AND ADD TO HASHTABLE
+    free(p_response);
     send_404(socket);
+    return 0;
 }
 
-int check_QB(SOCKET socket)
+int ping_QB(SOCKET socket)
 {
 
     /*
@@ -298,7 +357,7 @@ int check_QB(SOCKET socket)
     if (send(socket, ping, strlen(ping) + 1, 0) == -1)
     {
         perror("QB disconnected");
-        return 1;
+        return -1;
     }
 
     printf("QB is connected.\n");
@@ -306,12 +365,43 @@ int check_QB(SOCKET socket)
     if (recv(socket, response, 4096, 0) <= 0)
     {
         perror("QB Disconnection");
-        return 1;
+        return -1;
     }
     printf("Received from QB: %s\n", response);
-    qb_info.socket = socket;
-    qb_info.type = 0;
 
+    return 0;
+}
+
+int connect_QB(SOCKET socket, enum QBType type) {
+    // first make sure qb is alive
+    if (ping_QB(socket) != 0) {
+        perror("Cannot connect to QB");
+        return -1;
+    }
+    
+    // check any existing connections to ensure no QB has disconnected
+    bool space_available = false;
+    for(int i = 0; i < NUM_QB; i++) {
+        if (ping_QB(qb_info[i].socket) == -1) {
+            qb_info[i].type = NONE;
+            space_available = true;
+        }
+    }
+    // assign QB to an open space
+    if(space_available) {
+        for(int i = 0; i < NUM_QB; i++) {
+            if(qb_info[i].type == NONE) {
+                qb_info[i].socket = socket;
+                qb_info[i].type = type;
+                break;
+            }
+        }
+    }
+    else {
+        printf("Cannot assign question bank: Already connected to 2 QBs\n");
+        return -1;
+    }
+    printf("QB INFORMATION:\nQB SLOT 1 TYPE: %d\nQB SLOT 2 TYPE: %d\n", qb_info[0].type, qb_info[1].type);
     return 0;
 }
 
@@ -336,7 +426,6 @@ void handle_get(SOCKET socket, HTTPRequest request)
     else
     {
         char *cookie = request.header_fields.search(&request.header_fields, "Cookie", strlen("Cookie"));
-
         if (cookie && strcmp(path, "/login") == 0)
         {
             // makes login a protected path
@@ -374,11 +463,17 @@ void handle_get(SOCKET socket, HTTPRequest request)
         }
         if (strcmp(path, "/quiz/start") == 0)
         {
-            if (qb_info.socket == 0)
+            // check both QBs are connected first
+            if (qb_info[0].socket == 0 || qb_info[1].socket == 0)
             {
-                send_400(socket);
+                send_QB_disconnected(socket);
             }
-            get_questions(qb_info.socket, socket);
+            char *student = cookie + 5; // plus 5 because cookie starts with 'user=XXXXX'
+            printf("\nStudent requesting to start quiz: %s\n", student);
+            if(get_questions(student, socket) == -1) {
+                printf("Cannot retrieve questions: Missing QB Connection\n");
+                send_QB_disconnected(socket);
+            }
             return;
             // strcat(path, ".html");
         }
@@ -436,7 +531,6 @@ void handle_post(HTTPRequest response, SOCKET socket)
         char *password = (char *)response.body.search(&response.body, "password", strlen("password") * sizeof(char) + 1);
         printf("\n%s is attempting to sign in with the password %s\n", username, password);
         TESTINFO *student = hashtable_get(hashtable, username);
-        printf("Checking %s against %s and %s against %s\n", username, student->user, password, student->pw);
         if (strcmp(username, student->user) == 0 && strcmp(password, student->pw) == 0)
         {
             // ! assume that the username isnt longer than 18 characters
@@ -517,7 +611,7 @@ void received(int new_fd, int numbytes, char *buf)
     }
     else
     {
-        char original[strlen(buf)];
+        char original[strlen(buf) + 1];
         strcpy(original, buf);
         client_received += numbytes;
         buf[client_received] = 0;
@@ -547,10 +641,17 @@ void received(int new_fd, int numbytes, char *buf)
             }
             else if (strncmp(buf, "QB", 2) == 0)
             {
-                if (check_QB(new_fd) == -1)
+                enum QBType type;
+                // See if QB is Python or C
+                if(strstr(buf, "PYTHON") != NULL) type = PYTHON;
+                else if(strstr(buf, "C") != NULL) type = C;
+                else {
+                    perror("QB is of unknown language");
+                }
+                // Try to connect to QB
+                if (connect_QB(new_fd, type) == -1)
                 {
-                    perror("check_QB: QB Disconnect");
-                    exit(EXIT_FAILURE);
+                    perror("Failed to connect to new QB");
                 }
             }
             else
@@ -575,7 +676,7 @@ void manage_connection(SOCKET sockfd)
     FD_ZERO(&current_sockets);
     FD_SET(sockfd, &current_sockets);
 
-    printf("Server: waiting for connections...\n");
+    printf("Server: waiting for connections...\n\n");
 
     while (1)
     {
@@ -726,22 +827,26 @@ int main(int argc, char *argv[])
         usage();
     }
     // Read in the data of students from a csv
-    int numStudents = 0;
-    char **studentNames = NULL;
     hashtable = hashtable_new();
     getData(hashtable, &numStudents, &studentNames, FILEPATH);
+    // Allocation for Question Banks
+    qb_info = (QBInformation *) calloc(NUM_QB, sizeof(struct QBInformation));
+    CHECK_ALLOC(qb_info);
+    for (int i = 0; i < NUM_QB; i++) {
+        qb_info[i].socket = 0;
+        qb_info[i].type = NONE;
+    }
     for (int i = 0; i < numStudents; i++)
     {
         TESTINFO *student = hashtable_get(hashtable, studentNames[i]);
         printf("Student data for %s loaded in\n", student->user);
     }
-    writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
+    printf("\n");
     // Server stuff idk
     SOCKET socket = bind_socket(get_info(argv[1]));
 
     manage_connection(socket);
-    // ! dosnt work on bens machine
     // writes any changed data back to the csv when finished
-
+    writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
     return 0;
 }
