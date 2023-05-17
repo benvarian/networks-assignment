@@ -414,6 +414,34 @@ int populate_questions(char *student_name)
     return 0;
 }
 
+/*  Increments the tracker of the current question a student
+ *  is viewing on their webpage, takes student name as parameter
+ */
+void increment_question(char *student_name) {
+    uint32_t h = hash_string(student_name) % HASHTABLE_SIZE;
+    hashtable[h]->currentq += 1;
+}
+
+/*  If question was marked correct, call this function to update the
+    hashtable (and call write to CSV to make sure data is saved)
+    Takes the student name and the question ID of the correct answer
+*/
+void answer_correct(char *student_name, int qid) {
+    uint32_t h = hash_string(student_name) % HASHTABLE_SIZE;
+    for(int i = 0; i < NUM_QUESTIONS; i++) if(hashtable[h]->qid[i] == qid) hashtable[h]->correct[i] = true;
+    writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
+}
+
+/*  If question was marked incorrect, call this function to update the
+    hashtable (and call write to CSV to make sure data is saved)
+    Takes the student name and the question ID of the incorrect answer
+*/
+void answer_incorrect(char *student_name, int qid) {
+    uint32_t h = hash_string(student_name) % HASHTABLE_SIZE;
+    for(int i = 0; i < NUM_QUESTIONS; i++) if(hashtable[h]->qid[i] == qid) hashtable[h]->attemptsLeft -= 1;
+    writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
+}
+
 void ping_QB(SOCKET socket, int qb_num)
 {
     /*
@@ -627,6 +655,9 @@ void handle_get(SOCKET socket, HTTPRequest request)
             printf("GOT STUDENT STUFF, asking for question %i\n", student->qid[0]);
             char *next_question = get_question(student->qid[0]);
             // printf("Question passed: %s\n", next_question);
+            increment_question(student_name);
+            student = hashtable_get(hashtable, student_name);
+            printf("Question tracker incremented to %i\n", student->currentq);
             send_webpage(socket, next_question);
             return;
         }
