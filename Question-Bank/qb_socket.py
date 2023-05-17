@@ -204,7 +204,18 @@ class QB_Socket_Connection:
 
     def handle_req(self, msg):
         """Handles msg sent by TM
-
+            Mark req in form:
+                "MARK
+                {qid}:{ans}
+                "
+            Question req in form:
+                "QUESTIONS
+                {subject}:{num}
+                "
+            Specific Question in form:
+                "QUESTION
+                {qid}
+                "
         Args:
             msg (String): Message sent by TM
         """
