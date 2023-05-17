@@ -97,8 +97,10 @@ void extract_body(HTTPRequest *request, char *body);
 
 void handle_post(HTTPRequest response, SOCKET socket);
 
-int ping_QB(SOCKET socket);
+void addq_to_hashtable(char *student_name, int qnum, char *qid, char *type);
+
+void ping_QB(SOCKET socket, int qb_num);
 
 int connect_QB(SOCKET socket, enum QBType type);
 
-int get_questions(char *student, SOCKET socket);
+int get_questions(char *student);
