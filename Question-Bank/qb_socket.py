@@ -205,7 +205,7 @@ class QB_Socket_Connection:
         Raises:
             RuntimeError: if socket connection is broken
         """
-        msg = "ACCEPTED PING"
+        msg = "ACCEPTED PING\0"
         byte_msg = msg.encode()
         sent = self.sock.send(byte_msg)
         if sent == 0:
@@ -260,13 +260,12 @@ class QB_Socket_Connection:
         """
         msg = msg.decode("utf-8").split("\r\n", 1)
         mode_req = msg[0] + "\r\n"
-        print(f"MESSAGE RECEIVED: {msg}")
         if (mode_req == MARK_HEADER):
             qid, ans = msg[1].split(":")
             
             # print("qid == " + qid)
             # print("ans == " + ans)
-            print("Marking:\n\tqid =", qid, "\n\tans =", ans, "\nasdf")
+            print("Marking:\n\tqid =", qid, "\n\tans =", ans, "\n")
             mark = QB_DB.mark(int(qid), ans)
             self.send_mark(mark)
         elif (mode_req == QUESTION_HEADER):
