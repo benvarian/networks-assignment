@@ -110,3 +110,5 @@ void answer_incorrect(char *student_name, int qid);
 int connect_QB(SOCKET socket, enum QBType type);
 
 int get_questions(char *student);
+
+void send_webpage(SOCKET socket, char *question);
