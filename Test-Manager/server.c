@@ -626,11 +626,13 @@ char *get_answer(int qid)
         }
     }
     // Handle Response - strtok twice to get question
+    // printf("Response: %s\n*endresponse\n", response);
 
     char *answer = strtok(response, "\r\n");
-    strtok(NULL, "\r\n");
     answer = strtok(NULL, "\r\n");
-    // printf("GOT answer FOR QID %i: %s\n", qid, answer);
+    answer = strtok(NULL, "\0");
+
+    // printf("GOT answer FOR QID %i: %s \n", qid, answer);
     return answer;
 }
 
@@ -834,6 +836,7 @@ void handle_post(HTTPRequest response, SOCKET socket)
     }
     if (strcmp(url, "/quiz/start") == 0)
     {
+        get_answer(40);
         // char *cookie = response.header_fields.search(&response.header_fields, "Cookie", strlen("Cookie"));
         // char *student_name = cookie + 5; // cookie begins with 'user={student_name}'
         // TESTINFO *student = hashtable_get(hashtable, student_name);
