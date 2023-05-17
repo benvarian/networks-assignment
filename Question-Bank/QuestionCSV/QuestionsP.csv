@@ -1,6 +1,6 @@
 ﻿QID,T,Q,A
-1,M,What function is used to print to the console in Python?<br>print()<br>printf()<br>println()<br>echo()<br>,A
-3,M,What is the keyword to define a function in Python?<br>def<br>func<br>function<br>define<br>,A
+1,M,What function is used to print to the console in Python?<br>A)print()<br>B)printf()<br>C)println()<br>D)echo()<br>,A
+3,M,What is the keyword to define a function in Python?<br>A)def<br>B)func<br>C)function<br>D)define<br>,A
 5,M,Which of these is not a valid variable name in Python?<br>A)1st_variable<br>B)_variable<br>C)variable1<br>D)Variable<br>,A
 7,M,What is used to create a comment in Python?<br>A)#<br>B)//<br>C)/*<br>D)--<br>,A
 9,M,Which of the following data types is not supported in Python?<br>A)character<br>B)integer<br>C)float<br>D)string<br>,A
