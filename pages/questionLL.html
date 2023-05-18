@@ -6,26 +6,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-
       let qtnArea = document.getElementsByClassName("Question-Area");
       let quizArea = document.getElementsByClassName("Quiz-Area");
       let submitBtn = document.getElementsByClassName("submit-button");
 
-      let textAns = document.getElementsByClassName("codeInput");
+      let radio = document.getElementsByName("q");
 
-      let textAnsArea = document.getElementsByClassName("Text-Answer-Area");
       let radioAnsArea = document.getElementsByClassName("Half-Answer-Area");
-
-      let sumQtnDisplay = document.getElementsByClassName("sumQtnDisplay");
-      let sumAnsDisplay = document.getElementsByClassName("sumAnsDisplay");
 
       let answers = [];
 
-      const addAnswer = (qID, answer) => {
-        answers.push({"qtn":qID, "ans":answer});
+      const addAnswer = (question, answer) => {
+        answers.push({"qtn":question, "ans":answer});
       }
 
       const submit = async (answers) => {
+        console.log(window.location.href);
         var xhr = new XMLHttpRequest();
         xhr.open("POST", "http://localhost/ben/quiz", true);
         xhr.setRequestHeader('Content-Type', 'application/json');
@@ -35,14 +31,21 @@
 
       }
 
+
       //function called when the submit button is pressed
       function submitPressed() {
 
-        if(textAns[0].value != "") {
-          addAnswer(1,textAns[0].value);
-          submit(answers);
-        }
+        let selections = ['a','b','c','d'];
+
+          for(let k = 0; k < 4; k++) {
+            if(radio[k].checked) {
+
+              addAnswer(1,selections[k]);
+              submit(answers[0]);
+            }
+          }
       }
+
     </script>
 
   </head>
@@ -58,18 +61,34 @@
     </div>
 
     <div class="Quiz-Area" >
-
-      <div class="Quiz-Header slide">
+      <div style="display: block;"class="Quiz-Header slide">
 
         <div class="Question-Area" >
           <p>This is a question and below are the answers? <br> A) <br> B) <br> C) <br> D) </p>
         </div>
         <div class="Answer-Area" >
-          <div class="Text-Answer-Area" >
-            <textarea class="codeInput" rows="8" cols="80"></textarea>
+          <div class="Half-Answer-Area" >
+            <ul >
+              <li >
+                <input type="radio" name="q" id="1a" class="answer">
+                <label for="1a" id="a_text">A</label>
+              </li>
+              <li >
+                <input type="radio" name="q" id="1b" class="answer">
+                <label for="1b" id="a_text">B</label>
+              </li>
+              <li >
+                <input type="radio" name="q" id="1c" class="answer">
+                <label for="1c" id="a_text">C</label>
+              </li>
+              <li >
+                <input type="radio" name="q" id="1d" class="answer">
+                <label for="1d" id="a_text">D</label>
+              </li>
+            </ul >
           </div>
-        </div>
 
+        </div>
 
       </div>
 
@@ -77,7 +96,6 @@
 
         <input class="bottom-button" onclick="submitPressed()" type="submit" name="" value="Next">
       </div>
-
 
     </div>
 
