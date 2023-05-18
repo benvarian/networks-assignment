@@ -11,7 +11,7 @@ try:
     # Init input params
     HOST = sys.argv[1]
     PORT=int(sys.argv[2])
-    QB_TYPE = str(sys.argv[3])
+    QB_TYPE = str(sys.argv[3]).upper()
     if (QB_TYPE not in SUBJECTS): raise Exception("Fail init args")
 except:
     print("\nUsage:\n python3 qb_socket.py {TM-IP-address} {port} {qb_type}")
