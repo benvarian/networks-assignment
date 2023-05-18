@@ -872,6 +872,10 @@ void handle_get(SOCKET socket, HTTPRequest request)
 void handle_post(HTTPRequest response, SOCKET socket)
 {
     char *url = (char *)response.request_line.search(&response.request_line, "uri", strlen("uri"));
+    printf("url = %s\n", url);
+    if (url == NULL) {
+        return;
+    }
     if (strcmp(url, "/login") == 0)
     {
         char *username = (char *)response.body.search(&response.body, "username", strlen("username") * sizeof(char) + 1);
@@ -899,13 +903,18 @@ void handle_post(HTTPRequest response, SOCKET socket)
     }
     if (strcmp(url, "/quiz/start") == 0)
     {
+        printf("%s\n", "herherherherh");
         char *cookie = response.header_fields.search(&response.header_fields, "Cookie", strlen("Cookie"));
+        printf("%s\n", cookie);
         char *user = cookie + 5;
+        printf("%s\n", user);
         TESTINFO *student = hashtable_get(hashtable, user);
         int current_question = student->currentq;
         char *student_answer = response.body.search(&response.body, "sans", strlen("sans"));
-        printf("%s", student_answer);
-        char *actual = student_answer;
+
+        // printf("%s\n", student_answer);
+        char *actual = &student_answer[0];
+        actual[1] = '\0';
         // printf("%d:%c\n", student->qid[current_question - 1], student_answer);
         if (get_mark(current_question, actual) == '1')
         {
