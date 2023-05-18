@@ -168,14 +168,11 @@ void getData(HASHTABLE *hashtable, int *numStudents, char ***studentNames, char 
         correct = (bool *)calloc(sizeof(bool *), NUM_QUESTIONS);
         CHECK_ALLOC(correct);
         char *correcttok = strtok_r(entries, "$", &savecorrect);
+        
         for (int i = 0; i < NUM_QUESTIONS; i++)
         {
-            if (strcmp(correcttok, "T"))
-                correct[i] = true;
-            else if (strcmp(correcttok, "F"))
-                correct[i] = false;
-            else
-                correct[i] = (bool)NULL; // ERROR: SHOULD BE T OR F NOT NOTHING
+            if (strcmp(correcttok, "T") == 0) correct[i] = true;
+            else correct[i] = false;
             correcttok = strtok_r(entries, "$", &savecorrect);
         }
 
