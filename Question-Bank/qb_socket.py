@@ -266,7 +266,7 @@ class QB_Socket_Connection:
             
             # print("qid == " + qid)
             # print("ans == " + ans)
-            print("Marking:\n\tqid =", qid, "\n\tans =", ans, "\nasdf")
+            print("Marking:\n\tqid =", qid, "\n\tans =", ans, "\n")
             mark = QB_DB.mark(int(qid), ans)
             self.send_mark(mark)
         elif (mode_req == QUESTION_HEADER):
