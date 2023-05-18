@@ -641,7 +641,7 @@ char *get_answer(int qid)
     return answer;
 }
 
-char *get_mark(int qid, char *ans)
+char get_mark(int qid, char *ans)
 {
     char request[MAXDATASIZE];
     char *response = calloc(1, MAXDATASIZE + 1);
@@ -691,14 +691,12 @@ char *get_mark(int qid, char *ans)
             }
         }
     }
-    // Handle Response - strtok twice to get question
-    // printf("Response: %s\n*endresponse\n", response);
-
     char *mark = strtok(response, "\r\n");
-    mark = strtok(NULL, "\0");
+    mark = strtok(NULL, "\r\n");
+    mark = strtok(NULL, "\r\n");
+    char score = *(mark + 5);
 
-    // printf("GOT mark FOR QID %i: %s \n", qid, mark);
-    return mark;
+    return score;
 }
 
 void handle_question_increase(SOCKET socket, char *student_name)
