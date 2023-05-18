@@ -271,7 +271,7 @@ class QB_Socket_Connection:
         elif (mode_req == QUESTION_HEADER):
             q_type, q_num = msg[1].split(":")
             
-            print("qnum =", int(q_num.strip()))
+            print("qnum =", int(str(q_num).rstrip("\x00").strip()))
             if (q_type not in QTYPES):
                 print("Invalid Request. Second val of q req should be in QTYPES")
                 self.send_error("q_typeError")
