@@ -101,6 +101,14 @@ void addq_to_hashtable(char *student_name, int qnum, char *qid, char *type);
 
 void ping_QB(SOCKET socket, int qb_num);
 
+void increment_question(char *student_name);
+
+void answer_correct(char *student_name, int qid);
+
+void answer_incorrect(char *student_name, int qid);
+
 int connect_QB(SOCKET socket, enum QBType type);
 
 int get_questions(char *student);
+
+void send_webpage(SOCKET socket, char *question);

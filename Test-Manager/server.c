@@ -12,120 +12,6 @@ QBInformation *qb_info;
 int numStudents = 0;
 char **studentNames;
 
-// Parses out the request line to retrieve the method, uri, and http version.
-void extract_request_line_fields(struct HTTPRequest *request, char *request_line)
-{
-    // Copy the string literal into a local instance. MITCH ADDED +1 FOR \0
-    char fields[strlen(request_line) + 1];
-    strcpy(fields, request_line);
-    // Separate the string on spaces for each section.
-    char *method = strtok(fields, " ");
-    char *uri = strtok(NULL, " ");
-    char *http_version = strtok(NULL, "\0");
-    // Insert the results into the request object as a dictionary
-    struct Dictionary request_line_dict = dictionary_constructor((compare_string_keys));
-    request_line_dict.insert(&request_line_dict, "method", sizeof("method") + 1, method, strlen(method) * sizeof(char) + 1);
-    request_line_dict.insert(&request_line_dict, "uri", sizeof("uri") + 1, uri, strlen(uri) * sizeof(char) + 1);
-    request_line_dict.insert(&request_line_dict, "http_version", sizeof("http_version") + 1, http_version, strlen(http_version) * sizeof(char) + 1);
-    // Save the dictionary to the request object.
-    request->request_line = request_line_dict;
-    if (request->request_line.search(&request->request_line, "GET", sizeof("GET")))
-    {
-        extract_body(request, (char *)request->request_line.search(&request->request_line, "uri", sizeof("uri")));
-    }
-}
-
-// Parses out the header fields.
-void extract_header_fields(struct HTTPRequest *request, char *header_fields)
-{
-    // Copy the string literal into a local instance.
-    char fields[strlen(header_fields) + 1];
-    strcpy(fields, header_fields);
-    // Save each line of the input into a queue.
-    struct Queue headers = queue_constructor();
-    char *field = strtok(fields, "\n");
-    while (field)
-    {
-        headers.push(&headers, field, strlen(field) * sizeof(char) + 1);
-        field = strtok(NULL, "\r\n");
-    }
-    // Initialize the request's header_fields dictionary.
-    request->header_fields = dictionary_constructor(compare_string_keys);
-    // Use the queue to further extract key value pairs.
-    char *header = (char *)headers.peek(&headers);
-    while (header)
-    {
-        char *key = strtok(header, ":");
-        char *value = strtok(NULL, "\0");
-        if (value)
-        {
-            // Remove leading white spaces.
-            if (value[0] == ' ')
-            {
-                value++;
-            }
-            // printf(":%s\n", value);
-            // Push the key value pairs into the request's header_fields dictionary.
-            request->header_fields.insert(&request->header_fields, key, strlen(key) * sizeof(char) + 1, value, strlen(value) * sizeof(char) + 1);
-            // Collect the next field from the queue.
-        }
-        headers.pop(&headers);
-        header = (char *)headers.peek(&headers);
-    }
-    // Destroy the queue.
-    queue_destructor(&headers);
-}
-
-// Parses the body according to the content type specified in the header fields.
-void extract_body(struct HTTPRequest *request, char *body)
-{
-    // Check what content type needs to be parsed
-    char *content_type = (char *)request->header_fields.search(&request->header_fields, "Content-Type", sizeof("Content-Type"));
-    if (content_type)
-    {
-        // Initialize the body_fields dictionary.
-        struct Dictionary body_fields = dictionary_constructor(compare_string_keys);
-        if (strcmp(content_type, "application/x-www-form-urlencoded") == 0)
-        {
-            // Collect each key value pair as a set and store them in a queue.
-            struct Queue fields = queue_constructor();
-            char *field = strtok(body, "&");
-            while (field)
-            {
-                fields.push(&fields, field, strlen(field) * sizeof(char) + 1);
-                // loop over to the next field that is parsed otherwise itll cause a hang as its the same string
-                field = strtok(NULL, "&");
-            }
-            // Iterate over the queue to further separate keys from values.
-            field = fields.peek(&fields);
-            while (field)
-            {
-                char *key = strtok(field, "=");
-                char *value = strtok(NULL, "\0");
-                // Remove unnecessary leading white space.
-                if (value[0] == ' ')
-                {
-                    value++;
-                }
-                // Insert the key value pair into the dictionary.
-                body_fields.insert(&body_fields, key, strlen(key) * sizeof(char) + 1, value, strlen(value) * sizeof(char) + 1);
-                // Collect the next item in the queue.
-                fields.pop(&fields);
-                field = fields.peek(&fields);
-            }
-            // Destroy the queue.
-            queue_destructor(&fields);
-        }
-        else
-        {
-            // Save the data as a single key value pair.
-            body_fields.insert(&body_fields, "data", sizeof("data"), body, strlen(body) * sizeof(char) + 1);
-        }
-        // Set the request's body dictionary.
-        request->body = body_fields;
-    }
-}
-
 void usage(void)
 {
     fprintf(stderr, "usage: ./server port\n");
@@ -271,14 +157,166 @@ void send_302(SOCKET socket, const char *path, const char *username)
     drop_client(socket);
 }
 
-void addq_to_hashtable(char *student_name, int qnum, char *qid, char *type) {
+void send_webpage(SOCKET socket, char *question)
+{
+    char *web_page = calloc(1, MAXDATASIZE + 1);
+    CHECK_ALLOC(web_page);
+    static const char *first = "<!DOCTYPE html>\n<html lang='en' dir='ltr'>\n  <head>\n    <meta charset='utf-8'>\n    <meta name='viewport' content='width=device-width, initial-scale=1.0' />\n    <script src='https://cdn.tailwindcss.com'></script>\n    <script>\n      let qtnArea = document.getElementsByClassName('Question-Area');\n      let quizArea = document.getElementsByClassName('Quiz-Area');\n      let submitBtn = document.getElementsByClassName('submit-button');\n      let radio = document.getElementsByName('q');\n      let radioAnsArea = document.getElementsByClassName('Half-Answer-Area');\n      let answers = [];\n      const addAnswer = (question, answer) => {\n        answers.push({'qtn':question, 'ans':answer});\n      }\n      const submit = async (answers) => {\n        console.log(window.location.href);\n        var xhr = new XMLHttpRequest();\n        xhr.open('POST', 'http://localhost:8080/ben/quiz', true);\n        xhr.setRequestHeader('Content-Type', 'application/json');\n        await xhr.send(JSON.stringify({\n            answers\n        }));\n      }\n      //function called when the submit button is pressed\n      function submitPressed() {\n        let selections = ['a','b','c','d'];\n          for(let k = 0; k < 4; k++) {\n            if(radio[k].checked) {\n              addAnswer(1,selections[k]);\n              submit(answers[0]);\n            }\n          }\n      }\n    </script>\n  </head>\n  <body>\n    <div>\n      <nav class='bg-slate-100 shadow flex justify-between sticky top-0 z-50 place-items-center w-full'>\n        <div class='flex justify-center'>\n          <h1 class='mx-4'>CITS3002 Project</h1>\n          <button class='ml-4'>logout</button>\n          <a class='ml-4' href='profile.html'>back</a>\n        </div>\n      </nav>\n    </div>\n    <div class='Quiz-Area' style='flex: justify-center;\n    width: 60%;\n    height: 500px;\n    margin: 100px 20% 0 20%;\n    border-radius: 10px;\n    background: rgba(0,0,0,0.1);\n    box-shadow: 0 0 10px 2px rgba(100,100,100,0.1);\n    overflow: auto;\n'>      <div style='display: block;'class='Quiz-Header slide'>\n<h1 style='font-size: 30px;\n        color: #3d3d3d;\n        text-align: center;'>Question 1 / 10</h1><br>\n        <div class='Question-Area' style='width: 90%;\n        height: 70%;\n        border-bottom: 2px solid #3d3d3d;\n        margin: 0 5%;'>";
+    static const char *last = "</div>\n        <div class='Answer-Area' style='display: flex;\n        width: 90%;\n        height: 20%;\n        margin: 0 5%;'>\n          <div class='Half-Answer-Area' style='width: 50%;\n          height: 100%;\n          margin: 0;'>\n            <ul style='list-style-type: none;\n            padding: 0;'>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1a' class='answer'>\n                <label for='1a' id='a_text'>A</label>\n              </li>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1b' class='answer'>\n                <label for='1b' id='a_text'>B</label>\n              </li>\n            </ul style='list-style-type: none;\n            padding: 0;'>\n          </div>\n          <div class='Half-Answer-Area' style='width: 50%;\n          height: 100%;\n          margin: 0;'>\n            <ul style='list-style-type: none;\n            padding: 0;'>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1c' class='answer'>\n                <label for='1c' id='a_text'>C</label>\n              </li>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1d' class='answer'>\n                <label for='1d' id='a_text'>D</label>\n              </li>\n            </ul>\n          </div>\n\n        </div>\n\n      </div>\n\n      <div class='Quiz-Bottom' style='\n      width: 94%;\n      height: 14%;\n      margin: 0 3%;'>\n\n        <input class='bottom-button' onclick='submitPressed()' type='submit' name='' value='Next' style='width: 40%;\n        height: 100%;\n        width: 80%;\n        margin: 0 10%;\n        background-color: #80d9ff;\n        cursor: pointer;\n        border-radius: 10px;\n        '>\n      </div>\n\n    </div>\n\n  </body>\n</html>\n";
+    strcat(web_page, first);
+    strcat(web_page, question);
+    strcat(web_page, last);
+    // printf("%s:", web_page)
+    // fprintf(stderr, "%d: %s", socket, question);
+
+    char buffer[BSIZE];
+
+    sprintf(buffer, "HTTP/1.1 200 OK\r\n");
+    send(socket, buffer, strlen(buffer), 0);
+
+    sprintf(buffer, "Connection: close\r\n");
+    send(socket, buffer, strlen(buffer), 0);
+
+    sprintf(buffer, "Content-Length: %zu\r\n", strlen(web_page) + 1);
+    send(socket, buffer, strlen(buffer), 0);
+
+    sprintf(buffer, "Content-Type: %s\r\n", "text/html");
+    send(socket, buffer, strlen(buffer), 0);
+
+    sprintf(buffer, "\r\n");
+    send(socket, buffer, strlen(buffer), 0);
+
+    send(socket, web_page, strlen(web_page) + 1, 0);
+
+    // send_403(socket);
+    free(web_page);
+}
+
+// Parses out the request line to retrieve the method, uri, and http version.
+void extract_request_line_fields(struct HTTPRequest *request, char *request_line)
+{
+    // Copy the string literal into a local instance. MITCH ADDED +1 FOR \0
+    char fields[strlen(request_line) + 1];
+    strcpy(fields, request_line);
+    // Separate the string on spaces for each section.
+    char *method = strtok(fields, " ");
+    char *uri = strtok(NULL, " ");
+    char *http_version = strtok(NULL, "\0");
+    // Insert the results into the request object as a dictionary
+    struct Dictionary request_line_dict = dictionary_constructor((compare_string_keys));
+    request_line_dict.insert(&request_line_dict, "method", sizeof("method") + 1, method, strlen(method) * sizeof(char) + 1);
+    request_line_dict.insert(&request_line_dict, "uri", sizeof("uri") + 1, uri, strlen(uri) * sizeof(char) + 1);
+    request_line_dict.insert(&request_line_dict, "http_version", sizeof("http_version") + 1, http_version, strlen(http_version) * sizeof(char) + 1);
+    // Save the dictionary to the request object.
+    request->request_line = request_line_dict;
+    if (request->request_line.search(&request->request_line, "GET", sizeof("GET")))
+    {
+        extract_body(request, (char *)request->request_line.search(&request->request_line, "uri", sizeof("uri")));
+    }
+}
+
+// Parses out the header fields.
+void extract_header_fields(struct HTTPRequest *request, char *header_fields)
+{
+    // Copy the string literal into a local instance.
+    char fields[strlen(header_fields) + 1];
+    strcpy(fields, header_fields);
+    // Save each line of the input into a queue.
+    struct Queue headers = queue_constructor();
+    char *field = strtok(fields, "\n");
+    while (field)
+    {
+        headers.push(&headers, field, strlen(field) * sizeof(char) + 1);
+        field = strtok(NULL, "\r\n");
+    }
+    // Initialize the request's header_fields dictionary.
+    request->header_fields = dictionary_constructor(compare_string_keys);
+    // Use the queue to further extract key value pairs.
+    char *header = (char *)headers.peek(&headers);
+    while (header)
+    {
+        char *key = strtok(header, ":");
+        char *value = strtok(NULL, "\0");
+        if (value)
+        {
+            // Remove leading white spaces.
+            if (value[0] == ' ')
+            {
+                value++;
+            }
+            // printf(":%s\n", value);
+            // Push the key value pairs into the request's header_fields dictionary.
+            request->header_fields.insert(&request->header_fields, key, strlen(key) * sizeof(char) + 1, value, strlen(value) * sizeof(char) + 1);
+            // Collect the next field from the queue.
+        }
+        headers.pop(&headers);
+        header = (char *)headers.peek(&headers);
+    }
+    // Destroy the queue.
+    queue_destructor(&headers);
+}
+
+// Parses the body according to the content type specified in the header fields.
+void extract_body(struct HTTPRequest *request, char *body)
+{
+    // Check what content type needs to be parsed
+    char *content_type = (char *)request->header_fields.search(&request->header_fields, "Content-Type", sizeof("Content-Type"));
+    if (content_type)
+    {
+        // Initialize the body_fields dictionary.
+        struct Dictionary body_fields = dictionary_constructor(compare_string_keys);
+        if (strcmp(content_type, "application/x-www-form-urlencoded") == 0)
+        {
+            // Collect each key value pair as a set and store them in a queue.
+            struct Queue fields = queue_constructor();
+            char *field = strtok(body, "&");
+            while (field)
+            {
+                fields.push(&fields, field, strlen(field) * sizeof(char) + 1);
+                // loop over to the next field that is parsed otherwise itll cause a hang as its the same string
+                field = strtok(NULL, "&");
+            }
+            // Iterate over the queue to further separate keys from values.
+            field = fields.peek(&fields);
+            while (field)
+            {
+                char *key = strtok(field, "=");
+                char *value = strtok(NULL, "\0");
+                // Remove unnecessary leading white space.
+                if (value[0] == ' ')
+                {
+                    value++;
+                }
+                // Insert the key value pair into the dictionary.
+                body_fields.insert(&body_fields, key, strlen(key) * sizeof(char) + 1, value, strlen(value) * sizeof(char) + 1);
+                // Collect the next item in the queue.
+                fields.pop(&fields);
+                field = fields.peek(&fields);
+            }
+            // Destroy the queue.
+            queue_destructor(&fields);
+        }
+        else
+        {
+            // Save the data as a single key value pair.
+            body_fields.insert(&body_fields, "data", sizeof("data"), body, strlen(body) * sizeof(char) + 1);
+        }
+        // Set the request's body dictionary.
+        request->body = body_fields;
+    }
+}
+
+void addq_to_hashtable(char *student_name, int qnum, char *qid, char *type)
+{
     // get hash of the student
     uint32_t hash = hash_string(student_name) % HASHTABLE_SIZE;
     // overwrite information by adding a new entry to the hashtable with same username
     hashtable[hash]->qid[qnum] = atoi(qid);
     // convert type to enum
-    if(strcmp(type, "P") == 0) hashtable[hash]->type[qnum] = P;
-    else hashtable[hash]->type[qnum] = M;
+    if (strcmp(type, "P") == 0)
+        hashtable[hash]->type[qnum] = P;
+    else
+        hashtable[hash]->type[qnum] = M;
 }
 
 /*  Gets two random integers that add up to NUM_QUESTIONS
@@ -291,12 +329,14 @@ void addq_to_hashtable(char *student_name, int qnum, char *qid, char *type) {
 
     returns 0 if successful, -1 if not
 */
-int populate_questions(char *student_name) 
+int populate_questions(char *student_name)
 {
     // Check connection to both TMs
-    for(int i = 0; i < NUM_QB; i++) {
+    for (int i = 0; i < NUM_QB; i++)
+    {
         ping_QB(qb_info[i].socket, i);
-        if(qb_info[i].type == NONE) return -1;
+        if (qb_info[i].type == NONE)
+            return -1;
     }
     // Get how many questions of each language are being asked
     srand(time(NULL));
@@ -350,7 +390,8 @@ int populate_questions(char *student_name)
     int qnum = 0;
     char *question = strtok_r(c_response, "&", &savequestion);
     question = strtok_r(NULL, "&", &savequestion); // parse again to get rid of response header
-    while (question != NULL) {
+    while (question != NULL)
+    {
         qid = strtok(question, ":");
         type = strtok(NULL, ":");
         addq_to_hashtable(student_name, qnum, qid, type);
@@ -361,7 +402,8 @@ int populate_questions(char *student_name)
     // SEND P RESPONSE OFF TO PARSE AND ADD TO HASHTABLE
     question = strtok_r(p_response, "&", &savequestion);
     question = strtok_r(NULL, "&", &savequestion); // parse again to get rid of response header
-    while (question != NULL) {
+    while (question != NULL)
+    {
         qid = strtok(question, ":");
         type = strtok(NULL, ":");
         addq_to_hashtable(student_name, qnum, qid, type);
@@ -370,6 +412,34 @@ int populate_questions(char *student_name)
     }
     free(p_response);
     return 0;
+}
+
+/*  Increments the tracker of the current question a student
+ *  is viewing on their webpage, takes student name as parameter
+ */
+void increment_question(char *student_name) {
+    uint32_t h = hash_string(student_name) % HASHTABLE_SIZE;
+    hashtable[h]->currentq += 1;
+}
+
+/*  If question was marked correct, call this function to update the
+    hashtable (and call write to CSV to make sure data is saved)
+    Takes the student name and the question ID of the correct answer
+*/
+void answer_correct(char *student_name, int qid) {
+    uint32_t h = hash_string(student_name) % HASHTABLE_SIZE;
+    for(int i = 0; i < NUM_QUESTIONS; i++) if(hashtable[h]->qid[i] == qid) hashtable[h]->correct[i] = true;
+    writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
+}
+
+/*  If question was marked incorrect, call this function to update the
+    hashtable (and call write to CSV to make sure data is saved)
+    Takes the student name and the question ID of the incorrect answer
+*/
+void answer_incorrect(char *student_name, int qid) {
+    uint32_t h = hash_string(student_name) % HASHTABLE_SIZE;
+    for(int i = 0; i < NUM_QUESTIONS; i++) if(hashtable[h]->qid[i] == qid) hashtable[h]->attemptsLeft -= 1;
+    writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
 }
 
 void ping_QB(SOCKET socket, int qb_num)
@@ -405,12 +475,15 @@ void ping_QB(SOCKET socket, int qb_num)
     return;
 }
 
-int connect_QB(SOCKET socket, enum QBType type) { 
+int connect_QB(SOCKET socket, enum QBType type)
+{
     // check any existing connections to ensure no QB has disconnected
     bool space_available = false;
-    for(int i = 0; i < NUM_QB; i++) {
+    for (int i = 0; i < NUM_QB; i++)
+    {
         ping_QB(qb_info[i].socket, i);
-        if(qb_info[i].type == NONE) space_available = true;
+        if (qb_info[i].type == NONE)
+            space_available = true;
     }
 
     // assign QB to an open space
@@ -436,16 +509,20 @@ int connect_QB(SOCKET socket, enum QBType type) {
 }
 
 // Returns the question string of a specific qid from the QB
-char *get_question(int qid) {
+char *get_question(int qid)
+{
     char request[64];
     char *response = calloc(1, MAXDATASIZE + 1);
     CHECK_ALLOC(response);
     sprintf(request, "GETQUESTION\r\n%i", qid);
-    if(qid % 2 == 1) {
+    if (qid % 2 == 1)
+    {
         // Question is a Python question, so ask from a Python QB
-        for(int i = 0; i < NUM_QB; i++) {
+        for (int i = 0; i < NUM_QB; i++)
+        {
             ping_QB(qb_info[i].socket, i);
-            if(qb_info[i].type == PYTHON) {
+            if (qb_info[i].type == PYTHON)
+            {
                 // send/receive request
                 if (send(qb_info[i].socket, request, strlen(request) + 1, 0) == -1)
                 {
@@ -460,11 +537,14 @@ char *get_question(int qid) {
             }
         }
     }
-    else {
+    else
+    {
         // Question is a C question, so ask from a C QB
-        for(int i = 0; i < NUM_QB; i++) {
+        for (int i = 0; i < NUM_QB; i++)
+        {
             ping_QB(qb_info[i].socket, i);
-            if(qb_info[i].type == C) {
+            if (qb_info[i].type == C)
+            {
                 // send/receive request
                 if (send(qb_info[i].socket, request, strlen(request) + 1, 0) == -1)
                 {
@@ -484,7 +564,7 @@ char *get_question(int qid) {
     char *question = strtok(response, "\r\n");
     strtok(NULL, "\r\n");
     question = strtok(NULL, "\r\n");
-    printf("GOT QUESTION FOR QID %i: %s\n", qid, question);
+    // printf("GOT QUESTION FOR QID %i: %s\n", qid, question);
     return question;
 }
 
@@ -510,7 +590,8 @@ void handle_get(SOCKET socket, HTTPRequest request)
     {
         char *cookie = request.header_fields.search(&request.header_fields, "Cookie", strlen("Cookie"));
         char *student_name;
-        if(cookie != NULL) student_name = cookie + 5; // plus 5 because cookie starts with 'user=XXXXX'
+        if (cookie != NULL)
+            student_name = cookie + 5; // plus 5 because cookie starts with 'user=XXXXX'
         if (cookie && strcmp(path, "/login") == 0)
         {
             char new_path[124];
@@ -545,16 +626,20 @@ void handle_get(SOCKET socket, HTTPRequest request)
             // CHECK IF STUDENT HAS QUESTIONS OR NOT YET
             TESTINFO *student = hashtable_get(hashtable, student_name);
             printf("\nStudent requesting to start quiz: %s\n", student_name);
-            if(student->qid[0] == 0) { 
-                if(populate_questions(student_name) == -1) { // populate student qids and types
+            if (student->qid[0] == 0)
+            {
+                if (populate_questions(student_name) == -1)
+                { // populate student qids and types
                     printf("Cannot retrieve questions: Missing QB Connection\n");
                     send_QB_disconnected(socket);
                 }
-                else writeToCSV(hashtable, &numStudents, studentNames, FILEPATH); // update csv with info
+                else
+                    writeToCSV(hashtable, &numStudents, studentNames, FILEPATH); // update csv with info
             }
             student = hashtable_get(hashtable, student_name);
-            for(int i = 0; i < NUM_QUESTIONS; i++) {
-                printf("Question %i: QID: %i: qType: %d\n", i+1, student->qid[i], student->type[i]);
+            for (int i = 0; i < NUM_QUESTIONS; i++)
+            {
+                printf("Question %i: QID: %i: qType: %d\n", i + 1, student->qid[i], student->type[i]);
             }
             strcat(path, "/index.html");
         }
@@ -569,7 +654,11 @@ void handle_get(SOCKET socket, HTTPRequest request)
             TESTINFO *student = hashtable_get(hashtable, student_name);
             printf("GOT STUDENT STUFF, asking for question %i\n", student->qid[0]);
             char *next_question = get_question(student->qid[0]);
-            printf("Question passed: %s\n", next_question);
+            // printf("Question passed: %s\n", next_question);
+            increment_question(student_name);
+            student = hashtable_get(hashtable, student_name);
+            printf("Question tracker incremented to %i\n", student->currentq);
+            send_webpage(socket, next_question);
             return;
         }
     }
@@ -703,6 +792,7 @@ void received(int new_fd, int numbytes, char *buf)
     }
     else
     {
+        printf("%s", buf);
         char original[strlen(buf) + 1];
         strcpy(original, buf);
         client_received += numbytes;
@@ -735,8 +825,10 @@ void received(int new_fd, int numbytes, char *buf)
             {
                 enum QBType type;
                 // See if QB is Python or C
-                if(strstr(buf, "PYTHON") != NULL) type = PYTHON;
-                else type = C;
+                if (strstr(buf, "PYTHON") != NULL)
+                    type = PYTHON;
+                else
+                    type = C;
                 // Try to connect to QB
                 if (connect_QB(new_fd, type) == -1)
                 {
@@ -755,7 +847,7 @@ void received(int new_fd, int numbytes, char *buf)
 void manage_connection(SOCKET sockfd)
 {
 
-    struct sockaddr_storage their_addr; // connector's address information
+    struct sockaddr_storage their_addr;
     socklen_t sin_size;
     fd_set current_sockets, ready_sockets;
     int new_fd;
@@ -806,31 +898,6 @@ void manage_connection(SOCKET sockfd)
                 }
             }
         }
-        // sin_size = sizeof their_addr;
-        // new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
-        // if (new_fd == -1)
-        // {
-        //     fprintf(stdout, "Client connection failed\n");
-        //     continue;
-        // }
-
-        // if (!fork())
-        // {
-        //     close(sockfd);
-
-        //     if ((numbytes = recv(new_fd, buf, sizeof buf, 0)) == -1)
-        //     {
-        //         perror("recv");
-        //         exit(1);
-        //     }
-        //     else
-        //     {
-        //         received(new_fd, numbytes, buf);
-        //     }
-        //     close(new_fd);
-        //     exit(0);
-        // }
-        // close(new_fd);
     }
 }
 
@@ -940,5 +1007,3 @@ int main(int argc, char *argv[])
     writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
     return 0;
 }
-
-

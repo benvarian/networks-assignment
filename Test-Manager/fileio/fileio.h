@@ -22,6 +22,7 @@ typedef struct _testinfo {
     int          *qid;           // array of question IDs (unsigned int)
     int          *attemptsLeft;  // array of attempts left for each question (unsigned int)
     bool         *correct;       // array of booleans stating if student has answered correct or not
+    int          currentq;       // current question a student is viewing in their test
     } TESTINFO; 
 
 //  A HELPFUL PREPROCESSOR MACRO TO CHECK IF ALLOCATIONS WERE SUCCESSFUL
