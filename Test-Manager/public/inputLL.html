@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+
+      let qtnArea = document.getElementsByClassName("Question-Area");
+      let quizArea = document.getElementsByClassName("Quiz-Area");
+      let submitBtn = document.getElementsByClassName("submit-button");
+
+      let textAns = document.getElementsByClassName("codeInput");
+
+      let textAnsArea = document.getElementsByClassName("Text-Answer-Area");
+      let radioAnsArea = document.getElementsByClassName("Half-Answer-Area");
+
+      let sumQtnDisplay = document.getElementsByClassName("sumQtnDisplay");
+      let sumAnsDisplay = document.getElementsByClassName("sumAnsDisplay");
+
+      let answers = [];
+
+      const addAnswer = (qID, answer) => {
+        answers.push({"qtn":qID, "ans":answer});
+      }
+
+      const submit = async (answers) => {
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "http://localhost/ben/quiz", true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        await xhr.send(JSON.stringify({
+            answers
+        }));
+
+      }
+
+      //function called when the submit button is pressed
+      function submitPressed() {
+
+        if(textAns[0].value != "") {
+          addAnswer(1,textAns[0].value);
+          submit(answers);
+        }
+      }
+    </script>
+
+  </head>
+  <body>
+    <div>
+      <nav class="bg-slate-100 shadow flex justify-between sticky top-0 z-50 place-items-center w-full">
+        <div class="flex justify-center">
+          <h1 class="mx-4">CITS3002 Project</h1>
+          <button class="ml-4">logout</button>
+          <a class="ml-4" href="profile.html">back</a>
+        </div>
+      </nav>
+    </div>
+
+    <div class="Quiz-Area" >
+
+      <div class="Quiz-Header slide">
+
+        <div class="Question-Area" >
+          <p>This is a question and below are the answers? <br> A) <br> B) <br> C) <br> D) </p>
+        </div>
+        <div class="Answer-Area" >
+          <div class="Text-Answer-Area" >
+            <textarea class="codeInput" rows="8" cols="80"></textarea>
+          </div>
+        </div>
+
+
+      </div>
+
+      <div class="Quiz-Bottom" >
+
+        <input class="bottom-button" onclick="submitPressed()" type="submit" name="" value="Next">
+      </div>
+
+
+    </div>
+
+  </body>
+</html>
