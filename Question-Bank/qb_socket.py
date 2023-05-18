@@ -11,7 +11,7 @@ try:
     # Init input params
     HOST = sys.argv[1]
     PORT=int(sys.argv[2])
-    QB_TYPE = str(sys.argv[3])
+    QB_TYPE = str(sys.argv[3]).upper()
     if (QB_TYPE not in SUBJECTS): raise Exception("Fail init args")
 except:
     print("\nUsage:\n python3 qb_socket.py {TM-Host} {port} {qb_type}")
@@ -63,7 +63,7 @@ class QB_Socket_Connection:
                 self.sock.connect((HOST, PORT))
                 break
             except Exception as e:
-                print(e)
+                pass
             # connection failed
             print("Fail: Could not connect to TM, Trying again in 2 seconds.\n")
             time.sleep(2)
