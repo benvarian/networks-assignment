@@ -737,7 +737,7 @@ void handle_question_increase(SOCKET socket, char *student_name)
     // increment_question(student_name);
     student = hashtable_get(hashtable, student_name);
     printf("Question tracker incremented to %i\n", student->currentq);
-    send_webpage(socket, next_question);
+    send_webpage(socket, next_question, first_multi, last_multi);
 }
 
 void handle_get(SOCKET socket, HTTPRequest request)
@@ -833,24 +833,6 @@ void handle_get(SOCKET socket, HTTPRequest request)
         if (strcmp(path, "/quiz/start") == 0)
         {
             handle_question_increase(socket, student_name);
-            // // check both QBs are connected first
-            // if (qb_info[0].socket == 0 || qb_info[1].socket == 0)
-            // {
-            //     send_QB_disconnected(socket);
-            // }
-            // // Get first question of the student's test
-            // TESTINFO *student = hashtable_get(hashtable, student_name);
-            // printf("GOT STUDENT STUFF, asking for question %i\n", student->qid[student->currentq]);
-            // char *next_question = get_question(student->qid[student->currentq]);
-            // if (student->currentq <= NUM_QUESTIONS)
-            //     increment_question(student_name);
-            // else
-            //     (send_403(socket));
-            // // printf("Question passed: %s\n", next_question);
-            // // increment_question(student_name);
-            // student = hashtable_get(hashtable, student_name);
-            // printf("Question tracker incremented to %i\n", student->currentq);
-            // send_webpage(socket, next_question);
             return;
         }
     }
