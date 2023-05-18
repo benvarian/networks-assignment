@@ -5,9 +5,51 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      let qtnArea = document.getElementsByClassName("Question-Area");
+      let quizArea = document.getElementsByClassName("Quiz-Area");
+      let submitBtn = document.getElementsByClassName("submit-button");
+
+      let radio = document.getElementsByName("q");
+
+      let radioAnsArea = document.getElementsByClassName("Half-Answer-Area");
+
+      let answers = [];
+
+      const addAnswer = (question, answer) => {
+        answers.push({"qtn":question, "ans":answer});
+      }
+
+      const submit = async (answers) => {
+        console.log(window.location.href);
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "http://localhost/ben/quiz", true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        await xhr.send(JSON.stringify({
+            answers
+        }));
+
+      }
+
+
+      //function called when the submit button is pressed
+      function submitPressed() {
+
+        let selections = ['a','b','c','d'];
+
+          for(let k = 0; k < 4; k++) {
+            if(radio[k].checked) {
+
+              addAnswer(1,selections[k]);
+              submit(answers[0]);
+            }
+          }
+      }
+
+    </script>
 
   </head>
-  <body onload="populateQuestions()">
+  <body>
     <div>
       <nav class="bg-slate-100 shadow flex justify-between sticky top-0 z-50 place-items-center w-full">
         <div class="flex justify-center">
@@ -49,13 +91,13 @@
               <li style="font-size: 1.2rem;
               height: 20%;
               margin: 2% 8%;">
-                <input type="radio" name="Q1" id="1a" class="answer">
+                <input type="radio" name="q" id="1a" class="answer">
                 <label for="1a" id="a_text">A</label>
               </li>
               <li style="font-size: 1.2rem;
               height: 20%;
               margin: 2% 8%;">
-                <input type="radio" name="Q1" id="1b" class="answer">
+                <input type="radio" name="q" id="1b" class="answer">
                 <label for="1b" id="a_text">B</label>
               </li>
             </ul style="list-style-type: none;
@@ -69,13 +111,13 @@
               <li style="font-size: 1.2rem;
               height: 20%;
               margin: 2% 8%;">
-                <input type="radio" name="Q1" id="1c" class="answer">
+                <input type="radio" name="q" id="1c" class="answer">
                 <label for="1c" id="a_text">C</label>
               </li>
               <li style="font-size: 1.2rem;
               height: 20%;
               margin: 2% 8%;">
-                <input type="radio" name="Q1" id="1d" class="answer">
+                <input type="radio" name="q" id="1d" class="answer">
                 <label for="1d" id="a_text">D</label>
               </li>
             </ul>
@@ -90,7 +132,7 @@
       height: 14%;
       margin: 0 3%;">
 
-        <input class="bottom-button" onclick="plusSlides(1)" type="submit" name="" value="Next" style="width: 40%;
+        <input class="bottom-button" onclick="submitPressed()" type="submit" name="" value="Next" style="width: 40%;
         height: 100%;
         width: 80%;
         margin: 0 10%;
