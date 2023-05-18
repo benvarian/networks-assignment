@@ -260,7 +260,7 @@ class QB_Socket_Connection:
         """
         msg = msg.decode("utf-8").split("\r\n")
         mode_req = msg[0] + "\r\n"
-
+        print(f"MESSAGE RECEIVED: {msg}")
         if (mode_req == MARK_HEADER):
             qid, ans = msg[1].split(":")
             # mark = random.randint(0, 1)
@@ -276,17 +276,20 @@ class QB_Socket_Connection:
                 self.send_error("q_typeError")
                 return
             # mandatory extra long one-liner in order to be more 'pythonic'
-            questions = ''.join(["qid:{}&type:{}&question:{}&".format(q[0], q[1], q[2]) for q in QB_DB.get_rand_qs(int(q_num))])[:-1]
+            questions = ''.join(["&{}:{}".format(q[0], q[1]) for q in QB_DB.get_rand_qs(int(q_num))])
+            questions.join("&")
             self.send_questions(questions)
         elif(mode_req == ANSWER_HEADER):
-            qid = int(msg[1])
-            question = question_bank.get_q_by_id(qid)
+            # removes null terminator
+            qid = int(msg[1][:-1])
+            question = QB_DB.get_q_by_id(qid)
             answer = question[2]
             self.send_answer(answer)
         # handle pings from tm just by making an elif as its a viable header 
         elif(mode_req == GETQUESTION_HEADER):
-            qid = int(msg[1])
-            question = question_bank.get_q_by_id(qid)
+            # removes null terminator
+            qid = int(msg[1][:-1])
+            question = QB_DB.get_q_by_id(qid)
             self.send_question(question[1])
         elif (mode_req == "TM\r\n"):
             print("TM PINGED QB, Responding with ACCEPTED PING")

@@ -30,6 +30,9 @@ typedef struct _testinfo {
 //  WE DEFINE A HASHTABLE AS A (WILL BE, DYNAMICALLY ALLOCATED) ARRAY OF USER INFO
 typedef	TESTINFO * HASHTABLE;
 
+// Calculates the hash of a string
+extern uint32_t hash_string(char *string);
+
 //  ALLOCATE AND INITIALIZE SPACE FOR A NEW HASHTABLE (AN ARRAY OF TESTINFO)
 extern HASHTABLE *hashtable_new(void);
 
