@@ -4,12 +4,13 @@ import sys
 import os
 from ctypes import c_char_p, CDLL
 from distutils.ccompiler import new_compiler
+import multiprocessing as mp
+
 
 key = {
     'P': "./QuestionCSV/QuestionsP.csv",
     'C': "./QuestionCSV/QuestionsC.csv"
 }
-
 class QB_DB:
     """ 
         Stores Questions, implements functions to mark and
@@ -83,14 +84,17 @@ class QB_DB:
         # [type, q, a]
         q_obj = self.get_q_by_id(qid)
         ans = ans.rstrip('\x00')
-        # TODO: if q_obj is none
+
+        if (q_obj == None):
+            return 0
+        
         # programming
         try:
             if (q_obj[0] == 'P'):
                 if qid % 2 == 1: lang = "P"
                 else: lang = "C"
-                student_ans = execute_function(lang, ans) # holds the error code here for now
-                true_ans = execute_function(lang, q_obj[2])
+                student_ans = safely_execute_script(lang, ans) # holds the error code here for now
+                true_ans = safely_execute_script(lang, q_obj[2])
 
                 if(true_ans == student_ans): return 1
                 else: return 0
@@ -159,6 +163,22 @@ def execute_function(lang, script):
             except FileNotFoundError: pass
             return (f"Error: {e}")
     else: return("Error: Invalid Programming Language")
+
+def safely_execute_script(lang, script):
+    """
+    Safely execute a student's function using multiprocessing.
+    """
+    q = mp.Queue()
+    process = mp.Process(target=lambda q: q.put(execute_function(lang, script)), args=(q,))
+    process.start()
+    process.join(timeout=5)
+    exit_code = process.exitcode
+    if exit_code == 0:
+        return q.get()
+    print('Execute Function: Process Failed. Exit code: {}'.format(exit_code))
+    return 'Execute Function: process failed. Exit code: {}'.format(exit_code)
+
+
 
 def test():
     qb = QB_DB("C")
