@@ -258,15 +258,17 @@ class QB_Socket_Connection:
         Args:
             msg (String): Message sent by TM
         """
-        msg = msg.decode("utf-8").split("\r\n")
+        msg = msg.decode("utf-8").split("\r\n", 1)
         mode_req = msg[0] + "\r\n"
         print(f"MESSAGE RECEIVED: {msg}")
         if (mode_req == MARK_HEADER):
             qid, ans = msg[1].split(":")
-            # mark = random.randint(0, 1)
-            mark = QB_DB.mark(qid, ans)
+            
+            # print("qid == " + qid)
+            # print("ans == " + ans)
             print("Marking:\n\tqid =", qid, "\n\tans =", ans, "\n")
-            self.send_mark(qid, mark)
+            mark = QB_DB.mark(int(qid), ans)
+            self.send_mark(mark)
         elif (mode_req == QUESTION_HEADER):
             q_type, q_num = msg[1].split(":")
 
