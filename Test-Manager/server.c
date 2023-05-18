@@ -157,6 +157,13 @@ void send_302(SOCKET socket, const char *path, const char *username)
     drop_client(socket);
 }
 
+void send_418(SOCKET socket)
+{
+    const char *c418 = "HTTP/1.1 418 I'm a teapot\r\n\r\n";
+    send(socket, c418, strlen(c418), 0);
+    drop_client(socket);
+}
+
 /*  Concatenates a static 'start' and 'end' html page (found in server.h) 
  * with the dynamic 'centre' and send it to the socket
  *  Used for Summary page and displaying each question
@@ -174,7 +181,7 @@ void send_webpage(SOCKET socket, char *centre, const char *start, const char *en
 
     char buffer[BSIZE];
 
-    sprintf(buffer, "HTTP/1.1 200 OK\r\n");
+    sprintf(buffer, "HTTP/1.1 200 ok\r\n");
     send(socket, buffer, strlen(buffer), 0);
 
     sprintf(buffer, "Connection: close\r\n");
@@ -422,7 +429,8 @@ int populate_questions(char *student_name)
  *  is viewing on their webpage, takes student name as parameter
  *  doesn't do any checks if this increment should be allowed
  */
-void increment_question(char *student_name) {
+void increment_question(char *student_name)
+{
     uint32_t h = hash_string(student_name) % HASHTABLE_SIZE;
     hashtable[h]->currentq += 1;
 }
@@ -433,7 +441,9 @@ void increment_question(char *student_name) {
  */
 void answer_correct(char *student_name, int qid) {
     uint32_t h = hash_string(student_name) % HASHTABLE_SIZE;
-    for(int i = 0; i < NUM_QUESTIONS; i++) if(hashtable[h]->qid[i] == qid) hashtable[h]->correct[i] = true;
+    for (int i = 0; i < NUM_QUESTIONS; i++)
+        if (hashtable[h]->qid[i] == qid)
+            hashtable[h]->correct[i] = true;
     writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
 }
 
@@ -443,7 +453,9 @@ void answer_correct(char *student_name, int qid) {
  */
 void answer_incorrect(char *student_name, int qid) {
     uint32_t h = hash_string(student_name) % HASHTABLE_SIZE;
-    for(int i = 0; i < NUM_QUESTIONS; i++) if(hashtable[h]->qid[i] == qid) hashtable[h]->attemptsLeft -= 1;
+    for (int i = 0; i < NUM_QUESTIONS; i++)
+        if (hashtable[h]->qid[i] == qid)
+            hashtable[h]->attemptsLeft -= 1;
     writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
 }
 
@@ -569,7 +581,7 @@ char *get_question(int qid)
                 }
                 if (recv(qb_info[i].socket, response, 4096, 0) <= 0)
                 {
-                    perror("recv HERE");
+                    perror("recv");
                     exit(EXIT_FAILURE);
                 }
             }
@@ -580,6 +592,152 @@ char *get_question(int qid)
     strtok(NULL, "\r\n");
     question = strtok(NULL, "\r\n");
     return question;
+}
+
+char *get_answer(int qid)
+{
+    char request[64];
+    char *response = calloc(1, MAXDATASIZE + 1);
+    CHECK_ALLOC(response);
+    sprintf(request, "ANSWER\r\n%i", qid);
+    if (qid % 2 == 1)
+    {
+        // Question is a Python question, so ask from a Python QB
+        for (int i = 0; i < NUM_QB; i++)
+        {
+            ping_QB(qb_info[i].socket, i);
+            if (qb_info[i].type == PYTHON)
+            {
+                // send/receive request
+                if (send(qb_info[i].socket, request, strlen(request) + 1, 0) == -1)
+                {
+                    perror("send");
+                    exit(EXIT_FAILURE);
+                }
+                if (recv(qb_info[i].socket, response, 4096, 0) <= 0)
+                {
+                    perror("recv");
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+    }
+    else
+    {
+        // Question is a C question, so ask from a C QB
+        for (int i = 0; i < NUM_QB; i++)
+        {
+            ping_QB(qb_info[i].socket, i);
+            if (qb_info[i].type == C)
+            {
+                // send/receive request
+                if (send(qb_info[i].socket, request, strlen(request) + 1, 0) == -1)
+                {
+                    perror("send");
+                    exit(EXIT_FAILURE);
+                }
+                if (recv(qb_info[i].socket, response, 4096, 0) <= 0)
+                {
+                    perror("recv");
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+    }
+    // Handle Response - strtok twice to get question
+    // printf("Response: %s\n*endresponse\n", response);
+
+    char *answer = strtok(response, "\r\n\r\n");
+    answer = strtok(NULL, "\r\n");
+    answer = strtok(NULL, "\n");
+    answer = strtok(NULL, "\r\n\r\n");
+
+    printf("GOT answer FOR QID %i: %s\n", qid, answer);
+    return answer;
+}
+
+char get_mark(int qid, char ans)
+{
+    char request[MAXDATASIZE];
+    char *response = calloc(1, MAXDATASIZE + 1);
+    CHECK_ALLOC(response);
+    sprintf(request, "MARK\r\n%i:%c", qid, ans);
+    if (qid % 2 == 1)
+    {
+        // Question is a Python question, so ask from a Python QB
+        for (int i = 0; i < NUM_QB; i++)
+        {
+            ping_QB(qb_info[i].socket, i);
+            if (qb_info[i].type == PYTHON)
+            {
+                // send/receive request
+                if (send(qb_info[i].socket, request, strlen(request) + 1, 0) == -1)
+                {
+                    perror("send");
+                    exit(EXIT_FAILURE);
+                }
+                if (recv(qb_info[i].socket, response, 4096, 0) <= 0)
+                {
+                    perror("recv");
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+    }
+    else
+    {
+        // Question is a C question, so ask from a C QB
+        for (int i = 0; i < NUM_QB; i++)
+        {
+            ping_QB(qb_info[i].socket, i);
+            if (qb_info[i].type == C)
+            {
+                // send/receive request
+                if (send(qb_info[i].socket, request, strlen(request) + 1, 0) == -1)
+                {
+                    perror("send");
+                    exit(EXIT_FAILURE);
+                }
+                if (recv(qb_info[i].socket, response, 4096, 0) <= 0)
+                {
+                    perror("recv");
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+    }
+    char *mark = strtok(response, "\r\n");
+    mark = strtok(NULL, "\r\n");
+    mark = strtok(NULL, "\r\n");
+    char score = *(mark + 5);
+
+    return score;
+}
+
+void handle_question_increase(SOCKET socket, char *student_name)
+{
+    // check both QBs are connected first
+    if (qb_info[0].socket == 0 || qb_info[1].socket == 0)
+    {
+        send_QB_disconnected(socket);
+    }
+    // Get first question of the student's test
+    TESTINFO *student = hashtable_get(hashtable, student_name);
+    // printf("GOT STUDENT STUFF, asking for question %i\n", student->qid[student->currentq]);
+    char *next_question = get_question(student->qid[student->currentq]);
+    if (student->currentq <= NUM_QUESTIONS && student->currentq != NUM_QUESTIONS - 1)
+    {
+        increment_question(student_name);
+    }
+    else
+        // implement summary page here
+        // send_302(socket, "/quiz", cookie);
+        send_403(socket);
+    // printf("Question passed: %s\n", next_question);
+    // increment_question(student_name);
+    student = hashtable_get(hashtable, student_name);
+    printf("Question tracker incremented to %i\n", student->currentq);
+    send_webpage(socket, next_question);
 }
 
 void handle_get(SOCKET socket, HTTPRequest request)
@@ -636,7 +794,6 @@ void handle_get(SOCKET socket, HTTPRequest request)
         }
         if (strcmp(path, "/quiz") == 0 && cookie != NULL)
         {
-            printf("\nStudent requesting to start quiz: %s\n", student_name);
             // CHECK IF STUDENT HAS QUESTIONS OR NOT YET
             TESTINFO *student = hashtable_get(hashtable, student_name);
             if (student->qid[0] == 0)
@@ -675,22 +832,25 @@ void handle_get(SOCKET socket, HTTPRequest request)
         }
         if (strcmp(path, "/quiz/start") == 0)
         {
-            // check both QBs are connected first
-            if (qb_info[0].socket == 0 || qb_info[1].socket == 0)
-            {
-                send_QB_disconnected(socket);
-            }
-            // Get first question of the student's test
-            TESTINFO *student = hashtable_get(hashtable, student_name);
-            printf("GOT STUDENT STUFF, asking for question %i\n", student->qid[0]);
-            char *next_question = get_question(student->qid[0]);
-            // printf("Question passed: %s\n", next_question);
-            increment_question(student_name);
-            student = hashtable_get(hashtable, student_name);
-            printf("Question tracker incremented to %i\n", student->currentq);
-            // IF ATTEMPTSLEFT=0, OR CORRECT = TRUE -> PASS ANSWER TO DISPLAY
-            printf("GOT HERE\n");
-            send_webpage(socket, next_question, first_multi, last_multi);
+            handle_question_increase(socket, student_name);
+            // // check both QBs are connected first
+            // if (qb_info[0].socket == 0 || qb_info[1].socket == 0)
+            // {
+            //     send_QB_disconnected(socket);
+            // }
+            // // Get first question of the student's test
+            // TESTINFO *student = hashtable_get(hashtable, student_name);
+            // printf("GOT STUDENT STUFF, asking for question %i\n", student->qid[student->currentq]);
+            // char *next_question = get_question(student->qid[student->currentq]);
+            // if (student->currentq <= NUM_QUESTIONS)
+            //     increment_question(student_name);
+            // else
+            //     (send_403(socket));
+            // // printf("Question passed: %s\n", next_question);
+            // // increment_question(student_name);
+            // student = hashtable_get(hashtable, student_name);
+            // printf("Question tracker incremented to %i\n", student->currentq);
+            // send_webpage(socket, next_question);
             return;
         }
     }
@@ -766,6 +926,26 @@ void handle_post(HTTPRequest response, SOCKET socket)
             send_401(socket);
         }
     }
+    if (strcmp(url, "/quiz/start") == 0)
+    {
+        char *cookie = response.header_fields.search(&response.header_fields, "Cookie", strlen("Cookie"));
+        char *user = cookie + 5;
+        TESTINFO *student = hashtable_get(hashtable, user);
+        int current_question = student->currentq;
+        char *student_answer = response.body.search(&response.body, "sans", strlen("sans"));
+        char actual = toupper(student_answer[0]);
+        // printf("%d:%c\n", student->qid[current_question - 1], student_answer);
+        if (get_mark(current_question, actual) == '1')
+        {
+            printf("correct\n");
+            answer_correct(student->user, student->qid[current_question - 1]);
+        }
+        else
+        {
+            answer_incorrect(student->user, student->qid[current_question - 1]);
+            send_418(socket);
+        }
+    }
     // http_request_destructor(&response);
 }
 
@@ -790,13 +970,17 @@ void parse_request(char *response_string, SOCKET socket)
     extract_header_fields(&response, header_fields);
     extract_request_line_fields(&response, request_line);
     extract_body(&response, body);
-    /*! keeping for debugging incase something happens and everything breaks
-    for (int i = 0; i < response.header_fields.keys.length; i++)
-    {
-        printf("%s:%s\n", (char *)response.header_fields.keys.head->data, (char *)response.header_fields.search(&response.header_fields,
-        (char *)response.header_fields.keys.head->data, strlen((char *)response.header_fields.keys.head->data)));
-        response.header_fields.keys.head = response.header_fields.keys.head->next;
-    } */
+    // ! keeping for debugging incase something happens and everything breaks
+    // for (int i = 0; i < response.header_fields.keys.length; i++)
+    // {
+    //     printf("%s:%s\n", (char *)response.header_fields.keys.head->data, (char *)response.header_fields.search(&response.header_fields, (char *)response.header_fields.keys.head->data, strlen((char *)response.header_fields.keys.head->data)));
+    //     response.header_fields.keys.head = response.header_fields.keys.head->next;
+    // }
+    // for (int i = 0; i < response.request_line.keys.length; i++)
+    // {
+    //     printf("%s:%s:lol\n", (char *)response.request_line.keys.head->data, (char *)response.request_line.search(&response.request_line, (char *)response.request_line.keys.head->data, strlen((char *)response.request_line.keys.head->data)));
+    //     response.request_line.keys.head = response.request_line.keys.head->next;
+    // }
     char *method = (char *)response.request_line.search(&response.request_line, "method", strlen("method"));
     if (strcmp(method, "GET") == 0)
     {
@@ -824,7 +1008,6 @@ void received(int new_fd, int numbytes, char *buf)
     }
     else
     {
-        printf("%s", buf);
         char original[strlen(buf) + 1];
         strcpy(original, buf);
         client_received += numbytes;

@@ -13,6 +13,7 @@
 #include <signal.h>
 #include <sys/select.h>
 #include <time.h>
+#include <ctype.h>
 
 #include "Data-Structures/Dictionary/Dictionary.h"
 
