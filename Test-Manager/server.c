@@ -157,12 +157,19 @@ void send_302(SOCKET socket, const char *path, const char *username)
     drop_client(socket);
 }
 
+void send_418(SOCKET socket)
+{
+    const char *c418 = "HTTP/1.1 418 I'm a teapot\r\n\r\n";
+    send(socket, c418, strlen(c418), 0);
+    drop_client(socket);
+}
+
 void send_webpage(SOCKET socket, char *question)
 {
     char *web_page = calloc(1, 8095 + 1);
     CHECK_ALLOC(web_page);
-    static const char *first = "<!DOCTYPE html>\n<html lang='en' dir='ltr'>\n  <head>\n    <meta charset='utf-8'>\n    <meta name='viewport' content='width=device-width, initial-scale=1.0' />\n    <script src='https://cdn.tailwindcss.com'></script>\n<script>\nlet qtnArea = document.getElementsByClassName('Question-Area');\n let quizArea = document.getElementsByClassName('Quiz-Area');\nlet submitBtn = document.getElementsByClassName('submit-button');\nlet radio = document.getElementsByName('q');\nlet radioAnsArea = document.getElementsByClassName('Half-Answer-Area');\nlet ans = \"\";\nconst addAnswer = (question, answer) => {\nans = `qid=${question}&sans=${answer}&ans=${answer}\\0`;}\nconst submit = async (answers) => {\nvar xhr = new XMLHttpRequest();\nxhr.open('POST', window.location.href, true);\nxhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');\nawait xhr.send(ans);\n}\n//function called when the submit button is pressed\nfunction submitPressed() {\nlet selections = ['a','b','c','d'];\nfor(let k = 0; k < 4; k++) {\nif(radio[k].checked) {\naddAnswer(1,selections[k]);\nsubmit(ans);\n}}}</script>\n  </head>\n  <body>\n    <div>\n      <nav class='bg-slate-100 shadow flex justify-between sticky top-0 z-50 place-items-center w-full'>\n        <div class='flex justify-center'>\n          <h1 class='mx-4'>CITS3002 Project</h1>\n          <button class='ml-4'>logout</button>\n          <a class='ml-4' href='profile.html'>back</a>\n        </div>\n      </nav>\n    </div>\n    <div class='Quiz-Area' style='flex: justify-center;\n    width: 60%;\n    height: 500px;\n    margin: 100px 20% 0 20%;\n    border-radius: 10px;\n    background: rgba(0,0,0,0.1);\n    box-shadow: 0 0 10px 2px rgba(100,100,100,0.1);\n    overflow: auto;\n'>      <div style='display: block;'class='Quiz-Header slide'>\n<h1 style='font-size: 30px;\n        color: #3d3d3d;\n        text-align: center;'>Question 1 / 10</h1><br>\n        <div class='Question-Area' style='width: 90%;\n        height: 70%;\n        border-bottom: 2px solid #3d3d3d;\n        margin: 0 5%;'>";
-    static const char *last = "</div>\n        <div class='Answer-Area' style='display: flex;\n        width: 90%;\n        height: 20%;\n        margin: 0 5%;'>\n          <div class='Half-Answer-Area' style='width: 50%;\n          height: 100%;\n          margin: 0;'>\n            <ul style='list-style-type: none;\n            padding: 0;'>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1a' class='answer'>\n                <label for='1a' id='a_text'>A</label>\n              </li>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1b' class='answer'>\n                <label for='1b' id='a_text'>B</label>\n              </li>\n            </ul style='list-style-type: none;\n            padding: 0;'>\n          </div>\n          <div class='Half-Answer-Area' style='width: 50%;\n          height: 100%;\n          margin: 0;'>\n            <ul style='list-style-type: none;\n            padding: 0;'>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1c' class='answer'>\n                <label for='1c' id='a_text'>C</label>\n              </li>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1d' class='answer'>\n                <label for='1d' id='a_text'>D</label>\n              </li>\n            </ul>\n          </div>\n\n        </div>\n\n      </div>\n\n      <div class='Quiz-Bottom' style='\n      width: 94%;\n      height: 14%;\n      margin: 0 3%;'>\n\n        <input class='bottom-button' onclick='submitPressed()' type='submit' name='' value='Next' style='width: 40%;\n        height: 100%;\n        width: 80%;\n        margin: 0 10%;\n        background-color: #80d9ff;\n        cursor: pointer;\n        border-radius: 10px;\n'>\n<button onclick=\"window.location.reload()\">Submit</button>\n </div>\n\n    </div>\n\n  </body>\n</html>\n";
+    static const char *first = "<!DOCTYPE html>\n<html lang='en' dir='ltr'>\n  <head>\n    <meta charset='utf-8'>\n    <meta name='viewport' content='width=device-width, initial-scale=1.0' />\n    <script src='https://cdn.tailwindcss.com'></script>\n<style>.hide {display: none;}</style>\n</head>\n <body>\n<div>\n<nav class='bg-slate-100 shadow flex justify-between sticky top-0 z-50 place-items-center w-full'>\n        <div class='flex justify-center'>\n          <h1 class='mx-4'>CITS3002 Project</h1>\n          <button class='ml-4'>logout</button>\n          <a class='ml-4' href='profile.html'>back</a>\n        </div>\n      </nav>\n    </div>\n    <div class='Quiz-Area' style='flex: justify-center;\n    width: 60%;\n    height: 500px;\n    margin: 100px 20% 0 20%;\n    border-radius: 10px;\n    background: rgba(0,0,0,0.1);\n    box-shadow: 0 0 10px 2px rgba(100,100,100,0.1);\n    overflow: auto;\n'>      <div style='display: block;'class='Quiz-Header slide'>\n<h1 style='font-size: 30px;\n        color: #3d3d3d;\n        text-align: center;'>Question 1 / 10</h1><br>\n        <div class='Question-Area' style='width: 90%;\n        height: 70%;\n        border-bottom: 2px solid #3d3d3d;\n        margin: 0 5%;'>";
+    static const char *last = "</div>\n        <div class='Answer-Area' style='display: flex;\n        width: 90%;\n        height: 20%;\n        margin: 0 5%;'>\n          <div class='Half-Answer-Area' style='width: 50%;\n          height: 100%;\n          margin: 0;'>\n            <ul style='list-style-type: none;\n            padding: 0;'>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1a' class='answer'>\n                <label for='1a' id='a_text'>A</label>\n              </li>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1b' class='answer'>\n                <label for='1b' id='a_text'>B</label>\n              </li>\n            </ul style='list-style-type: none;\n            padding: 0;'>\n          </div>\n          <div class='Half-Answer-Area' style='width: 50%;\n          height: 100%;\n          margin: 0;'>\n            <ul style='list-style-type: none;\n            padding: 0;'>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1c' class='answer'>\n                <label for='1c' id='a_text'>C</label>\n              </li>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1d' class='answer'>\n                <label for='1d' id='a_text'>D</label>\n              </li>\n            </ul>\n          </div>\n\n        </div>\n\n      </div>\n\n      <div class='Quiz-Bottom' style='\n      width: 94%;\n      height: 14%;\n      margin: 0 3%;'>\n\n        <input class='bottom-button' onclick='submitPressed()' type='submit' name='' value='Submit Question' style=\"width: 40%;\n        height: 100%;\n        width: 80%;\n        margin: 0 10%;\n        background-color: #80d9ff;\n        cursor: pointer;\n        border-radius: 10px;\n\">\n<button id=\"real-submit\"  class=\"text-blue-500\" onclick=\"reload()\">Next Question</button>\n<p class=\"text-green-500\" id=\"correct\">Answer Correct</p> <p class=\"text-red-700\" id=\"incorrect\">Answer incorrect</p></div>\n</div>\n<script>\n let qtnArea = document.getElementsByClassName('Question-Area');\n let quizArea = document.getElementsByClassName('Quiz-Area');\nlet id = document.getElementById(\"incorrect\"); window.addEventListener(\"load\", ()=>{ console.log(\"page loaded\"); id.classList.add(\"hide\"); correct.classList.add(\"hide\"); real.classList.add('hide'); }); \nlet submitBtn = document.getElementsByClassName('submit-button');\nlet radio = document.getElementsByName('q'); let correct = document.getElementById(\"correct\"); let real = document.getElementById('real-submit')\nlet radioAnsArea = document.getElementsByClassName('Half-Answer-Area');\nlet ans = \"\";\nconst addAnswer = (question, answer) => {\nans = `qid=${question}&sans=${answer}&ans=${answer}\\0`;}\nvar xhr = new XMLHttpRequest();\nxhr.onreadystatechange = () => {if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 418) {incorrect.classList.remove('hide'); correct.classList.add('hide'); real.classList.add('hide') } else {incorrect.classList.add('hide'); correct.classList.remove('hide'); real.classList.remove('hide');}}; \nconst submit = async (answers) => {\nxhr.open('POST', window.location.href, true);\nxhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');\nawait xhr.send(ans);\n}\n//function called when the submit button is pressed\nfunction submitPressed() {\nlet selections = ['a','b','c','d'];\nfor(let k = 0; k < 4; k++) {\nif(radio[k].checked) {\naddAnswer(1,selections[k]);\nsubmit(ans);\n}}} function reload() {if (incorrect.classList.contains(\"hide\") === true )window.location.reload();} </script>\n</body>\n</html>\n";
     strcat(web_page, first);
     strcat(web_page, question);
     strcat(web_page, last);
@@ -637,7 +644,7 @@ char *get_answer(int qid)
     return answer;
 }
 
-char *get_mark(int qid, char ans)
+char get_mark(int qid, char ans)
 {
     char request[MAXDATASIZE];
     char *response = calloc(1, MAXDATASIZE + 1);
@@ -687,14 +694,12 @@ char *get_mark(int qid, char ans)
             }
         }
     }
-    // Handle Response - strtok twice to get question
-    // printf("Response: %s\n*endresponse\n", response);
-
     char *mark = strtok(response, "\r\n");
-    mark = strtok(NULL, "\0");
+    mark = strtok(NULL, "\r\n");
+    mark = strtok(NULL, "\r\n");
+    char score = *(mark + 5);
 
-    // printf("GOT mark FOR QID %i: %s \n", qid, mark);
-    return mark;
+    return score;
 }
 
 void handle_question_increase(SOCKET socket, char *student_name)
@@ -713,7 +718,8 @@ void handle_question_increase(SOCKET socket, char *student_name)
         increment_question(student_name);
     }
     else
-        // ! implement summary page here
+        // implement summary page here
+        // send_302(socket, "/quiz", cookie);
         send_403(socket);
     // printf("Question passed: %s\n", next_question);
     // increment_question(student_name);
@@ -903,8 +909,16 @@ void handle_post(HTTPRequest response, SOCKET socket)
         char *student_answer = response.body.search(&response.body, "sans", strlen("sans"));
         char actual = toupper(student_answer[0]);
         // printf("%d:%c\n", student->qid[current_question - 1], student_answer);
-        printf("\n%s\n", get_mark(current_question, actual));
-        handle_question_increase(socket, user);
+        if (get_mark(current_question, actual) == '1')
+        {
+            printf("correct\n");
+            answer_correct(student->user, student->qid[current_question - 1]);
+        }
+        else
+        {
+            answer_incorrect(student->user, student->qid[current_question - 1]);
+            send_418(socket);
+        }
     }
     // http_request_destructor(&response);
 }

@@ -1,17 +1,22 @@
 <!DOCTYPE html>
 <html lang='en' dir='ltr'>
   <head>
+    
     <meta charset='utf-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0' />
     <script src='https://cdn.tailwindcss.com'></script>
     <script>
+      window.addEventListener("load", ()=>{
       let qtnArea = document.getElementsByClassName('Question-Area');
       let quizArea = document.getElementsByClassName('Quiz-Area');
       let submitBtn = document.getElementsByClassName('submit-button');
       let radio = document.getElementsByName('q');
       let radioAnsArea = document.getElementsByClassName('Half-Answer-Area');
+      let incorrect = document.querySelector('.hide');
       let ans = "";
       const addAnswer = (question, answer) => {ans = `qid=${question}&sans=${answer}&ans=${answer}`;}
+      xhr.onreadystatechange = () => {if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 418) {incorrect.classList.remove('hide');} else {incorrect.classList.add('hide');}};
+      function reload() {if (incorrect.classList.contains("hide") === false )window.location.reload();}
       const submit = async (answers) => {
         var xhr = new XMLHttpRequest();
         xhr.open('POST', window.location.href, true);
@@ -28,7 +33,9 @@
             }
           }
       }
+    });
     </script>
+    <style>.hide {display: none;}</style>
   </head>
   <body>
     <div>
@@ -118,8 +125,8 @@
         border-radius: 10px;
         '> Submit</button>
       </div>
-      <button onclick="window.location.reload()">Submit</button>
-
+      <button onclick="reload()">Submit</button>
+      
     </div>
 
   </body>
