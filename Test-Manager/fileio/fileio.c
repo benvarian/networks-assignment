@@ -1,5 +1,10 @@
 #include "fileio.h"
 
+/**
+ * Calculates the hash of the string
+ * and returns the hash
+ * Credit to Chris in CITS2002
+*/
 uint32_t hash_string(char *string)
 {
     uint32_t hash = 0;
@@ -12,7 +17,9 @@ uint32_t hash_string(char *string)
     return hash;
 }
 
-//  ALLOCATE AND INITIALIZE SPACE FOR A NEW HASHTABLE (AN ARRAY OF TESTINFO)
+/**
+ * Allocate memory for a new hashtable and return it
+*/
 HASHTABLE *hashtable_new(void)
 {
     HASHTABLE *new = calloc(HASHTABLE_SIZE, sizeof(TESTINFO *));
@@ -20,8 +27,14 @@ HASHTABLE *hashtable_new(void)
     return new;
 }
 
-/*  ADD A NEW USER TO A GIVEN HASHTABLE
+/**  ADD A NEW USER TO A GIVEN HASHTABLE
     HASHING IS BASED ON THE USERNAME (SO IT MUST BE UNIQUE) */
+/**
+ * Add a new user to the given hashtable
+ * Hashing is based on the username, so username
+ * must be unique or else data will be overwritten
+ * Data added is specified by each passed parameter
+*/
 void hashtable_add(HASHTABLE *hashtable, char *username, char *passw, enum qType *types, int *qid, int *attemptsLeft, bool *correct)
 {
     uint32_t h = hash_string(username) % HASHTABLE_SIZE; // get index
@@ -43,16 +56,21 @@ void hashtable_add(HASHTABLE *hashtable, char *username, char *passw, enum qType
     hashtable[h]->currentq = 0; // start at question 0
 }
 
-/*  DETERMINE IF A USER EXISTS IN THE HASHTABLE AND
-    RETURN A POINTER TO THE USER INFO STRUCTURE IF IT EXISTS
-    RETURNS NULL POINTER IF USER DOES NOT EXIST     */
+/**
+ * Determine if the username exists in the hashtable and
+ * return a pointer to the user info structure if it exists
+ * Returns a NULL pointer if user does not exist
+*/
 TESTINFO *hashtable_get(HASHTABLE *hashtable, char *username)
 {
     uint32_t h = hash_string(username) % HASHTABLE_SIZE; // get index
     return hashtable[h];
 }
 
-/* Will open a file in the specified mode, returning the file pointer */
+/**
+ * Will open a file pointed to by file_path, in the mode specified
+ * Returns a FILE pointer to the data
+*/
 FILE *openFile(char *file_path, char *mode)
 {
     FILE *fp;
@@ -66,6 +84,9 @@ FILE *openFile(char *file_path, char *mode)
 }
 
 /* Reads text from the file into a buffer then closes the file, returning the buffer */
+/**
+ * Reads the text from the 
+*/
 char *readFile(FILE *fp)
 {
     // Get size of the file
@@ -80,6 +101,9 @@ char *readFile(FILE *fp)
     return buffer;
 }
 
+/**
+ * 
+*/
 void getData(HASHTABLE *hashtable, int *numStudents, char ***studentNames, char *filepath)
 {
     // get data into a buffer
@@ -191,6 +215,10 @@ void getData(HASHTABLE *hashtable, int *numStudents, char ***studentNames, char 
     free(buffer);
 }
 
+/**  Runs through each student in the studentNames array and gets their hashtable
+ *  data, then writes it to the csv file at 'filepath' in the format so that it can
+ *  be read in later again by the TM
+ */
 void writeToCSV(HASHTABLE *hashtable, int *numStudents, char **studentNames, char *filepath)
 {
     FILE *fp = openFile(filepath, "w");
@@ -243,15 +271,3 @@ void writeToCSV(HASHTABLE *hashtable, int *numStudents, char **studentNames, cha
     }
     fclose(fp);
 }
-
-/* TESTING FILE IO
-int main(void) {
-    int numStudents = 0;
-    char **studentNames = NULL;
-    HASHTABLE *hashtable = hashtable_new();
-    getData(hashtable, &numStudents, &studentNames, FILEPATH);
-    TESTINFO *mitch = hashtable_get(hashtable, "mitch");
-    printf("Username: %s\nPassword: %s\nQID: %i\n\n", mitch->user, mitch->pw, mitch->qid[0]);
-    for(int i = 0; i < numStudents; i++) printf("Name: %s\n", studentNames[i]);
-    writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
-} */
