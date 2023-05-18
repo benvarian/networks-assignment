@@ -99,8 +99,8 @@ class QB_DB:
                 if(true_ans == student_ans): return 1
                 else: return 0
             elif(q_obj[0] == 'M'):
-                answer = ans.strip().rstrip('\x00')
-                return 1 if (q_obj[2].strip() == answer) else 0
+                answer = ans.strip().rstrip('\x00').upper()
+                return 1 if (q_obj[2].strip().upper() == answer) else 0
         except:
             pass
         # raise error...?
@@ -177,8 +177,6 @@ def safely_execute_script(lang, script):
         return q.get()
     print('Execute Function: Process Failed. Exit code: {}'.format(exit_code))
     return 'Execute Function: process failed. Exit code: {}'.format(exit_code)
-
-
 
 def test():
     qb = QB_DB("C")
