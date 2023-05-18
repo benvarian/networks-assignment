@@ -646,7 +646,7 @@ char get_mark(int qid, char *ans)
     char request[MAXDATASIZE];
     char *response = calloc(1, MAXDATASIZE + 1);
     CHECK_ALLOC(response);
-    sprintf(request, "MARK\r\n%i:%c", qid, ans);
+    sprintf(request, "MARK\r\n%i:%s", qid, ans);
     if (qid % 2 == 1)
     {
         // Question is a Python question, so ask from a Python QB
@@ -904,7 +904,8 @@ void handle_post(HTTPRequest response, SOCKET socket)
         TESTINFO *student = hashtable_get(hashtable, user);
         int current_question = student->currentq;
         char *student_answer = response.body.search(&response.body, "sans", strlen("sans"));
-        char actual = toupper(student_answer[0]);
+        printf("%s", student_answer);
+        char *actual = student_answer;
         // printf("%d:%c\n", student->qid[current_question - 1], student_answer);
         if (get_mark(current_question, actual) == '1')
         {
