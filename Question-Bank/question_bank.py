@@ -84,17 +84,22 @@ class QB_DB:
         q_obj = self.get_q_by_id(qid)
         # TODO: if q_obj is none
         # programming
-        if (q_obj[0] == 'P'):
-            if qid % 2 == 1: lang = "P"
-            else: lang = "C"
-            student_ans = execute_function(lang, ans) # holds the error code here for now
-            true_ans = execute_function(lang, q_obj[2])
-            if(true_ans == student_ans): return 1
-            else: return 0
-        elif(q_obj[0] == 'M'):
-            return 1 if q_obj[2] == ans else 0
+        try:
+            if (q_obj[0] == 'P'):
+                if qid % 2 == 1: lang = "P"
+                else: lang = "C"
+                student_ans = execute_function(lang, ans) # holds the error code here for now
+                true_ans = execute_function(lang, q_obj[2])
+                if(true_ans == student_ans): return 1
+                else: return 0
+            elif(q_obj[0] == 'M'):
+                answer = ans.strip().rstrip('\x00')
+                return 1 if (q_obj[2].strip() == answer) else 0
+        except:
+            pass
         # raise error...?
-        return
+        # something went wrong.
+        return 0
 
 # Executes a function passed to it, with a specified language (P for Python C for C)
 # If it runs into an error, it returns the exit code it ran into when running the program
