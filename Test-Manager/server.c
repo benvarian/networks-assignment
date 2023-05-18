@@ -903,7 +903,6 @@ void handle_post(HTTPRequest response, SOCKET socket)
     }
     if (strcmp(url, "/quiz/start") == 0)
     {
-        printf("%s\n", "herherherherh");
         char *cookie = response.header_fields.search(&response.header_fields, "Cookie", strlen("Cookie"));
         printf("%s\n", cookie);
         char *user = cookie + 5;
@@ -912,11 +911,11 @@ void handle_post(HTTPRequest response, SOCKET socket)
         int current_question = student->currentq;
         char *student_answer = response.body.search(&response.body, "sans", strlen("sans"));
 
-        // printf("%s\n", student_answer);
-        char *actual = &student_answer[0];
-        actual[1] = '\0';
-        // printf("%d:%c\n", student->qid[current_question - 1], student_answer);
-        if (get_mark(current_question, actual) == '1')
+        printf("%s\n", student_answer);
+        char *actual = student_answer;
+        // actual[1] = '\0';
+        printf("%d:%s\n", student->qid[current_question - 1], student_answer);
+        if (get_mark(student->qid[current_question - 1], actual) == '1')
         {
             printf("correct\n");
             answer_correct(student->user, student->qid[current_question - 1]);
