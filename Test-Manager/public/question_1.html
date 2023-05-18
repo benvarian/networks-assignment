@@ -10,17 +10,13 @@
       let submitBtn = document.getElementsByClassName('submit-button');
       let radio = document.getElementsByName('q');
       let radioAnsArea = document.getElementsByClassName('Half-Answer-Area');
-      let answers = [];
-      const addAnswer = (question, answer) => {
-        answers.push({'qtn':question, 'ans':answer});
-      }
+      let ans = "";
+      const addAnswer = (question, answer) => {ans = `qid=${question}&sans=${answer}&ans=${answer}`;}
       const submit = async (answers) => {
- var xhr = new XMLHttpRequest();
+        var xhr = new XMLHttpRequest();
         xhr.open('POST', window.location.href, true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        await xhr.send(JSON.stringify({
-            answers
-        }));
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        await xhr.send(ans);
       }
       //function called when the submit button is pressed
       function submitPressed() {
@@ -28,7 +24,7 @@
           for(let k = 0; k < 4; k++) {
             if(radio[k].checked) {
               addAnswer(1,selections[k]);
-              submit(answers[0]);
+              submit(ans);
             }
           }
       }
