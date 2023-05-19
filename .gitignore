@@ -2,6 +2,7 @@
 .vscode/*
 *.json
 .vscode/
+*.DS_Store
 
 *.o
 *.pyc
