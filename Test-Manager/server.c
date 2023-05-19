@@ -218,7 +218,6 @@ void send_webpage(SOCKET socket, char *centre, const char *start, const char *en
     sprintf(buffer, "\r\n");
     send(socket, buffer, strlen(buffer), 0);
 
-    printf("WEBPAGE:\n\n%s\n\n", web_page);
     send(socket, web_page, strlen(web_page) + 1, 0);
 
     free(web_page);
@@ -475,9 +474,13 @@ void answer_correct(char *student_name, int qid)
 void answer_incorrect(char *student_name, int qid)
 {
     uint32_t h = hash_string(student_name) % HASHTABLE_SIZE;
-    for (int i = 0; i < NUM_QUESTIONS; i++)
-        if (hashtable[h]->qid[i] == qid)
-            hashtable[h]->attemptsLeft -= 1;
+    for (int i = 0; i < NUM_QUESTIONS; i++) {
+        if (hashtable[h]->qid[i] == qid) {
+            hashtable[h]->attemptsLeft[i] = hashtable[h]->attemptsLeft[i] - 1;
+            break;
+        }
+        else continue;
+    }
     writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
 }
 
@@ -751,7 +754,6 @@ void handle_question_increase(SOCKET socket, char *student_name)
     }
     // Get first question of the student's test
     TESTINFO *student = hashtable_get(hashtable, student_name);
-    printf("GOT STUDENT STUFF, asking for question %i:%d\n", student->qid[student->currentq], student->type[student->currentq]);
     char *next_question = get_question(student->qid[student->currentq]);
     char *format_question = calloc(1, (strlen(next_question) + 5) * sizeof(char)); // + 4 for question number, +1 for null terminator
     CHECK_ALLOC(format_question);
@@ -764,7 +766,6 @@ void handle_question_increase(SOCKET socket, char *student_name)
         send_307(socket);
 
     student = hashtable_get(hashtable, student_name);
-    printf("Question tracker incremented to %i:%d:%s\n", student->currentq, student->qid[student->currentq], format_question);
 
     if (student->qid[student->currentq - 1] >= 100)
     {
@@ -845,10 +846,6 @@ void handle_get(SOCKET socket, HTTPRequest request)
                     writeToCSV(hashtable, &numStudents, studentNames, FILEPATH); // update csv with info
             }
             student = hashtable_get(hashtable, student_name); // regenerate information again
-            for (int i = 0; i < NUM_QUESTIONS; i++)
-            {
-                printf("Question %i: QID: %i: qType: %d\n", i + 1, student->qid[i], student->type[i]);
-            }
             char *summary_centre = calloc(1, MAXDATASIZE - strlen(summary_start) - strlen(summary_end));
             CHECK_ALLOC(summary_centre);
             // calculate current total marks of student
@@ -967,7 +964,6 @@ void handle_post(HTTPRequest response, SOCKET socket)
         int current_question = student->currentq;
         char *student_answer = response.body.search(&response.body, "sans", strlen("sans") + 1);
         char *actual = student_answer;
-
         if (student->correct[student->currentq - 1] != true && student->attemptsLeft[student->currentq - 1] > 0)
         {
             if (get_mark(student->qid[current_question - 1], actual) == '1')

@@ -93,7 +93,6 @@ void getData(HASHTABLE *hashtable, int *numStudents, char ***studentNames, char 
     char *buffer;
     readFile(fp, &buffer);
     fclose(fp);
-    printf("\n\nFILE:\n%s\n\n", buffer);
     // split data into rows for each user
     char *saverow;
     char *user;
