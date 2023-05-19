@@ -575,14 +575,11 @@ char *get_question(int qid)
             }
         }
     }
-
     // Handle Response - strtok twice to get question
     char *question = strtok(response, "\r\n");
     strtok(NULL, "\r\n");
     question = strtok(NULL, "\0");
-    // printf("GOT QUESTION FOR QID %i: %s\n", qid, question);
     return question;
-    // printf("GOT QUESTION FOR QID %i: %s\n", qid, question);
 }
 
 char *get_answer(int qid)
@@ -723,6 +720,7 @@ void handle_question_increase(SOCKET socket, char *student_name)
         send_403(socket);
     student = hashtable_get(hashtable, student_name);
     printf("Question tracker incremented to %i:%s\n", student->currentq, next_question);
+)
     send_webpage(socket, next_question);
 }
 
