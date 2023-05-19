@@ -8,7 +8,6 @@ struct BinarySearchTree
     // Head points to the top-most node in the tree.
     struct Node *head;
     
-    /*PUBLIC MEMBER METHODS */
     // The compare function is specified by the user and is used to compare the data of two nodes.
     // It must take two void pointers as arguments and return 1, -1, or 0.
     int (*compare)(void *data_one, void *data_two);
@@ -22,10 +21,7 @@ struct BinarySearchTree
 struct BinarySearchTree binary_search_tree_constructor(int (*compare)(void *data_one, void *data_two));
 void binary_search_tree_destructor(struct BinarySearchTree tree);
 
-int binary_search_tree_int_compare(void *data_one, void *data_two);
-int binary_search_tree_float_compare(void *data_one, void *data_two);
-int binary_search_tree_char_compare(void *data_one, void *data_two);
 int binary_search_tree_str_compare(void *data_one, void *data_two);
 
 
-#endif /* BinarySearchTree_h */
+#endif
