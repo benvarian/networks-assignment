@@ -1,5 +1,9 @@
 #include "fileio.h"
 
+/**
+ * Generates unsigned int for a given string
+ * and returns it
+*/
 uint32_t hash_string(char *string)
 {
     uint32_t hash = 0;
@@ -12,7 +16,10 @@ uint32_t hash_string(char *string)
     return hash;
 }
 
-//  ALLOCATE AND INITIALIZE SPACE FOR A NEW HASHTABLE (AN ARRAY OF TESTINFO)
+/**
+ * Allocates and initializes space for a new hashtable
+ * (an array of testing)
+*/
 HASHTABLE *hashtable_new(void)
 {
     HASHTABLE *new = calloc(HASHTABLE_SIZE, sizeof(TESTINFO *));
@@ -72,7 +79,7 @@ FILE *openFile(char *file_path, char *mode)
     return (fp); // Owness is on the calling function to close file when finished
 }
 
-/* Reads text from the file into a buffer then closes the file, returning the buffer */
+/* Reads text from the file into the given buffer pointer */
 void readFile(FILE *fp, char **buffer)
 {
     // Get size of the file
@@ -86,6 +93,12 @@ void readFile(FILE *fp, char **buffer)
     return;
 }
 
+/**
+ * Gets the data from the csv pointed at filepath and for each student
+ * adds it to the hashtable for later usage
+ * increments the number of students each time a line is read in, and stores
+ * the student name inside studentNames array provided
+*/
 void getData(HASHTABLE *hashtable, int *numStudents, char ***studentNames, char *filepath)
 {
     // get data into a buffer
@@ -198,6 +211,10 @@ void getData(HASHTABLE *hashtable, int *numStudents, char ***studentNames, char 
     free(buffer);
 }
 
+/**
+ * Writes the data inside the hashtable to the csv, based on each student name
+ * csv is saved to the filepath
+*/
 void writeToCSV(HASHTABLE *hashtable, int *numStudents, char **studentNames, char *filepath)
 {
     FILE *fp = openFile(filepath, "w");

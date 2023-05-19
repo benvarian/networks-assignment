@@ -75,7 +75,6 @@ void send_404(SOCKET socket);
 
 void handle_get(SOCKET socket, HTTPRequest request);
 
-// todo change back to HTTPRequest
 void handle_post(HTTPRequest response, SOCKET socket);
 
 void parse_request(char *response_string, SOCKET socket);

@@ -678,7 +678,6 @@ char *get_answer(int qid)
     char *answer = strstr(response, "\r\n\r\n") + 4;
     // remove final padding
     answer[strlen(answer) - 3] = 0;
-    // printf("GOT answer FOR QID %i: %s\n", qid, answer);
     return answer;
 }
 
@@ -755,7 +754,7 @@ void handle_question_increase(SOCKET socket, char *student_name)
     // Get first question of the student's test
     TESTINFO *student = hashtable_get(hashtable, student_name);
     char *next_question = get_question(student->qid[student->currentq]);
-    char *format_question = calloc(1, (strlen(next_question) + 5) * sizeof(char)); // + 4 for question number, +1 for null terminator
+    char *format_question = calloc(1, (strlen(next_question) + 5) * sizeof(char)); // + 4 for question number (e.g "10. "), +1 for null terminator
     CHECK_ALLOC(format_question);
     sprintf(format_question, "%i. %s", student->currentq + 1, next_question);
     if (student->currentq <= NUM_QUESTIONS && student->currentq != NUM_QUESTIONS - 1)
@@ -843,6 +842,7 @@ void handle_get(SOCKET socket, HTTPRequest request)
                     send_QB_disconnected(socket);
                 }
                 else
+                    printf("New Questions have been generated for %s\n", student_name);
                     writeToCSV(hashtable, &numStudents, studentNames, FILEPATH); // update csv with info
             }
             student = hashtable_get(hashtable, student_name); // regenerate information again
@@ -927,7 +927,6 @@ void handle_post(HTTPRequest response, SOCKET socket)
         char *password = (char *)response.body.search(&response.body, "password", strlen("password") + 1);
         printf("\n%s is attempting to sign in with the password %s\n", username, password);
         TESTINFO *student = hashtable_get(hashtable, username);
-        // stops segfault
         if (student == NULL)
         {
             printf("Student doesnt exist\n");
@@ -1040,7 +1039,6 @@ void received(int new_fd, int numbytes, char *buf)
         client_received += numbytes;
         buf[client_received] = 0;
         char *res = strstr(buf, "\r\n\r\n");
-        // ! double check importance of this if statements and nested stuff later
         if (res)
         {
             *res = 0;
@@ -1048,7 +1046,6 @@ void received(int new_fd, int numbytes, char *buf)
             {
                 char *path = buf + 4;
                 char *end_path = strstr(path, " ");
-                // printf("%s", end_path);
                 if (!end_path)
                 {
                     send_400(new_fd);
@@ -1079,7 +1076,6 @@ void received(int new_fd, int numbytes, char *buf)
             }
             else
             {
-                // todo  unknown request figure out how to handle
                 send_400(new_fd);
             }
         }
