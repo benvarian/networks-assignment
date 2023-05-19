@@ -164,16 +164,20 @@ void send_418(SOCKET socket)
     drop_client(socket);
 }
 
-void send_webpage(SOCKET socket, char *question)
+/*  Concatenates a static 'start' and 'end' html page (found in server.h) 
+ * with the dynamic 'centre' and send it to the socket
+ *  Used for Summary page and displaying each question
+ */
+void send_webpage(SOCKET socket, char *centre, const char *start, const char *end)
 {
     char *web_page = calloc(1, 8095 + 1);
     CHECK_ALLOC(web_page);
-    static const char *first = "<!DOCTYPE html>\n<html lang='en' dir='ltr'>\n  <head>\n    <meta charset='utf-8'>\n    <meta name='viewport' content='width=device-width, initial-scale=1.0' />\n    <script src='https://cdn.tailwindcss.com'></script>\n<style>.hide {display: none;}</style>\n</head>\n <body>\n<div>\n<nav class='bg-slate-100 shadow flex justify-between sticky top-0 z-50 place-items-center w-full'>\n        <div class='flex justify-center'>\n          <h1 class='mx-4'>CITS3002 Project</h1>\n          <button class='ml-4'>logout</button>\n          <a class='ml-4' href='profile.html'>back</a>\n        </div>\n      </nav>\n    </div>\n    <div class='Quiz-Area' style='flex: justify-center;\n    width: 60%;\n    height: 500px;\n    margin: 100px 20% 0 20%;\n    border-radius: 10px;\n    background: rgba(0,0,0,0.1);\n    box-shadow: 0 0 10px 2px rgba(100,100,100,0.1);\n    overflow: auto;\n'>      <div style='display: block;'class='Quiz-Header slide'>\n<h1 style='font-size: 30px;\n        color: #3d3d3d;\n        text-align: center;'>Question 1 / 10</h1><br>\n        <div class='Question-Area' style='width: 90%;\n        height: 70%;\n        border-bottom: 2px solid #3d3d3d;\n        margin: 0 5%;'>";
-    static const char *last = "</div>\n        <div class='Answer-Area' style='display: flex;\n        width: 90%;\n        height: 20%;\n        margin: 0 5%;'>\n          <div class='Half-Answer-Area' style='width: 50%;\n          height: 100%;\n          margin: 0;'>\n            <ul style='list-style-type: none;\n            padding: 0;'>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1a' class='answer'>\n                <label for='1a' id='a_text'>A</label>\n              </li>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1b' class='answer'>\n                <label for='1b' id='a_text'>B</label>\n              </li>\n            </ul style='list-style-type: none;\n            padding: 0;'>\n          </div>\n          <div class='Half-Answer-Area' style='width: 50%;\n          height: 100%;\n          margin: 0;'>\n            <ul style='list-style-type: none;\n            padding: 0;'>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1c' class='answer'>\n                <label for='1c' id='a_text'>C</label>\n              </li>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1d' class='answer'>\n                <label for='1d' id='a_text'>D</label>\n              </li>\n            </ul>\n          </div>\n\n        </div>\n\n      </div>\n\n      <div class='Quiz-Bottom' style='\n      width: 94%;\n      height: 14%;\n      margin: 0 3%;'>\n\n        <input class='bottom-button' onclick='submitPressed()' type='submit' name='' value='Submit Question' style=\"width: 40%;\n        height: 100%;\n        width: 80%;\n        margin: 0 10%;\n        background-color: #80d9ff;\n        cursor: pointer;\n        border-radius: 10px;\n\">\n<button id=\"real-submit\"  class=\"text-blue-500\" onclick=\"reload()\">Next Question</button>\n<p class=\"text-green-500\" id=\"correct\">Answer Correct</p> <p class=\"text-red-700\" id=\"incorrect\">Answer incorrect</p></div>\n</div>\n<script>\n let qtnArea = document.getElementsByClassName('Question-Area');\n let quizArea = document.getElementsByClassName('Quiz-Area');\nlet id = document.getElementById(\"incorrect\"); window.addEventListener(\"load\", ()=>{ console.log(\"page loaded\"); id.classList.add(\"hide\"); correct.classList.add(\"hide\"); real.classList.add('hide'); }); \nlet submitBtn = document.getElementsByClassName('submit-button');\nlet radio = document.getElementsByName('q'); let correct = document.getElementById(\"correct\"); let real = document.getElementById('real-submit')\nlet radioAnsArea = document.getElementsByClassName('Half-Answer-Area');\nlet ans = \"\";\nconst addAnswer = (question, answer) => {\nans = `qid=${question}&sans=${answer}&ans=${answer}\\0`;}\nvar xhr = new XMLHttpRequest();\nxhr.onreadystatechange = () => {if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 418) {incorrect.classList.remove('hide'); correct.classList.add('hide'); real.classList.add('hide') } else {incorrect.classList.add('hide'); correct.classList.remove('hide'); real.classList.remove('hide');}}; \nconst submit = async (answers) => {\nxhr.open('POST', window.location.href, true);\nxhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');\nawait xhr.send(ans);\n}\n//function called when the submit button is pressed\nfunction submitPressed() {\nlet selections = ['a','b','c','d'];\nfor(let k = 0; k < 4; k++) {\nif(radio[k].checked) {\naddAnswer(1,selections[k]);\nsubmit(ans);\n}}} function reload() {if (incorrect.classList.contains(\"hide\") === true )window.location.reload();} </script>\n</body>\n</html>\n";
-    strcat(web_page, first);
-    strcat(web_page, question);
-    strcat(web_page, last);
-    // printf("%s:", web_page);
+
+    //printf("Sending changed stuff: %s\n\n", centre);
+    strcat(web_page, start);
+    strcat(web_page, centre);
+    strcat(web_page, end);
+    // printf("%s:", web_page)
     // fprintf(stderr, "%d: %s", socket, question);
 
     char buffer[BSIZE];
@@ -193,6 +197,7 @@ void send_webpage(SOCKET socket, char *question)
     sprintf(buffer, "\r\n");
     send(socket, buffer, strlen(buffer), 0);
 
+    //printf("WEBPAGE:\n\n%s\n\n", web_page);
     send(socket, web_page, strlen(web_page) + 1, 0);
 
     // send_403(socket);
@@ -725,7 +730,7 @@ void handle_question_increase(SOCKET socket, char *student_name)
     // increment_question(student_name);
     student = hashtable_get(hashtable, student_name);
     printf("Question tracker incremented to %i\n", student->currentq);
-    send_webpage(socket, next_question);
+    send_webpage(socket, next_question, first_multi, last_multi);
 }
 
 void handle_get(SOCKET socket, HTTPRequest request)
@@ -784,7 +789,6 @@ void handle_get(SOCKET socket, HTTPRequest request)
         {
             // CHECK IF STUDENT HAS QUESTIONS OR NOT YET
             TESTINFO *student = hashtable_get(hashtable, student_name);
-            printf("\nStudent requesting to start quiz: %s\n", student_name);
             if (student->qid[0] == 0)
             {
                 if (populate_questions(student_name) == -1)
@@ -795,36 +799,33 @@ void handle_get(SOCKET socket, HTTPRequest request)
                 else
                     writeToCSV(hashtable, &numStudents, studentNames, FILEPATH); // update csv with info
             }
-            student = hashtable_get(hashtable, student_name);
+            student = hashtable_get(hashtable, student_name); // regenerate information again
             for (int i = 0; i < NUM_QUESTIONS; i++)
             {
                 printf("Question %i: QID: %i: qType: %d\n", i + 1, student->qid[i], student->type[i]);
             }
-            uint32_t h = hash_string(student_name) % HASHTABLE_SIZE;
-            hashtable[h]->currentq = 0; // Reset counter back to 0, just in case a student goes out of the test back to home page
-            strcat(path, "/index.html");
+            char *summary_centre = calloc(1, MAXDATASIZE - strlen(summary_start) - strlen(summary_end));
+            CHECK_ALLOC(summary_centre);
+            // calculate current total marks of student
+            // Total marks is score of attempts left if they have it correct
+            // 3 attempts left, when question is correct, is 3 marks
+            int totalMarks = 0;
+            for (int i = 0; i < NUM_QUESTIONS; i++) if(student->correct[i] == true) totalMarks += student->attemptsLeft[i];
+            // create summary screen text
+            sprintf(summary_centre, "<h1>Marks Summary</h1><hr><h2>Total Marks: %i</h2><hr>", totalMarks);
+            char questionstring[128];
+            for(int i = 0; i < NUM_QUESTIONS; i++) {
+                sprintf(questionstring, "<h2>Question %i:</h2><div><p>Attempts Left: %i</p><p>Answered Correctly?   %s</p></div><hr>",
+                        i+1, student->attemptsLeft[i], (student->correct[i] == true) ? "True" : "False");
+                strcat(summary_centre, questionstring);
+            }
+            send_webpage(socket, summary_centre, summary_start, summary_end);
+            free(summary_centre);
+            return;
         }
         if (strcmp(path, "/quiz/start") == 0)
         {
             handle_question_increase(socket, student_name);
-            // // check both QBs are connected first
-            // if (qb_info[0].socket == 0 || qb_info[1].socket == 0)
-            // {
-            //     send_QB_disconnected(socket);
-            // }
-            // // Get first question of the student's test
-            // TESTINFO *student = hashtable_get(hashtable, student_name);
-            // printf("GOT STUDENT STUFF, asking for question %i\n", student->qid[student->currentq]);
-            // char *next_question = get_question(student->qid[student->currentq]);
-            // if (student->currentq <= NUM_QUESTIONS)
-            //     increment_question(student_name);
-            // else
-            //     (send_403(socket));
-            // // printf("Question passed: %s\n", next_question);
-            // // increment_question(student_name);
-            // student = hashtable_get(hashtable, student_name);
-            // printf("Question tracker incremented to %i\n", student->currentq);
-            // send_webpage(socket, next_question);
             return;
         }
     }
