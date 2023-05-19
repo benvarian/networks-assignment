@@ -872,7 +872,6 @@ void handle_get(SOCKET socket, HTTPRequest request)
 void handle_post(HTTPRequest response, SOCKET socket)
 {
     char *url = (char *)response.request_line.search(&response.request_line, "uri", strlen("uri"));
-    printf("url = %s\n", url);
     if (url == NULL) {
         return;
     }
@@ -904,9 +903,7 @@ void handle_post(HTTPRequest response, SOCKET socket)
     if (strcmp(url, "/quiz/start") == 0)
     {
         char *cookie = response.header_fields.search(&response.header_fields, "Cookie", strlen("Cookie"));
-        printf("%s\n", cookie);
         char *user = cookie + 5;
-        printf("%s\n", user);
         TESTINFO *student = hashtable_get(hashtable, user);
         int current_question = student->currentq;
         char *student_answer = response.body.search(&response.body, "sans", strlen("sans"));
