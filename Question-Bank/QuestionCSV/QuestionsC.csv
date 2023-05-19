@@ -1,26 +1,26 @@
 ﻿QID,Q,A
 2,M,How do you print to the console in C? <br>A)println()<br>B)print()<br>C)printf()<br>D)echo()<br>,C
-4,M,Which keyword is used to declare a constant in C?<br>A)const<br>B)constant<br>C)final<br>D)immutable<br>,A
+4,M,Which keyword is used to declare a constant in C?<br>A)immutable<br>B)constant<br>C)final<br>D)const<br>,D
 6,M,What is the correct syntax to declare a pointer in C?<br>A)int p;<br>B)int *p;<br>C)int &p;<br>D)pointer p,B
 8,M,Which function is used to calculate the length of a string in C?<br>A)strlen()<br>B)length()<br>C)len()<br>D)sizeof()<br>,A
 10,M,Which of the following is not a valid data type in C?<br>A)float<br>B)int<br>C)String<br>D)char<br>,C
 12,M,Which of the following is not a standard library in C?<br>A)stdio.h<br>B)math.h<br>C)string.h<br>D)graphics.h<br>,D
 14,M,In C\c what symbol is used to denote a comment?<br>A)//<br>B)/*<br>C)''<br>D)#<br>,A
 16,M,What is the correct way to dereference a pointer in C?<br>A)ptr<br>B)&ptr*<br>C)ptr* int<br>D)*ptr<br>,D
-18,M,Given the following function\c what will be the output when printf("%d"\c function(5)); is executed?\y<code>int function(int n) {\y    if (n == 1) {\y        return 1;\y    } else {\y        return n * function(n - 2);\y    }\y}\y</code>\y<br>A)15<br>B)24<br>C)5<br>D)None of the above<br>,A
-18,M,Given the following function\c what will be the output when printf("%d"\c function(4)); is executed?\y<code>int function(int n) {\y    if (n == 1) {\y        return 1;\y    } else {\y        return n * function(n - 2);\y    }\y}\y</code>\y<br>A)15<br>B)24<br>C)5<br>D)None of the above<br>,D
-22,M,Consider the following C function. What will be the output when `printf("%d"\c function(3));` is executed?\y<code>\yint function(int n) {\y    static int i = 321;\y    if (n == 0) {\y        return i;\y    } else {\y        i = i + n;\y        return function(n - 1);\y    }\y}\y</code>\y<br>A)321<br>B)322<br>C)327<br>D)None of the above<br>,C
-24,M,What will be the output of the following C code?\y<code>\yint main() {\y    int a = 5\c b = 10;\y    return (b >= a == b > a) == 0;\y}\y</code>\y<br>A)0<br>B)1<br>C)10<br>D)5<br>,A
-26,M,What will be the output of the following C code?\y<code>\yint main() {\y    char str[] = "Hello\c World!";\y    printf("%s"\c str + 7);\y    return 0;\y}\y</code>\y<br>A)Hello\c World!<br>B)World!<br>C)None of the above<br>D)!,B
-28,M,What will be the output of the following C code?\y<code>\yint main() {\y    int x = 10;\y    int y = x++;\y    printf("%d %d"\c x\c y);\y    return 0;\y}\y</code>\y<br>A)10 10<br>B)11 10<br>C)11 11<br>D)10 11<br>,B
+18,M,Given the following function\c what will be the output when printf("%d"\c function(5)); is executed?<br><code>int function(int n) {<br>\tif (n == 1) {<br>\t\treturn 1;<br>\t} else {<br>\t\treturn n * function(n - 2);<br>\t}<br>}<br></code><br>A)15<br>B)24<br>C)5<br>D)None of the above<br>,A
+18,M,Given the following function\c what will be the output when printf("%d"\c function(4)); is executed?<br><code>int function(int n) {<br>\tif (n == 1) {<br>\t\treturn 1;<br>\t} else {<br>\t\treturn n * function(n - 2);<br>\t}<br>}<br></code><br>A)15<br>B)24<br>C)5<br>D)None of the above<br>,D
+22,M,Consider the following C function. What will be the output when `printf("%d"\c function(3));` is executed?<br><code><br>int function(int n) {<br>\tstatic int i = 321;<br>\tif (n == 0) {<br>\t\treturn i;<br>\t} else {<br>\t\ti = i + n;<br>\t\treturn function(n - 1);<br>\t}<br>}<br></code><br>A)321<br>B)322<br>C)327<br>D)None of the above<br>,C
+24,M,What will be the output of the following C code?<br><code>int main() {<br>\tint a = 5\c b = 10;<br>\treturn (b >= a == b > a) == 0;<br>}<br></code><br>A)0<br>B)1<br>C)10<br>D)5<br>,A
+26,M,What will be the output of the following C code?<br><code>int main() {<br>\tchar str[] = "Hello\c World!";<br>\tprintf("%s"\c str + 7);<br>\treturn 0;<br>}<br></code><br>A)Hello\c World!<br>B)World!<br>C)None of the above<br>D)!,B
+28,M,What will be the output of the following C code?<br><code>int main() {<br>\tint x = 10;<br>\tint y = x++;<br>\tprintf("%d %d"\c x\c y);<br>\treturn 0;<br>}<br></code><br>A)10 10<br>B)11 10<br>C)11 11<br>D)10 11<br>,B
 30,M,What does the "static" keyword do in C?<br>A)It makes a variable or function visible only within the file it's declared.<br>B)It makes a variable or function visible throughout the program.<br>C)It makes a variable or function change its value every time it's accessed.<br>D)It makes a variable or function keep its value between any function call.<br>,D
-132,P,Write a function named 'function' that returns a string containing the 5th Fibonacci number.,char *function() {return("5");}
-134,P,Write a function named 'function' that returns a string containing the sum of the first 10 natural numbers.,char *function() {return("55");}
-136,P,Write a function named 'function' that returns a string containing the factorial of 7.,char *function() {return("5040");}
-138,P,Write a function named 'function' that returns a string containing the first 10 numbers in the sequence of square numbers (starting from 1) with no space between numbers.,char *function() {return("149162536496481100");}
-140,P,Write a function named 'function' that returns a string containing the string "Hello\c Wrold!".,char *function() {return("Hello\c World");}
-142,P,Write a function named 'function' that returns a string containing the result of 5 raised to the power of 3.,char *function() {return("125");}
-144,P,Write a function named 'function' that returns a string containing a string of the first ten prime numbers.,char *function() {return("2357111317192329");}
-146,P,Write a function named 'function' that returns a string containing the sum of squares of numbers from 1 to 5.,char *function() {return("55");}
-148,P,Write a function named 'function' that returns a string containing the first ten even numbers with no spaces between numbers.,char *function() {return("2468101214161820");}
-150,P,Write a function named 'function' that returns a string containing the sum of the digits in the number 12345.,char *function() {return("15");}
+132,P,Write a C function named 'function' that returns a string containing the 5th Fibonacci number.,char *function() {return("5");}
+134,P,Write a C function named 'function' that returns a string containing the sum of the first 10 natural numbers.,char *function() {return("55");}
+136,P,Write a C function named 'function' that returns a string containing the factorial of 7.,char *function() {return("5040");}
+138,P,Write a C function named 'function' that returns a string containing the first 10 numbers in the sequence of square numbers (starting from 1) with no space between numbers.,char *function() {return("149162536496481100");}
+140,P,Write a C function named 'function' that returns a string containing the string "Hello\c Wrold!".,char *function() {return("Hello\c World");}
+142,P,Write a C function named 'function' that returns a string containing the result of 5 raised to the power of 3.,char *function() {return("125");}
+144,P,Write a C function named 'function' that returns a string containing a string of the first ten prime numbers.,char *function() {return("2357111317192329");}
+146,P,Write a C function named 'function' that returns a string containing the sum of squares of numbers from 1 to 5.,char *function() {return("55");}
+148,P,Write a C function named 'function' that returns a string containing the first ten even numbers with no spaces between numbers.,char *function() {return("2468101214161820");}
+150,P,Write a C function named 'function' that returns a string containing the sum of the digits in the number 12345.,char *function() {return("15");}
