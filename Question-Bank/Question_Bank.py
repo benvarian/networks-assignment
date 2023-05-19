@@ -9,7 +9,7 @@ try:
     QB_TYPE = str(sys.argv[3])
     if (QB_TYPE not in SUBJECTS): raise Exception("Fail init args")
 except:
-    print("\nUsage:\n python3 qb_socket.py {TM-Host} {port} {qb_type}")
+    print("\nUsage:\n python3 Question_Bank.py {TM-Host} {port} {qb_type}")
     exit()
 
 print("TM ADDRESS = ", str(HOST) + ":" + str(PORT))
