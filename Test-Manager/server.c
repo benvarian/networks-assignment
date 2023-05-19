@@ -129,7 +129,6 @@ void send_404(SOCKET socket)
 void send_201(SOCKET socket)
 {
     const char *c201 = "HTTP/1.1 201 Created\r\n"
-                       "Location: /\r\n"
                        "Content-Type: text/html\r\n\r\n"
                        "<div><h1>CONGRATS</h1></div";
     send(socket, c201, strlen(c201), 0);
@@ -150,7 +149,8 @@ void send_403(SOCKET socket)
     drop_client(socket);
 }
 
-void send_307(SOCKET socket) {
+void send_307(SOCKET socket)
+{
     const char *c307 = "HTTP/1.1 307 Temporary Redirect\r\nLocation: /quiz\r\n\r\n";
     send(socket, c307, strlen(c307), 0);
     drop_client(socket);
@@ -178,13 +178,14 @@ void send_418(SOCKET socket)
     drop_client(socket);
 }
 
-void send_501(SOCKET socket) {
+void send_501(SOCKET socket)
+{
     const char *c501 = "HTTP/1.1 501 Not Implemented\r\n\r\n";
     send(socket, c501, strlen(c501), 0);
     drop_client(socket);
 }
 
-/*  Concatenates a static 'start' and 'end' html page (found in server.h) 
+/*  Concatenates a static 'start' and 'end' html page (found in server.h)
  * with the dynamic 'centre' and send it to the socket
  *  Used for Summary page and displaying each question
  */
@@ -217,7 +218,6 @@ void send_webpage(SOCKET socket, char *centre, const char *start, const char *en
     sprintf(buffer, "\r\n");
     send(socket, buffer, strlen(buffer), 0);
 
-    printf("WEBPAGE:\n\n%s\n\n", web_page);
     send(socket, web_page, strlen(web_page) + 1, 0);
 
     free(web_page);
@@ -474,22 +474,24 @@ void answer_correct(char *student_name, int qid)
 void answer_incorrect(char *student_name, int qid)
 {
     uint32_t h = hash_string(student_name) % HASHTABLE_SIZE;
-    for (int i = 0; i < NUM_QUESTIONS; i++)
-        if (hashtable[h]->qid[i] == qid)
-            hashtable[h]->attemptsLeft -= 1;
+    for (int i = 0; i < NUM_QUESTIONS; i++) {
+        if (hashtable[h]->qid[i] == qid) {
+            hashtable[h]->attemptsLeft[i] = hashtable[h]->attemptsLeft[i] - 1;
+            break;
+        }
+        else continue;
+    }
     writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
 }
 
+/**
+ * Pings the QB specified at the socket, if it is still connected
+ * it wont change anything, but if it has disconnected it will
+ * update the qb_info array to say there is a slot available
+ * for a new QB to connect
+*/
 void ping_QB(SOCKET socket, int qb_num)
 {
-    /*
-     * first, check that the qb is still connected, if not quit under exit_failure
-     * if return is say 1, then the qb is still connected, so proceed with execution,
-     * add to some form of struct so can refernec later
-     * send the get questions command to the qb
-     * parse
-     * serve html
-     */
     char *ping = "TM\r\nPING\r\n\r\n";
     char response[MAXDATASIZE + 1];
 
@@ -513,6 +515,14 @@ void ping_QB(SOCKET socket, int qb_num)
     return;
 }
 
+/**
+ * Connects to a QB at socket, of type (PYTHON or C)
+ * if there is space to connect to it (as can only connect
+ * to a specified number of QBs at a time)
+ * 
+ * Pings both QB slots to make sure there is space available
+ * Returns -1 if cannot connect, 0 if it can
+*/
 int connect_QB(SOCKET socket, enum QBType type)
 {
     // check any existing connections to ensure no QB has disconnected
@@ -546,7 +556,11 @@ int connect_QB(SOCKET socket, enum QBType type)
     return 0;
 }
 
-// Returns the question string of a specific qid from the QB
+/**
+ * Queries the QB for the question specified by qid from the
+ * corresponding QB - and returns the string
+ * Odd qid = Python question, even qid = C question
+*/
 char *get_question(int qid)
 {
     char request[64];
@@ -604,6 +618,11 @@ char *get_question(int qid)
     return question;
 }
 
+/**
+ * Gets the answer to a question specified by qid
+ * from the corresponding QB, returns a char * to
+ * that question
+*/
 char *get_answer(int qid)
 {
     char request[64];
@@ -659,10 +678,14 @@ char *get_answer(int qid)
     char *answer = strstr(response, "\r\n\r\n") + 4;
     // remove final padding
     answer[strlen(answer) - 3] = 0;
-    // printf("GOT answer FOR QID %i: %s\n", qid, answer);
     return answer;
 }
 
+/**
+ * Queries the correct QB if the student answer ans
+ * for the question qid is correct or not
+ * Returns char 1 if correct, char 0 if incorrect
+*/
 char get_mark(int qid, char *ans)
 {
     char request[MAXDATASIZE];
@@ -730,8 +753,10 @@ void handle_question_increase(SOCKET socket, char *student_name)
     }
     // Get first question of the student's test
     TESTINFO *student = hashtable_get(hashtable, student_name);
-    printf("GOT STUDENT STUFF, asking for question %i:%d\n", student->qid[student->currentq], student->type[student->currentq]);
     char *next_question = get_question(student->qid[student->currentq]);
+    char *format_question = calloc(1, (strlen(next_question) + 5) * sizeof(char)); // + 4 for question number (e.g "10. "), +1 for null terminator
+    CHECK_ALLOC(format_question);
+    sprintf(format_question, "%i. %s", student->currentq + 1, next_question);
     if (student->currentq <= NUM_QUESTIONS && student->currentq != NUM_QUESTIONS - 1)
     {
         increment_question(student_name);
@@ -740,17 +765,16 @@ void handle_question_increase(SOCKET socket, char *student_name)
         send_307(socket);
 
     student = hashtable_get(hashtable, student_name);
-    printf("Question tracker incremented to %i:%d:%s\n", student->currentq, student->qid[student->currentq], next_question);
 
     if (student->qid[student->currentq - 1] >= 100)
     {
         // Programming Question
-        send_webpage(socket, next_question, first_input, last_input);
+        send_webpage(socket, format_question, first_input, last_input);
     }
     else
     {
         // Multi Choice Question
-        send_webpage(socket, next_question, first_multi, last_multi);
+        send_webpage(socket, format_question, first_multi, last_multi);
     }
 }
 
@@ -818,26 +842,26 @@ void handle_get(SOCKET socket, HTTPRequest request)
                     send_QB_disconnected(socket);
                 }
                 else
+                    printf("New Questions have been generated for %s\n", student_name);
                     writeToCSV(hashtable, &numStudents, studentNames, FILEPATH); // update csv with info
             }
             student = hashtable_get(hashtable, student_name); // regenerate information again
-            for (int i = 0; i < NUM_QUESTIONS; i++)
-            {
-                printf("Question %i: QID: %i: qType: %d\n", i + 1, student->qid[i], student->type[i]);
-            }
             char *summary_centre = calloc(1, MAXDATASIZE - strlen(summary_start) - strlen(summary_end));
             CHECK_ALLOC(summary_centre);
             // calculate current total marks of student
             // Total marks is score of attempts left if they have it correct
             // 3 attempts left, when question is correct, is 3 marks
             int totalMarks = 0;
-            for (int i = 0; i < NUM_QUESTIONS; i++) if(student->correct[i] == true) totalMarks += student->attemptsLeft[i];
+            for (int i = 0; i < NUM_QUESTIONS; i++)
+                if (student->correct[i] == true)
+                    totalMarks += student->attemptsLeft[i];
             // create summary screen text
             sprintf(summary_centre, "<h1>Marks Summary</h1><hr><h2>Total Marks: %i</h2><hr>", totalMarks);
             char questionstring[128];
-            for(int i = 0; i < NUM_QUESTIONS; i++) {
+            for (int i = 0; i < NUM_QUESTIONS; i++)
+            {
                 sprintf(questionstring, "<h2>Question %i:</h2><div><p>Attempts Left: %i</p><p>Answered Correctly?   %s</p></div><hr>",
-                        i+1, student->attemptsLeft[i], (student->correct[i] == true) ? "True" : "False");
+                        i + 1, student->attemptsLeft[i], (student->correct[i] == true) ? "True" : "False");
                 strcat(summary_centre, questionstring);
             }
             send_webpage(socket, summary_centre, summary_start, summary_end);
@@ -903,7 +927,6 @@ void handle_post(HTTPRequest response, SOCKET socket)
         char *password = (char *)response.body.search(&response.body, "password", strlen("password") + 1);
         printf("\n%s is attempting to sign in with the password %s\n", username, password);
         TESTINFO *student = hashtable_get(hashtable, username);
-        // stops segfault
         if (student == NULL)
         {
             printf("Student doesnt exist\n");
@@ -935,26 +958,31 @@ void handle_post(HTTPRequest response, SOCKET socket)
     if (strcmp(url, "/quiz/start") == 0)
     {
         char *cookie = response.header_fields.search(&response.header_fields, "Cookie", strlen("Cookie") + 1);
-        printf("%s\n", cookie);
         char *user = cookie + 5;
-        printf("%s\n", user);
         TESTINFO *student = hashtable_get(hashtable, user);
         int current_question = student->currentq;
         char *student_answer = response.body.search(&response.body, "sans", strlen("sans") + 1);
-
-        printf("%s\n", student_answer);
         char *actual = student_answer;
-        // actual[1] = '\0';
-        printf("%d:%s\n", student->qid[current_question - 1], student_answer);
-        if (get_mark(student->qid[current_question - 1], actual) == '1')
+        if (student->correct[student->currentq - 1] != true && student->attemptsLeft[student->currentq - 1] > 0)
         {
-            printf("correct\n");
-            answer_correct(student->user, student->qid[current_question - 1]);
+            if (get_mark(student->qid[current_question - 1], actual) == '1')
+            {
+                printf("Student answered correctly\n");
+                answer_correct(student->user, student->qid[current_question - 1]);
+            }
+            else
+            {
+                answer_incorrect(student->user, student->qid[current_question - 1]);
+                send_418(socket);
+            }
         }
         else
-        {
-            answer_incorrect(student->user, student->qid[current_question - 1]);
-            send_418(socket);
+        { 
+            /* TO DO BEN FINISH */
+            // char *answer = get_answer(student->qid[student->currentq]);
+            printf("triggered\n\n\n");
+            send_201(socket);
+            return;
         }
     }
     // http_request_destructor(&response);
@@ -992,7 +1020,7 @@ void parse_request(char *response_string, SOCKET socket)
     }
     else
     {
-       send_501(socket);
+        send_501(socket);
     }
 }
 
@@ -1011,7 +1039,6 @@ void received(int new_fd, int numbytes, char *buf)
         client_received += numbytes;
         buf[client_received] = 0;
         char *res = strstr(buf, "\r\n\r\n");
-        // ! double check importance of this if statements and nested stuff later
         if (res)
         {
             *res = 0;
@@ -1019,7 +1046,6 @@ void received(int new_fd, int numbytes, char *buf)
             {
                 char *path = buf + 4;
                 char *end_path = strstr(path, " ");
-                // printf("%s", end_path);
                 if (!end_path)
                 {
                     send_400(new_fd);
@@ -1050,7 +1076,6 @@ void received(int new_fd, int numbytes, char *buf)
             }
             else
             {
-                // todo  unknown request figure out how to handle
                 send_400(new_fd);
             }
         }
