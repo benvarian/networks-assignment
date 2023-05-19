@@ -45,7 +45,7 @@ class QB_Socket_Connection:
                 self.sock.connect((self.HOST, self.PORT))
                 break
             except Exception as e:
-                print(e)
+                pass
             # connection failed
             print("Fail: Could not connect to TM, Trying again in 2 seconds.\n")
             time.sleep(2)
@@ -201,7 +201,7 @@ class QB_Socket_Connection:
         Raises:
             RuntimeError: if socket connection is broken
         """
-        msg = "ACCEPTED PING"
+        msg = "ACCEPTED PING\0"
         byte_msg = msg.encode()
         sent = self.sock.send(byte_msg)
         if sent == 0:
@@ -254,15 +254,16 @@ class QB_Socket_Connection:
         Args:
             msg (String): Message sent by TM
         """
-        msg = msg.decode("utf-8").split("\r\n")
+        msg = msg.decode("utf-8").split("\r\n", 1)
         mode_req = msg[0] + "\r\n"
-        print(f"MESSAGE RECEIVED: {msg}")
         if (mode_req == MARK_HEADER):
-            qid, ans = msg[1].split(":")
-            # mark = random.randint(0, 1)
-            mark = self.QB_DB.mark(qid, ans)
+            qid, ans = msg[1].split(":", 1)
+            
+            # print("qid == " + qid)
+            # print("ans == " + ans)
             print("Marking:\n\tqid =", qid, "\n\tans =", ans, "\n")
-            self.send_mark(qid, mark)
+            mark = self.QB_DB.mark(int(qid), ans)
+            self.send_mark(mark)
         elif (mode_req == QUESTION_HEADER):
             q_type, q_num = msg[1].split(":")
 

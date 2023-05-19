@@ -2,14 +2,15 @@ from get_questions import *
 import random
 import sys
 import os
-from ctypes import cdll, c_char_p
+from ctypes import c_char_p, CDLL
 from distutils.ccompiler import new_compiler
+import multiprocessing as mp
+
 
 key = {
     'P': "./QuestionCSV/QuestionsP.csv",
     'C': "./QuestionCSV/QuestionsC.csv"
 }
-
 class QB_DB:
     """ 
         Stores Questions, implements functions to mark and
@@ -82,19 +83,29 @@ class QB_DB:
         """
         # [type, q, a]
         q_obj = self.get_q_by_id(qid)
-        # TODO: if q_obj is none
+        ans = ans.rstrip('\x00')
+
+        if (q_obj == None):
+            return 0
+        
         # programming
-        if (q_obj[0] == 'P'):
-            if qid % 2 == 1: lang = "P"
-            else: lang = "C"
-            student_ans = execute_function(lang, ans) # holds the error code here for now
-            true_ans = execute_function(lang, q_obj[2])
-            if(true_ans == student_ans): return 1
-            else: return 0
-        elif(q_obj[0] == 'M'):
-            return 1 if q_obj[2] == ans else 0
+        try:
+            if (q_obj[0] == 'P'):
+                if qid % 2 == 1: lang = "P"
+                else: lang = "C"
+                student_ans = safely_execute_script(lang, ans) # holds the error code here for now
+                true_ans = safely_execute_script(lang, q_obj[2])
+
+                if(true_ans == student_ans): return 1
+                else: return 0
+            elif(q_obj[0] == 'M'):
+                answer = ans.strip().rstrip('\x00').upper()
+                return 1 if (q_obj[2].strip().upper() == answer) else 0
+        except:
+            pass
         # raise error...?
-        return
+        # something went wrong.
+        return 0
 
 # Executes a function passed to it, with a specified language (P for Python C for C)
 # If it runs into an error, it returns the exit code it ran into when running the program
@@ -108,6 +119,16 @@ def execute_function(lang, script):
             return result()
         except Exception as e: return (f"Error: {e}")
     elif (lang == "C"):
+        try:
+            os.remove('temp.c')
+        except FileNotFoundError: pass
+        try:
+            os.remove('temp.so')
+        except FileNotFoundError: pass
+        try:
+            os.remove('temp.o')
+        except FileNotFoundError: pass
+
         main =  """\n\nint main() {\nchar *result = function();\nreturn 0;}"""
         try:
             result = None
@@ -119,20 +140,43 @@ def execute_function(lang, script):
                 file.write(main)
             compiler.compile(['temp.c'])
             compiler.link_shared_object(['temp.o'], 'temp.so')
-            main = cdll.LoadLibrary("./temp.so")
+            main = CDLL("./temp.so")
             main.function.restype = c_char_p
             # Runs the code and returns the result in UTF-8 format
             result = main.function()
+            # while isLoaded('./temp.so'):
+            CDLL(None).dlclose(main._handle)
             os.remove('temp.c')
             os.remove('temp.so')
+            os.remove('temp.o')
             return result.decode('utf-8')
         except Exception as e: 
+            pass
             try:
                 os.remove('temp.c')
+            except FileNotFoundError: pass
+            try:
                 os.remove('temp.so')
+            except FileNotFoundError: pass
+            try:
+                os.remove('temp.o')
             except FileNotFoundError: pass
             return (f"Error: {e}")
     else: return("Error: Invalid Programming Language")
+
+def safely_execute_script(lang, script):
+    """
+    Safely execute a student's function using multiprocessing.
+    """
+    q = mp.Queue()
+    process = mp.Process(target=lambda q: q.put(execute_function(lang, script)), args=(q,))
+    process.start()
+    process.join(timeout=5)
+    exit_code = process.exitcode
+    if exit_code == 0:
+        return q.get()
+    print('Execute Function: Process Failed. Exit code: {}'.format(exit_code))
+    return 'Execute Function: process failed. Exit code: {}'.format(exit_code)
 
 def test():
     qb = QB_DB("C")
