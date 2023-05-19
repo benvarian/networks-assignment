@@ -157,6 +157,13 @@ void send_302(SOCKET socket, const char *path, const char *username)
     drop_client(socket);
 }
 
+void send_302_quiz_finish(SOCKET socket)
+{
+    const char *c301 = "HTTP/1.1 301 Found\r\nLocation: /quiz\r\n\r\n";
+    send(socket, c301, strlen(c301), 0);
+    drop_client(socket);
+}
+
 void send_418(SOCKET socket)
 {
     const char *c418 = "HTTP/1.1 418 I'm a teapot\r\n\r\n";
@@ -164,20 +171,28 @@ void send_418(SOCKET socket)
     drop_client(socket);
 }
 
-void send_webpage(SOCKET socket, char *question)
+void send_webpage(SOCKET socket, char *question, char question_type)
 {
-    printf("\n\n%s\n\n", question);
-    char *web_page = calloc(1, 8095 + 1);
+    char *web_page = calloc(1, 10013 + 1);
     CHECK_ALLOC(web_page);
     static const char *first = "<!DOCTYPE html>\n<html lang='en' dir='ltr'>\n  <head>\n    <meta charset='utf-8'>\n    <meta name='viewport' content='width=device-width, initial-scale=1.0' />\n    <script src='https://cdn.tailwindcss.com'></script>\n<style>.hide {display: none;}</style>\n</head>\n <body>\n<div>\n<nav class='bg-slate-100 shadow flex justify-between sticky top-0 z-50 place-items-center w-full'>\n        <div class='flex justify-center'>\n          <h1 class='mx-4'>CITS3002 Project</h1>\n          <button class='ml-4'>logout</button>\n          <a class='ml-4' href='profile.html'>back</a>\n        </div>\n      </nav>\n    </div>\n    <div class='Quiz-Area' style='flex: justify-center;\n    width: 60%;\n    height: 500px;\n    margin: 100px 20% 0 20%;\n    border-radius: 10px;\n    background: rgba(0,0,0,0.1);\n    box-shadow: 0 0 10px 2px rgba(100,100,100,0.1);\n    overflow: auto;\n'>      <div style='display: block;'class='Quiz-Header slide'>\n<h1 style='font-size: 30px;\n        color: #3d3d3d;\n        text-align: center;'>Question 1 / 10</h1><br>\n        <div class='Question-Area' style='width: 90%;\n        height: 70%;\n        border-bottom: 2px solid #3d3d3d;\n        margin: 0 5%;'>";
     static const char *last = "</div>\n        <div class='Answer-Area' style='display: flex;\n        width: 90%;\n        height: 20%;\n        margin: 0 5%;'>\n          <div class='Half-Answer-Area' style='width: 50%;\n          height: 100%;\n          margin: 0;'>\n            <ul style='list-style-type: none;\n            padding: 0;'>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1a' class='answer'>\n                <label for='1a' id='a_text'>A</label>\n              </li>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1b' class='answer'>\n                <label for='1b' id='a_text'>B</label>\n              </li>\n            </ul style='list-style-type: none;\n            padding: 0;'>\n          </div>\n          <div class='Half-Answer-Area' style='width: 50%;\n          height: 100%;\n          margin: 0;'>\n            <ul style='list-style-type: none;\n            padding: 0;'>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1c' class='answer'>\n                <label for='1c' id='a_text'>C</label>\n              </li>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1d' class='answer'>\n                <label for='1d' id='a_text'>D</label>\n              </li>\n            </ul>\n          </div>\n\n        </div>\n\n      </div>\n\n      <div class='Quiz-Bottom' style='\n      width: 94%;\n      height: 14%;\n      margin: 0 3%;'>\n\n        <input class='bottom-button' onclick='submitPressed()' type='submit' name='' value='Submit Question' style=\"width: 40%;\n        height: 100%;\n        width: 80%;\n        margin: 0 10%;\n        background-color: #80d9ff;\n        cursor: pointer;\n        border-radius: 10px;\n\">\n<button id=\"real-submit\"  class=\"text-blue-500\" onclick=\"reload()\">Next Question</button>\n<p class=\"text-green-500\" id=\"correct\">Answer Correct</p> <p class=\"text-red-700\" id=\"incorrect\">Answer incorrect</p></div>\n</div>\n<script>\n let qtnArea = document.getElementsByClassName('Question-Area');\n let quizArea = document.getElementsByClassName('Quiz-Area');\nlet id = document.getElementById(\"incorrect\"); window.addEventListener(\"load\", ()=>{ console.log(\"page loaded\"); id.classList.add(\"hide\"); correct.classList.add(\"hide\"); real.classList.add('hide'); }); \nlet submitBtn = document.getElementsByClassName('submit-button');\nlet radio = document.getElementsByName('q'); let correct = document.getElementById(\"correct\"); let real = document.getElementById('real-submit')\nlet radioAnsArea = document.getElementsByClassName('Half-Answer-Area');\nlet ans = \"\";\nconst addAnswer = (question, answer) => {\nans = `qid=${question}&sans=${answer}&ans=${answer}\\0`;}\nvar xhr = new XMLHttpRequest();\nxhr.onreadystatechange = () => {if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 418) {incorrect.classList.remove('hide'); correct.classList.add('hide'); real.classList.add('hide') } else {incorrect.classList.add('hide'); correct.classList.remove('hide'); real.classList.remove('hide');}}; \nconst submit = async (answers) => {\nxhr.open('POST', window.location.href, true);\nxhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');\nawait xhr.send(ans);\n}\n//function called when the submit button is pressed\nfunction submitPressed() {\nlet selections = ['a','b','c','d'];\nfor(let k = 0; k < 4; k++) {\nif(radio[k].checked) {\naddAnswer(1,selections[k]);\nsubmit(ans);\n}}} function reload() {if (incorrect.classList.contains(\"hide\") === true )window.location.reload();} </script>\n</body>\n</html>\n";
 
-    // static const char *first_input = "<!DOCTYPE html><html lang='en' dir='ltr'> <head> <meta charset='utf-8'> <meta name='viewport' content='width=device-width, initial-scale=1.0'/> <script src='https://cdn.tailwindcss.com'></script> </head> <body> <div> <nav class='bg-slate-100 shadow flex justify-between sticky top-0 z-50 place-items-center w-full'> <div class='flex justify-center'> <h1 class='mx-4'>CITS3002 Project</h1> <button class='ml-4'>logout</button> <a class='ml-4' href='profile.html'>back</a> </div></nav> </div><div class='Quiz-Area' > <div class='Quiz-Header slide'> <div class='Question-Area' >";
-    // static const char *last_input = "</div><div class='Answer-Area' > <div class='Text-Answer-Area' > <textarea class='codeInput' rows='8' cols='80'></textarea> </div></div></div><div class='Quiz-Bottom' > <input class='bottom-button' onclick='submitPressed()' type='submit' name='' value='Submit Answer'> <button id='real-submit' class='text-blue-500' onclick='reload()'>Next Question</button> <p class='text-red-700' id='incorrect'>Answer incorrect</p><p class='text-green-500' id='correct'>Answer Correct</p></div></div><script>let qtnArea=document.getElementsByClassName('Question-Area'); let quizArea=document.getElementsByClassName('Quiz-Area'); let submitBtn=document.getElementsByClassName('submit-button'); let textAns=document.getElementsByClassName('codeInput'); let textAnsArea=document.getElementsByClassName('Text-Answer-Area'); let radioAnsArea=document.getElementsByClassName('Half-Answer-Area'); let sumQtnDisplay=document.getElementsByClassName('sumQtnDisplay'); let sumAnsDisplay=document.getElementsByClassName('sumAnsDisplay'); let incorrect=document.querySelector('.hide'); let real=document.getElementById('real-submit'); let correct=document.getElementById('correct'); let answers=''; var xhr=new XMLHttpRequest(); const addAnswer=(question, answer)=>{ans=`qid=${question}&sans=${answer}&ans=${answer}`;}xhr.onreadystatechange=()=>{if (xhr.readyState===XMLHttpRequest.DONE && xhr.status===418){incorrect.classList.remove('hide'); real.classList.add('hide') correct.classList.add('hide')}else{incorrect.classList.add('hide'); correct.classList.remove('hide'); real.classList.remove('hide');}}; const submit=async (answers)=>{xhr.open('POST', window.location.href, true); xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded'); await xhr.send(ans);}//function called when the submit button is pressed function submitPressed(){if(textAns[0].value !=''){addAnswer(1,textAns[0].value); submit(ans);}}</script> </body></html>";
+    static const char *first_input = "<!DOCTYPE html><html lang='en' dir='ltr'> <head> <meta charset='utf-8'/> <meta name='viewport' content='width=device-width, initial-scale=1.0'/> <script src='https://cdn.tailwindcss.com'></script> <style>.hide{display: none;}</style> </head> <body> <div> <nav class='bg-slate-100 shadow flex justify-between sticky top-0 z-50 place-items-center w-full' > <div class='flex justify-center'> <h1 onclick='window.location.href='/'' class='mx-4'>CITS3002 Project</h1> <button onclick='window.location.href='/logout'' class='ml-4'>logout</button> </div></nav> </div><div class='Quiz-Area flex flex-col justify-center items-center h-[calc(100vh-72px)]'> <div class='Quiz-Header slide'> <div class='Question-Area'>";
+    static const char *last_input = "</div><div class='Answer-Area'> <div class='Text-Answer-Area'> <textarea class='codeInput border-solid border-2 border-slate-500' rows='8' cols='80'></textarea> </div></div></div><div class='Quiz-Bottom'> <input class='bottom-button bg-yellow-300 rounded-md p-2 m-2 pb-2' onclick='submitPressed()' type='submit' name='' value='Submit Answer'/> <button id='real-submit' class='text-blue-500' onclick='reload()'> Next Question </button> <p class='text-red-700' id='incorrect'>Answer incorrect</p><p class='text-green-500' id='correct'>Answer Correct</p></div></div><script>let qtnArea=document.getElementsByClassName('Question-Area'); let quizArea=document.getElementsByClassName('Quiz-Area'); let submitBtn=document.getElementsByClassName('submit-button'); let textAns=document.getElementsByClassName('codeInput'); let textAnsArea=document.getElementsByClassName('Text-Answer-Area'); let radioAnsArea=document.getElementsByClassName('Half-Answer-Area'); let sumQtnDisplay=document.getElementsByClassName('sumQtnDisplay'); let sumAnsDisplay=document.getElementsByClassName('sumAnsDisplay'); let incorrect=document.getElementById('incorrect'); let real=document.getElementById('real-submit'); let correct=document.getElementById('correct'); let answers=''; window.addEventListener('load', ()=>{console.log('page loaded'); incorrect.classList.add('hide'); correct.classList.add('hide'); real.classList.add('hide');}); var xhr=new XMLHttpRequest(); const addAnswer=(question, answer)=>{ans=`qid=${question}&sans=${answer}&ans=${answer}`;}; xhr.onreadystatechange=()=>{if (xhr.readyState===XMLHttpRequest.DONE && xhr.status===418){incorrect.classList.remove('hide'); real.classList.add('hide'); correct.classList.add('hide');}else{incorrect.classList.add('hide'); correct.classList.remove('hide'); real.classList.remove('hide');}}; const submit=async (answers)=>{xhr.open('POST', window.location.href, true); xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' ); await xhr.send(ans);}; function reload (){window.location.reload();}function submitPressed(){if (textAns[0].value !=''){addAnswer(1, textAns[0].value); submit(ans);}}</script> </body></html>";
+    if (question_type == 'M')
+    {
+        strcat(web_page, first);
+        strcat(web_page, question);
+        strcat(web_page, last);
+    }
+    else
+    {
+        strcat(web_page, first_input);
+        strcat(web_page, question);
+        strcat(web_page, last_input);
+    }
 
-    strcat(web_page, first);
-    strcat(web_page, question);
-    strcat(web_page, last);
 
     char buffer[BSIZE];
 
@@ -633,11 +648,11 @@ char *get_answer(int qid)
         }
     }
     // Handle Response - strtok twice to get question
-    
+
     char *answer = strstr(response, "\r\n\r\n") + 4;
     // remove final padding
-    answer[strlen(answer)-3] = 0;
-    printf("GOT answer FOR QID %i: %s\n", qid, answer);
+    answer[strlen(answer) - 3] = 0;
+    // printf("GOT answer FOR QID %i: %s\n", qid, answer);
     return answer;
 }
 
@@ -715,21 +730,22 @@ void handle_question_increase(SOCKET socket, char *student_name)
         increment_question(student_name);
     }
     else
-        // ! implement summary page here
-        // send_302(socket, "/quiz", cookie);
-        send_403(socket);
+        send_302_quiz_finish(socket);
     student = hashtable_get(hashtable, student_name);
-    printf("Question tracker incremented to %i:%s\n", student->currentq, next_question);
+    printf("Question tracker incremented to %i:%d:%s\n", student->currentq, student->qid[student->currentq], next_question);
 
     char qtype;
 
-    if (student->qid[student->currentq] >= 100) {
+    if (student->qid[student->currentq - 1] >= 100)
+    {
         qtype = 'P';
-    } else {
+    }
+    else
+    {
         qtype = 'M';
     }
 
-    send_webpage(socket, next_question);
+    send_webpage(socket, next_question, qtype);
 }
 
 void handle_get(SOCKET socket, HTTPRequest request)
@@ -860,16 +876,7 @@ void handle_get(SOCKET socket, HTTPRequest request)
 
 void handle_post(HTTPRequest response, SOCKET socket)
 {
-    // for (int i = 0; i < response.request_line.keys.length; i++)
-    // {
-    //     printf("\n\n%s:%s\n\n", (char *)response.request_line.keys.head->data, (char *)response.request_line.search(&response.request_line, (char *)response.request_line.keys.head->data, strlen((char *)response.request_line.keys.head->data)));
-    //     response.request_line.keys.head = response.request_line.keys.head->next;
-    // }
     char *url = (char *)response.request_line.search(&response.request_line, "uri", strlen("uri"));
-    printf("url = %s\n", url);
-    if (url == NULL) {
-        return;
-    }
     if (strcmp(url, "/login") == 0)
     {
         char *username = (char *)response.body.search(&response.body, "username", strlen("username") * sizeof(char) + 1);
@@ -944,17 +951,6 @@ void parse_request(char *response_string, SOCKET socket)
     extract_header_fields(&response, header_fields);
     extract_request_line_fields(&response, request_line);
     extract_body(&response, body);
-    // ! keeping for debugging incase something happens and everything breaks
-    // for (int i = 0; i < response.header_fields.keys.length; i++)
-    // {
-    //     printf("%s:%s\n", (char *)response.header_fields.keys.head->data, (char *)response.header_fields.search(&response.header_fields, (char *)response.header_fields.keys.head->data, strlen((char *)response.header_fields.keys.head->data)));
-    //     response.header_fields.keys.head = response.header_fields.keys.head->next;
-    // }
-    // for (int i = 0; i < response.request_line.keys.length; i++)
-    // {
-    //     printf("%s:%s:lol\n", (char *)response.request_line.keys.head->data, (char *)response.request_line.search(&response.request_line, (char *)response.request_line.keys.head->data, strlen((char *)response.request_line.keys.head->data)));
-    //     response.request_line.keys.head = response.request_line.keys.head->next;
-    // }
     char *method = (char *)response.request_line.search(&response.request_line, "method", strlen("method"));
     if (strcmp(method, "GET") == 0)
     {
@@ -973,7 +969,6 @@ void parse_request(char *response_string, SOCKET socket)
 
 void received(int new_fd, int numbytes, char *buf)
 {
-    // ! maybe change up how this is dealt with as its a big messy
     int client_received = 0;
     if (numbytes < 1)
     {
