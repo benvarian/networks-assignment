@@ -52,7 +52,7 @@ extern TESTINFO *hashtable_get(HASHTABLE *hashtable, char *username);
 extern FILE *openFile(char *file_path, char *mode);
 
 // Reads content of the file into a buffer
-extern char *readFile(FILE * fp);
+extern void readFile(FILE *fp, char **buffer);
 
 // Uses openFile and readFile to get data and put it in the hashtable
 // shouldn't need to call openFile and readFile, just this
