@@ -21,7 +21,7 @@ Before running the Test Manager please make sure your in the Test-Manager direct
 ## How to run Question Bank
 Before running the Question Bank please make sure your in the Question-Bank directory. 
 ```
-    python3 qb_socket.py [ip] [port] [type: C | PYTHON]
+    python3 Question_Bank.py [ip] [port] [type: C | PYTHON]
 ```
 
 

@@ -135,7 +135,6 @@ class QB_Socket_Connection:
         Raises:
             RuntimeError: if socket connection is broken
         """
-        # msg = QB_HEADER + QUESTION_HEADER + END_HEADER + "QUESTIONS:" + msg + END_MSG
         msg = self.QB_HEADER + GETQUESTION_HEADER + END_HEADER  + msg + END_MSG
         MSGLEN = len(msg)
         byte_msg = msg.encode()
@@ -220,7 +219,6 @@ class QB_Socket_Connection:
             _type_: msg received.
         """
         msg = False
-        # loops until a msg is received
         while (not msg):
             try:
                 print("waiting to receive a message...\n")
@@ -258,9 +256,6 @@ class QB_Socket_Connection:
         mode_req = msg[0] + "\r\n"
         if (mode_req == MARK_HEADER):
             qid, ans = msg[1].split(":", 1)
-            
-            # print("qid == " + qid)
-            # print("ans == " + ans)
             print("Marking:\n\tqid =", qid, "\n\tans =", ans, "\n")
             mark = self.QB_DB.mark(int(qid), ans)
             self.send_mark(mark)
@@ -282,7 +277,6 @@ class QB_Socket_Connection:
             question = self.QB_DB.get_q_by_id(qid)
             answer = question[2]
             self.send_answer(answer)
-        # handle pings from tm just by making an elif as its a viable header 
         elif(mode_req == GETQUESTION_HEADER):
             # removes null terminator
             qid = int(msg[1][:-1])
@@ -293,7 +287,6 @@ class QB_Socket_Connection:
             self.send_response()
             return
         else:
-            # TODO: maintain a count and restart socket after three issues in a row or something of the like.
             print("Request doesn't follow protocol, sending Error.")
             self.send_error("q_modeError")
 
@@ -304,13 +297,12 @@ class QB_Socket_Connection:
             Boolean: true if connection is working.
         """
         try:
-            # tries to read bytes without blocking without removing them from buffer (peek & don't wait)
             data = self.sock.recv(16, socket.MSG_DONTWAIT | socket.MSG_PEEK)
             return len(data) != 0
         except BlockingIOError:
-            return True  # socket is open and reading from it would block
+            return True
         except ConnectionResetError:
-            return False  # socket was closed for some other reason
+            return False
         except Exception as e:
             print("Unexpected Exception when checking if socket is connected:")
             print(e)
@@ -319,6 +311,7 @@ class QB_Socket_Connection:
 
     def restart_socket(self):
         """Restarts the socket
+
         """
         try:
             self.sock.shutdown(socket.SHUT_RDWR)
@@ -329,14 +322,14 @@ class QB_Socket_Connection:
             self.sock.close()
         except Exception as e:
             print(e)
-        # prevents it spamming TM if TM 
-        # closes pipelines as they start.
+        # waits before reconnecting
         time.sleep(1)
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def main_loop(self):
         """The main operation loop for handling the socket.
+        
         """
         self.connect_to_TM()
         print("\nBeginning main loop...\n")

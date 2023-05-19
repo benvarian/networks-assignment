@@ -1,6 +1,5 @@
 from get_questions import *
 import random
-import sys
 import os
 from ctypes import c_char_p, CDLL
 from distutils.ccompiler import new_compiler

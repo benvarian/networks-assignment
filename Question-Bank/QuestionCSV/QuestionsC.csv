@@ -17,8 +17,8 @@ QID,T,Q,A
 132,P,Write a C function named 'function' that returns a string containing the 5th Fibonacci number.,char *function() {return("5");}
 134,P,Write a C function named 'function' that returns a string containing the sum of the first 10 natural numbers.,char *function() {return("55");}
 136,P,Write a C function named 'function' that returns a string containing the factorial of 7.,char *function() {return("5040");}
-138,P,Write a C function named 'function' that returns a string containing the first 10 numbers in the sequence of square numbers (starting from 1) with no space between numbers.,char *function() {return("149162536496481100");}
-140,P,Write a C function named 'function' that returns a string containing the string "Hello\c Wrold!".,char *function() {return("Hello\c World");}
+138,P,Write a C function named 'function' that returns a string containing the first 10 square numbers (starting from 1) with no space between the numbers.,char *function() {return("149162536496481100");}
+140,P,Write a C function named 'function' that returns a string containing the string "Hello\c Wrold!".,char *function() {return("Hello\c Wrold");}
 142,P,Write a C function named 'function' that returns a string containing the result of 5 raised to the power of 3.,char *function() {return("125");}
 144,P,Write a C function named 'function' that returns a string containing a string of the first ten prime numbers.,char *function() {return("2357111317192329");}
 146,P,Write a C function named 'function' that returns a string containing the sum of squares of numbers from 1 to 5.,char *function() {return("55");}
