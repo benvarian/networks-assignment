@@ -11,10 +11,10 @@ try:
     # Init input params
     HOST = sys.argv[1]
     PORT=int(sys.argv[2])
-    QB_TYPE = str(sys.argv[3])
+    QB_TYPE = str(sys.argv[3]).upper()
     if (QB_TYPE not in SUBJECTS): raise Exception("Fail init args")
 except:
-    print("\nUsage:\n python3 qb_socket.py {TM-IP-address} {port} {qb_type}")
+    print("\nUsage:\n python3 qb_socket.py {TM-Host} {port} {qb_type}")
     exit()
 print("TM ADDRESS = ", str(HOST) + ":" + str(PORT))
 
@@ -63,7 +63,7 @@ class QB_Socket_Connection:
                 self.sock.connect((HOST, PORT))
                 break
             except Exception as e:
-                print(e)
+                pass
             # connection failed
             print("Fail: Could not connect to TM, Trying again in 2 seconds.\n")
             time.sleep(2)
@@ -205,7 +205,7 @@ class QB_Socket_Connection:
         Raises:
             RuntimeError: if socket connection is broken
         """
-        msg = "ACCEPTED PING"
+        msg = "ACCEPTED PING\0"
         byte_msg = msg.encode()
         sent = self.sock.send(byte_msg)
         if sent == 0:
@@ -260,9 +260,8 @@ class QB_Socket_Connection:
         """
         msg = msg.decode("utf-8").split("\r\n", 1)
         mode_req = msg[0] + "\r\n"
-        print(f"MESSAGE RECEIVED: {msg}")
         if (mode_req == MARK_HEADER):
-            qid, ans = msg[1].split(":")
+            qid, ans = msg[1].split(":", 1)
             
             # print("qid == " + qid)
             # print("ans == " + ans)

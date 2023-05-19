@@ -14,13 +14,13 @@
 35,M,Which of the following is an invalid statement?<br>A)abc = 1\c000\c000<br>B)a b c = 1000 2000 3000<br>C)a\cb\cc = 1000\c 2000\c 3000<br>D)None of the above<br>,B
 37,M,What is the output of the following Python code?\y<code>\yx = "abcdef"\yi = "a"\ywhile i in x:\y    x = x[:-1]\y    print(i, end = " ")\y</code>\y<br>A)a a a a a a<br>B)abcdef<br>C)a a a a a<br>D)None of the above<br>,C
 39,M,Which function is used to read only one character from the user?<br>A)input()<br>B)getch()<br>C)getche()<br>D)None of the above<br>,D
-41,P,Write a function named 'function' that returns a string containing the 5th Fibonacci number.,"""def function:\y\treturn ("5") """
-43,P,Write a function named 'function' that returns a string containing the sum of the first 10 natural numbers.,"""def function:\y\treturn ("55") """
-45,P,Write a function named 'function' that returns a string containing the factorial of 7.,"""def function:\y\treturn ("5040") """
-47,P,Write a function named 'function' that returns a string containing the first 10 numbers in the sequence of square numbers (starting from 1) with no space between numbers.,"""def function:\y\treturn ("149162536496481100") """
-49,P,Write a function named 'function' that returns a string containing the string "Hello\c Wrold!".,"""def function:\y\treturn ("Hello\c Wrold") """
-51,P,Write a function named 'function' that returns a string containing the result of 5 raised to the power of 3.,"""def function:\y\treturn ("125") """
-53,P,Write a function named 'function' that returns a string containing a string of the first ten prime numbers.,"""def function:\y\treturn ("2357111317192329") """
-55,P,Write a function named 'function' that returns a string containing the sum of squares of numbers from 1 to 5.,"""def function:\y\treturn ("55") """
-57,P,Write a function named 'function' that returns a string containing the first ten even numbers with no spaces between numbers.,"""def function:\y\treturn ("2468101214161820") """
-59,P,Write a function named 'function' that returns a string containing the sum of the digits in the number 12345.,"""def function:\y\treturn ("15") """
+41,P,Write a function named 'function' that returns a string containing the 5th Fibonacci number.,\ydef function():\y\treturn ("5") 
+43,P,Write a function named 'function' that returns a string containing the sum of the first 10 natural numbers.,\ydef function():\y\treturn ("55") 
+45,P,Write a function named 'function' that returns a string containing the factorial of 7.,\ydef function():\y\treturn ("5040") 
+47,P,Write a function named 'function' that returns a string containing the first 10 numbers in the sequence of square numbers (starting from 1) with no space between numbers.,\ydef function():\y\treturn ("149162536496481100") 
+49,P,Write a function named 'function' that returns a string containing the string "Hello\c Wrold!".,\ydef function():\y\treturn ("Hello\c Wrold") 
+51,P,Write a function named 'function' that returns a string containing the result of 5 raised to the power of 3.,\ydef function():\y\treturn ("125") 
+53,P,Write a function named 'function' that returns a string containing a string of the first ten prime numbers.,\ydef function():\y\treturn ("2357111317192329") 
+55,P,Write a function named 'function' that returns a string containing the sum of squares of numbers from 1 to 5.,\ydef function():\y\treturn ("55") 
+57,P,Write a function named 'function' that returns a string containing the first ten even numbers with no spaces between numbers.,\ydef function():\y\treturn ("2468101214161820") 
+59,P,Write a function named 'function' that returns a string containing the sum of the digits in the number 12345.,\ydef function():\y\treturn ("15") 
