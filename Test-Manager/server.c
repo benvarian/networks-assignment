@@ -708,6 +708,11 @@ void handle_get(SOCKET socket, HTTPRequest request)
 
 void handle_post(HTTPRequest response, SOCKET socket)
 {
+    // for (int i = 0; i < response.request_line.keys.length; i++)
+    // {
+    //     printf("\n\n%s:%s\n\n", (char *)response.request_line.keys.head->data, (char *)response.request_line.search(&response.request_line, (char *)response.request_line.keys.head->data, strlen((char *)response.request_line.keys.head->data)));
+    //     response.request_line.keys.head = response.request_line.keys.head->next;
+    // }
     char *url = (char *)response.request_line.search(&response.request_line, "uri", strlen("uri"));
     if (strcmp(url, "/login") == 0)
     {
@@ -732,6 +737,27 @@ void handle_post(HTTPRequest response, SOCKET socket)
         {
             printf("\n\ndoenst match\n");
             send_401(socket);
+        }
+    }
+    if (strcmp(url, "/quiz/start") == 0)
+    {
+        printf("handling quiz start\n");
+        char *cookie = response.header_fields.search(&response.header_fields, "Cookie", strlen("Cookie"));
+        char *user = cookie + 5;
+        TESTINFO *student = hashtable_get(hashtable, user);
+        int current_question = student->currentq;
+        char *student_answer = response.body.search(&response.body, "sans", strlen("sans"));
+        char actual = toupper(student_answer[0]);
+        // printf("%d:%c\n", student->qid[current_question - 1], student_answer);
+        if (get_mark(current_question, actual) == '1')
+        {
+            printf("correct\n");
+            answer_correct(student->user, student->qid[current_question - 1]);
+        }
+        else
+        {
+            answer_incorrect(student->user, student->qid[current_question - 1]);
+            send_418(socket);
         }
     }
     // http_request_destructor(&response);

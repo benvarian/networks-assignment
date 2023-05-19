@@ -3,3 +3,6 @@
 *.json
 .vscode/
 
+*.o
+*.pyc
+*.pyc
