@@ -83,7 +83,6 @@ void readFile(FILE *fp, char **buffer)
     *buffer = calloc(size + 1, sizeof(char));
     CHECK_ALLOC(buffer);
     fread(*buffer, size, 1, fp);
-    buffer[size] = '\0';
     return;
 }
 

@@ -1,5 +1,5 @@
 user,pw,qtype,qid,attemptsLeft,correct,questiontracker
 mitch,test123,M$M$M$M$M$P$P$P$P$P,0$0$0$0$0$0$0$0$0$0,3$3$3$3$3$3$3$3$3$3,F$F$F$F$F$F$F$F$F$F,0
-ben,ben,M$M$M$M$M$P$P$P$P$P,0$0$0$0$0$0$0$0$0$0,3$3$3$3$3$3$3$3$3$3,F$F$F$F$F$F$F$F$F$F,0
+ben,ben,M$M$M$M$M$P$M$M$P$M,6$37$33$9$7$141$5$1$149$159,0$3$3$3$3$3$3$3$3$3,F$F$F$F$F$F$F$F$F$F,0
 james,test123,M$M$P$M$M$P$P$M$M$M,0$0$0$0$0$0$0$0$0$0,3$3$3$3$3$3$3$3$3$3,F$F$F$F$F$F$F$F$F$F,0
 nick,test123,M$M$M$M$M$P$P$P$P$P,0$0$0$0$0$0$0$0$0$0,3$3$3$3$3$3$3$3$3$3,F$F$F$F$F$F$F$F$F$F,0

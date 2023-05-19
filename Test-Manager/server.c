@@ -129,7 +129,6 @@ void send_404(SOCKET socket)
 void send_201(SOCKET socket)
 {
     const char *c201 = "HTTP/1.1 201 Created\r\n"
-                       "Location: /\r\n"
                        "Content-Type: text/html\r\n\r\n"
                        "<div><h1>CONGRATS</h1></div";
     send(socket, c201, strlen(c201), 0);
@@ -150,7 +149,8 @@ void send_403(SOCKET socket)
     drop_client(socket);
 }
 
-void send_307(SOCKET socket) {
+void send_307(SOCKET socket)
+{
     const char *c307 = "HTTP/1.1 307 Temporary Redirect\r\nLocation: /quiz\r\n\r\n";
     send(socket, c307, strlen(c307), 0);
     drop_client(socket);
@@ -178,13 +178,14 @@ void send_418(SOCKET socket)
     drop_client(socket);
 }
 
-void send_501(SOCKET socket) {
+void send_501(SOCKET socket)
+{
     const char *c501 = "HTTP/1.1 501 Not Implemented\r\n\r\n";
     send(socket, c501, strlen(c501), 0);
     drop_client(socket);
 }
 
-/*  Concatenates a static 'start' and 'end' html page (found in server.h) 
+/*  Concatenates a static 'start' and 'end' html page (found in server.h)
  * with the dynamic 'centre' and send it to the socket
  *  Used for Summary page and displaying each question
  */
@@ -834,13 +835,16 @@ void handle_get(SOCKET socket, HTTPRequest request)
             // Total marks is score of attempts left if they have it correct
             // 3 attempts left, when question is correct, is 3 marks
             int totalMarks = 0;
-            for (int i = 0; i < NUM_QUESTIONS; i++) if(student->correct[i] == true) totalMarks += student->attemptsLeft[i];
+            for (int i = 0; i < NUM_QUESTIONS; i++)
+                if (student->correct[i] == true)
+                    totalMarks += student->attemptsLeft[i];
             // create summary screen text
             sprintf(summary_centre, "<h1>Marks Summary</h1><hr><h2>Total Marks: %i</h2><hr>", totalMarks);
             char questionstring[128];
-            for(int i = 0; i < NUM_QUESTIONS; i++) {
+            for (int i = 0; i < NUM_QUESTIONS; i++)
+            {
                 sprintf(questionstring, "<h2>Question %i:</h2><div><p>Attempts Left: %i</p><p>Answered Correctly?   %s</p></div><hr>",
-                        i+1, student->attemptsLeft[i], (student->correct[i] == true) ? "True" : "False");
+                        i + 1, student->attemptsLeft[i], (student->correct[i] == true) ? "True" : "False");
                 strcat(summary_centre, questionstring);
             }
             send_webpage(socket, summary_centre, summary_start, summary_end);
@@ -938,21 +942,17 @@ void handle_post(HTTPRequest response, SOCKET socket)
     if (strcmp(url, "/quiz/start") == 0)
     {
         char *cookie = response.header_fields.search(&response.header_fields, "Cookie", strlen("Cookie") + 1);
-        printf("%s\n", cookie);
         char *user = cookie + 5;
-        printf("%s\n", user);
         TESTINFO *student = hashtable_get(hashtable, user);
         int current_question = student->currentq;
         char *student_answer = response.body.search(&response.body, "sans", strlen("sans") + 1);
-
-        printf("%s\n", student_answer);
         char *actual = student_answer;
-        
-        printf("%d:%s\n", student->qid[current_question - 1], student_answer);
-        if(student->correct[student->currentq - 1] != true && student->attemptsLeft[student->currentq - 1] > 0) {
+
+        if (student->correct[student->currentq - 1] != true && student->attemptsLeft[student->currentq - 1] > 0)
+        {
             if (get_mark(student->qid[current_question - 1], actual) == '1')
             {
-                printf("correct\n");
+                printf("Student answered correctly\n");
                 answer_correct(student->user, student->qid[current_question - 1]);
             }
             else
@@ -961,7 +961,14 @@ void handle_post(HTTPRequest response, SOCKET socket)
                 send_418(socket);
             }
         }
-        else { /* TO DO BEN FINISH */ return;}
+        else
+        { 
+            /* TO DO BEN FINISH */
+            // char *answer = get_answer(student->qid[student->currentq]);
+            printf("triggered\n\n\n");
+            send_201(socket);
+            return;
+        }
     }
     // http_request_destructor(&response);
 }
@@ -998,7 +1005,7 @@ void parse_request(char *response_string, SOCKET socket)
     }
     else
     {
-       send_501(socket);
+        send_501(socket);
     }
 }
 
