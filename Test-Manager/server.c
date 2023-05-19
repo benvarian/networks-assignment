@@ -149,6 +149,13 @@ void send_403(SOCKET socket)
     send(socket, c403, strlen(c403), 0);
     drop_client(socket);
 }
+
+void send_307(SOCKET socket) {
+    const char *c307 = "HTTP/1.1 307 Temporary Redirect\r\nLocation: /quiz\r\n\r\n";
+    send(socket, c307, strlen(c307), 0);
+    drop_client(socket);
+}
+
 void send_302(SOCKET socket, const char *path, const char *username)
 {
     char c302[52 + (strlen(path) + 1) + (strlen(username) + 1)];
@@ -718,7 +725,7 @@ void handle_question_increase(SOCKET socket, char *student_name)
         increment_question(student_name);
     }
     else
-        send_403(socket);
+        send_307(socket);
 
     student = hashtable_get(hashtable, student_name);
     printf("Question tracker incremented to %i\n", student->currentq);
