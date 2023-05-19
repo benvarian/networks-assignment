@@ -270,14 +270,13 @@ class QB_Socket_Connection:
             self.send_mark(mark)
         elif (mode_req == QUESTION_HEADER):
             q_type, q_num = msg[1].split(":")
-            
-            print("qnum =", int(str(q_num).rstrip("\x00").strip()))
+            q_num = int(q_num.rstrip("\x00").strip("\r\n"))
             if (q_type not in QTYPES):
                 print("Invalid Request. Second val of q req should be in QTYPES")
                 self.send_error("q_typeError")
                 return
             # mandatory extra long one-liner in order to be more 'pythonic'
-            questions = ''.join(["&{}:{}".format(q[0], q[1]) for q in QB_DB.get_rand_qs(int(q_num))])
+            questions = ''.join(["&{}:{}".format(q[0], q[1]) for q in QB_DB.get_rand_qs(q_num)])
             questions.join("&")
             self.send_questions(questions)
         elif(mode_req == ANSWER_HEADER):
