@@ -164,6 +164,12 @@ void send_418(SOCKET socket)
     drop_client(socket);
 }
 
+void send_501(SOCKET socket) {
+    const char *c501 = "HTTP/1.1 501 Not Implemented\r\n\r\n";
+    send(socket, c501, strlen(c501), 0);
+    drop_client(socket);
+}
+
 void send_webpage(SOCKET socket, char *question)
 {
     char *web_page = calloc(1, 8095 + 1);
@@ -173,8 +179,6 @@ void send_webpage(SOCKET socket, char *question)
     strcat(web_page, first);
     strcat(web_page, question);
     strcat(web_page, last);
-    // printf("%s:", web_page);
-    // fprintf(stderr, "%d: %s", socket, question);
 
     char buffer[BSIZE];
 
@@ -195,7 +199,6 @@ void send_webpage(SOCKET socket, char *question)
 
     send(socket, web_page, strlen(web_page) + 1, 0);
 
-    // send_403(socket);
     free(web_page);
 }
 
@@ -715,11 +718,8 @@ void handle_question_increase(SOCKET socket, char *student_name)
         increment_question(student_name);
     }
     else
-        // implement summary page here
-        // send_302(socket, "/quiz", cookie);
         send_403(socket);
-    // printf("Question passed: %s\n", next_question);
-    // increment_question(student_name);
+
     student = hashtable_get(hashtable, student_name);
     printf("Question tracker incremented to %i\n", student->currentq);
     send_webpage(socket, next_question);
@@ -804,24 +804,6 @@ void handle_get(SOCKET socket, HTTPRequest request)
         if (strcmp(path, "/quiz/start") == 0)
         {
             handle_question_increase(socket, student_name);
-            // // check both QBs are connected first
-            // if (qb_info[0].socket == 0 || qb_info[1].socket == 0)
-            // {
-            //     send_QB_disconnected(socket);
-            // }
-            // // Get first question of the student's test
-            // TESTINFO *student = hashtable_get(hashtable, student_name);
-            // printf("GOT STUDENT STUFF, asking for question %i\n", student->qid[student->currentq]);
-            // char *next_question = get_question(student->qid[student->currentq]);
-            // if (student->currentq <= NUM_QUESTIONS)
-            //     increment_question(student_name);
-            // else
-            //     (send_403(socket));
-            // // printf("Question passed: %s\n", next_question);
-            // // increment_question(student_name);
-            // student = hashtable_get(hashtable, student_name);
-            // printf("Question tracker incremented to %i\n", student->currentq);
-            // send_webpage(socket, next_question);
             return;
         }
     }
@@ -956,17 +938,6 @@ void parse_request(char *response_string, SOCKET socket)
     extract_header_fields(&response, header_fields);
     extract_request_line_fields(&response, request_line);
     extract_body(&response, body);
-    // ! keeping for debugging incase something happens and everything breaks
-    // for (int i = 0; i < response.header_fields.keys.length; i++)
-    // {
-    //     printf("%s:%s\n", (char *)response.header_fields.keys.head->data, (char *)response.header_fields.search(&response.header_fields, (char *)response.header_fields.keys.head->data, strlen((char *)response.header_fields.keys.head->data)));
-    //     response.header_fields.keys.head = response.header_fields.keys.head->next;
-    // }
-    // for (int i = 0; i < response.request_line.keys.length; i++)
-    // {
-    //     printf("%s:%s:lol\n", (char *)response.request_line.keys.head->data, (char *)response.request_line.search(&response.request_line, (char *)response.request_line.keys.head->data, strlen((char *)response.request_line.keys.head->data)));
-    //     response.request_line.keys.head = response.request_line.keys.head->next;
-    // }
     char *method = (char *)response.request_line.search(&response.request_line, "method", strlen("method"));
     if (strcmp(method, "GET") == 0)
     {
@@ -978,8 +949,7 @@ void parse_request(char *response_string, SOCKET socket)
     }
     else
     {
-        // todo change to a  http response function to indicate we aint got a clue what they are doing
-        printf("Method unknown\n");
+       send_501(socket);
     }
 }
 

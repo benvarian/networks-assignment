@@ -22,3 +22,5 @@ Qb to come later...
 
 ## View output 
 Simply go to your browser and go to localhost:[port] and you will see the magic happen!!
+
+[lol](https://media.tenor.com/yIWM3TO6ScEAAAAd/meme-approved-knuckles.gif)
