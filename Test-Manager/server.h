@@ -112,4 +112,4 @@ int connect_QB(SOCKET socket, enum QBType type);
 
 int get_questions(char *student);
 
-void send_webpage(SOCKET socket, char *question);
+void send_webpage(SOCKET socket, char *question, char question_type);
