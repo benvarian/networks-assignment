@@ -732,6 +732,9 @@ void handle_question_increase(SOCKET socket, char *student_name)
     TESTINFO *student = hashtable_get(hashtable, student_name);
     printf("GOT STUDENT STUFF, asking for question %i:%d\n", student->qid[student->currentq], student->type[student->currentq]);
     char *next_question = get_question(student->qid[student->currentq]);
+    char *format_question = calloc(1, (strlen(next_question) + 5) * sizeof(char)); // + 4 for question number, +1 for null terminator
+    CHECK_ALLOC(format_question);
+    sprintf(format_question, "%i. %s", student->currentq + 1, next_question);
     if (student->currentq <= NUM_QUESTIONS && student->currentq != NUM_QUESTIONS - 1)
     {
         increment_question(student_name);
@@ -740,17 +743,17 @@ void handle_question_increase(SOCKET socket, char *student_name)
         send_307(socket);
 
     student = hashtable_get(hashtable, student_name);
-    printf("Question tracker incremented to %i:%d:%s\n", student->currentq, student->qid[student->currentq], next_question);
+    printf("Question tracker incremented to %i:%d:%s\n", student->currentq, student->qid[student->currentq], format_question);
 
     if (student->qid[student->currentq - 1] >= 100)
     {
         // Programming Question
-        send_webpage(socket, next_question, first_input, last_input);
+        send_webpage(socket, format_question, first_input, last_input);
     }
     else
     {
         // Multi Choice Question
-        send_webpage(socket, next_question, first_multi, last_multi);
+        send_webpage(socket, format_question, first_multi, last_multi);
     }
 }
 
