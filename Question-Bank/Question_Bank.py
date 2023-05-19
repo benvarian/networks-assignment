@@ -6,7 +6,7 @@ try:
     # Init input params
     HOST = sys.argv[1]
     PORT = int(sys.argv[2])
-    QB_TYPE = str(sys.argv[3])
+    QB_TYPE = str(sys.argv[3]).upper()
     if (QB_TYPE not in SUBJECTS): raise Exception("Fail init args")
 except:
     print("\nUsage:\n python3 Question_Bank.py {TM-Host} {port} {qb_type}")
