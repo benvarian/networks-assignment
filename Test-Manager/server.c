@@ -1009,7 +1009,7 @@ void parse_request(char *response_string, SOCKET socket)
     extract_header_fields(&response, header_fields);
     extract_request_line_fields(&response, request_line);
     extract_body(&response, body);
-    char *method = (char *)response.request_line.search(&response.request_line, "method", strlen("method"));
+    char *method = (char *)response.request_line.search(&response.request_line, "method", strlen("method") + 1);
     if (strcmp(method, "GET") == 0)
     {
         handle_get(socket, response);
