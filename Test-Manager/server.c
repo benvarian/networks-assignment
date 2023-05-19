@@ -577,7 +577,7 @@ char *get_question(int qid)
 
     char *question = strtok(response, "\r\n");
     strtok(NULL, "\r\n");
-    question = strtok(NULL, "\r\n");
+    question = strtok(NULL, "\0");
     // printf("GOT QUESTION FOR QID %i: %s\n", qid, question);
     return question;
 }
