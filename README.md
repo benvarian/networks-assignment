@@ -26,4 +26,4 @@ Before running the Question Bank please make sure your in the Question-Bank dire
 
 
 ## View output 
-Simply go to your browser and go to localhost:[port] and you will see the magic happen!!
+Simply go to your browser and go to [ip]:[port] and you will see the magic happen!!

@@ -1,8 +1,7 @@
 ## Authors
 - Nicholas Davies (22967042) (QB & protocol)
 - Mitchell Otley (23475725) (execute_function code, get_questions.py)  
-
-With help from Ben and James
+- Ben Varian (23215049)
 ## Coded with:
 Python
 ## Question Subjects Implemented:
