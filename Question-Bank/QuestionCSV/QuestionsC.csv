@@ -14,13 +14,13 @@
 26,M,What will be the output of the following C code?<br><code><br>int main() {<br>\tchar str[] = "Hello\c World!";<br>\tprintf("%s"\c str + 7);<br>\treturn 0;<br>}<br></code><br><br>A)Hello\c World!<br>B)World!<br>C)None of the above<br>D)!,B
 28,M,What will be the output of the following C code?<br><code><br>int main() {<br>\tint x = 10;<br>\tint y = x++;<br>\tprintf("%d %d"\c x\c y);<br>\treturn 0;<br>}<br></code><br><br>A)10 10<br>B)11 10<br>C)11 11<br>D)10 11<br>,B
 30,M,What does the "static" keyword do in C?<br>A)It makes a variable or function visible only within the file it's declared.<br>B)It makes a variable or function visible throughout the program.<br>C)It makes a variable or function change its value every time it's accessed.<br>D)It makes a variable or function keep its value between any function call.<br>,D
-32,P,Write a function named 'function' that returns a string containing the 5th Fibonacci number.,char *function() {return("5");}
-34,P,Write a function named 'function' that returns a string containing the sum of the first 10 natural numbers.,char *function() {return("55");}
-36,P,Write a function named 'function' that returns a string containing the factorial of 7.,char *function() {return("5040");}
-38,P,Write a function named 'function' that returns a string containing the first 10 numbers in the sequence of square numbers (starting from 1) with no space between numbers.,char *function() {return("149162536496481100");}
-40,P,Write a function named 'function' that returns a string containing the string "Hello\c Wrold!".,char *function() {return("Hello\c World");}
-42,P,Write a function named 'function' that returns a string containing the result of 5 raised to the power of 3.,char *function() {return("125");}
-44,P,Write a function named 'function' that returns a string containing a string of the first ten prime numbers.,char *function() {return("2357111317192329");}
-46,P,Write a function named 'function' that returns a string containing the sum of squares of numbers from 1 to 5.,char *function() {return("55");}
-48,P,Write a function named 'function' that returns a string containing the first ten even numbers with no spaces between numbers.,char *function() {return("2468101214161820");}
-50,P,Write a function named 'function' that returns a string containing the sum of the digits in the number 12345.,char *function() {return("15");}
+32,P,Write a C function named 'function' that returns a string containing the 5th Fibonacci number.,char *function() {return("5");}
+34,P,Write a C function named 'function' that returns a string containing the sum of the first 10 natural numbers.,char *function() {return("55");}
+36,P,Write a C function named 'function' that returns a string containing the factorial of 7.,char *function() {return("5040");}
+38,P,Write a C function named 'function' that returns a string containing the first 10 numbers in the sequence of square numbers (starting from 1) with no space between numbers.,char *function() {return("149162536496481100");}
+40,P,Write a C function named 'function' that returns a string containing the string "Hello\c Wrold!".,char *function() {return("Hello\c World");}
+42,P,Write a C function named 'function' that returns a string containing the result of 5 raised to the power of 3.,char *function() {return("125");}
+44,P,Write a C function named 'function' that returns a string containing a string of the first ten prime numbers.,char *function() {return("2357111317192329");}
+46,P,Write a C function named 'function' that returns a string containing the sum of squares of numbers from 1 to 5.,char *function() {return("55");}
+48,P,Write a C function named 'function' that returns a string containing the first ten even numbers with no spaces between numbers.,char *function() {return("2468101214161820");}
+50,P,Write a C function named 'function' that returns a string containing the sum of the digits in the number 12345.,char *function() {return("15");}
