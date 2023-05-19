@@ -73,25 +73,28 @@ FILE *openFile(char *file_path, char *mode)
 }
 
 /* Reads text from the file into a buffer then closes the file, returning the buffer */
-char *readFile(FILE *fp)
+void readFile(FILE *fp, char **buffer)
 {
     // Get size of the file
     fseek(fp, 0, SEEK_END);
     long size = ftell(fp);
     rewind(fp);
     // Allocate memory for buffer, then read into buffer
-    char *buffer = calloc(size, sizeof(char));
+    *buffer = calloc(size + 1, sizeof(char));
     CHECK_ALLOC(buffer);
-    fread(buffer, size, 1, fp);
-    fclose(fp);
-    return buffer;
+    fread(*buffer, size, 1, fp);
+    buffer[size] = '\0';
+    return;
 }
 
 void getData(HASHTABLE *hashtable, int *numStudents, char ***studentNames, char *filepath)
 {
     // get data into a buffer
     FILE *fp = openFile(filepath, "r");
-    char *buffer = readFile(fp);
+    char *buffer;
+    readFile(fp, &buffer);
+    fclose(fp);
+    printf("\n\nFILE:\n%s\n\n", buffer);
     // split data into rows for each user
     char *saverow;
     char *user;
@@ -177,12 +180,8 @@ void getData(HASHTABLE *hashtable, int *numStudents, char ***studentNames, char 
         char *correcttok = strtok_r(entries, "$", &savecorrect);
         for (int i = 0; i < NUM_QUESTIONS; i++)
         {
-            if (strcmp(correcttok, "T"))
-                correct[i] = true;
-            else if (strcmp(correcttok, "F"))
-                correct[i] = false;
-            else
-                correct[i] = (bool)NULL; // ERROR: SHOULD BE T OR F NOT NOTHING
+            if (strcmp(correcttok, "T") == 0) correct[i] = true;
+            else correct[i] = false;
             correcttok = strtok_r(entries, "$", &savecorrect);
         }
 
@@ -205,7 +204,7 @@ void writeToCSV(HASHTABLE *hashtable, int *numStudents, char **studentNames, cha
 {
     FILE *fp = openFile(filepath, "w");
     TESTINFO *entry;
-    fprintf(fp, "user,pw,qtype,qid,attemptsLeft,correct\n");
+    fprintf(fp, "user,pw,qtype,qid,attemptsLeft,correct,questiontracker\n");
     for (int i = 0; i < *numStudents; i++)
     {
         entry = hashtable_get(hashtable, studentNames[i]);
@@ -253,15 +252,3 @@ void writeToCSV(HASHTABLE *hashtable, int *numStudents, char **studentNames, cha
     }
     fclose(fp);
 }
-
-/* TESTING FILE IO
-int main(void) {
-    int numStudents = 0;
-    char **studentNames = NULL;
-    HASHTABLE *hashtable = hashtable_new();
-    getData(hashtable, &numStudents, &studentNames, FILEPATH);
-    TESTINFO *mitch = hashtable_get(hashtable, "mitch");
-    printf("Username: %s\nPassword: %s\nQID: %i\n\n", mitch->user, mitch->pw, mitch->qid[0]);
-    for(int i = 0; i < numStudents; i++) printf("Name: %s\n", studentNames[i]);
-    writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
-} */

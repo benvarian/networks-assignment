@@ -1,133 +1,155 @@
 <!DOCTYPE html>
-<html lang='en' dir='ltr'>
+<html lang="en" dir="ltr">
   <head>
-    
-    <meta charset='utf-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
-    <script src='https://cdn.tailwindcss.com'></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
-      window.addEventListener("load", ()=>{
-      let qtnArea = document.getElementsByClassName('Question-Area');
-      let quizArea = document.getElementsByClassName('Quiz-Area');
-      let submitBtn = document.getElementsByClassName('submit-button');
-      let radio = document.getElementsByName('q');
-      let radioAnsArea = document.getElementsByClassName('Half-Answer-Area');
-      let incorrect = document.querySelector('.hide');
-      let ans = "";
-      const addAnswer = (question, answer) => {ans = `qid=${question}&sans=${answer}&ans=${answer}`;}
-      xhr.onreadystatechange = () => {if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 418) {incorrect.classList.remove('hide');} else {incorrect.classList.add('hide');}};
-      function reload() {if (incorrect.classList.contains("hide") === false )window.location.reload();}
-      const submit = async (answers) => {
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', window.location.href, true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        await xhr.send(ans);
-      }
-      //function called when the submit button is pressed
-      function submitPressed() {
-        let selections = ['a','b','c','d'];
-          for(let k = 0; k < 4; k++) {
-            if(radio[k].checked) {
-              addAnswer(1,selections[k]);
+      window.addEventListener("load", () => {
+        let qtnArea = document.getElementsByClassName("Question-Area");
+        let quizArea = document.getElementsByClassName("Quiz-Area");
+        let submitBtn = document.getElementsByClassName("submit-button");
+        let radio = document.getElementsByName("q");
+        let radioAnsArea = document.getElementsByClassName("Half-Answer-Area");
+        let incorrect = document.querySelector(".hide");
+        let ans = "";
+        const addAnswer = (question, answer) => {
+          ans = `qid=${question}&sans=${answer}&ans=${answer}`;
+        };
+        xhr.onreadystatechange = () => {
+          if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 418) {
+            incorrect.classList.remove("hide");
+          } else {
+            incorrect.classList.add("hide");
+          }
+        };
+        function reload() {
+          if (incorrect.classList.contains("hide") === false)
+            window.location.reload();
+        }
+        const submit = async (answers) => {
+          var xhr = new XMLHttpRequest();
+          xhr.open("POST", window.location.href, true);
+          xhr.setRequestHeader(
+            "Content-Type",
+            "application/x-www-form-urlencoded"
+          );
+          await xhr.send(ans);
+        };
+        //function called when the submit button is pressed
+        function submitPressed() {
+          let selections = ["a", "b", "c", "d"];
+          for (let k = 0; k < 4; k++) {
+            if (radio[k].checked) {
+              addAnswer(1, selections[k]);
               submit(ans);
             }
           }
-      }
-    });
+        }
+      });
     </script>
-    <style>.hide {display: none;}</style>
+    <style>
+      .hide {
+        display: none;
+      }
+    </style>
   </head>
   <body>
     <div>
-      <nav class='bg-slate-100 shadow flex justify-between sticky top-0 z-50 place-items-center w-full'>
-        <div class='flex justify-center'>
-          <h1 class='mx-4'>CITS3002 Project</h1>
-          <button class='ml-4'>logout</button>
-          <a class='ml-4' href='profile.html'>back</a>
+      <nav
+        class="bg-slate-100 shadow flex justify-between sticky top-0 z-50 place-items-center w-full"
+      >
+        <div class="flex justify-center">
+          <h1 class="mx-4">CITS3002 Project</h1>
+          <button class="ml-4">logout</button>
+          <a class="ml-4" href="profile.html">back</a>
         </div>
       </nav>
     </div>
-    <div class='Quiz-Area' style='flex: justify-center;
-    width: 60%;
-    height: 500px;
-    margin: 100px 20% 0 20%;
-    border-radius: 10px;
-    background: rgba(0,0,0,0.1);
-    box-shadow: 0 0 10px 2px rgba(100,100,100,0.1);
-    overflow: auto;
-'>      <div style='display: block;'class='Quiz-Header slide'>
-<h1 style='font-size: 30px;
-        color: #3d3d3d;
-        text-align: center;'>Question 1 / 10</h1><br>
-        <div class='Question-Area' style='width: 90%;
-        height: 70%;
-        border-bottom: 2px solid #3d3d3d;
-        margin: 0 5%;'>What is the keyword to define a function in Python?<br>A)def<br>B)func<br>C)function<br>D)define<br></div>
-        <div class='Answer-Area' style='display: flex;
-        width: 90%;
-        height: 20%;
-        margin: 0 5%;'>
-          <div class='Half-Answer-Area' style='width: 50%;
-          height: 100%;
-          margin: 0;'>
-            <ul style='list-style-type: none;
-            padding: 0;'>
-              <li style='font-size: 1.2rem;
-              height: 20%;
-              margin: 2% 8%;'>
-                <input type='radio' name='q' id='1a' class='answer'>
-                <label for='1a' id='a_text'>A</label>
+    <div
+      class="Quiz-Area"
+      style="
+        flex: justify-center;
+        width: 60%;
+        height: 500px;
+        margin: 100px 20% 0 20%;
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.1);
+        box-shadow: 0 0 10px 2px rgba(100, 100, 100, 0.1);
+        overflow: auto;
+      "
+    >
+      <div style="display: block" class="Quiz-Header slide">
+        <h1 style="font-size: 30px; color: #3d3d3d; text-align: center">
+          Question 1 / 10
+        </h1>
+        <br />
+        <div
+          class="Question-Area"
+          style="
+            width: 90%;
+            height: 70%;
+            border-bottom: 2px solid #3d3d3d;
+            margin: 0 5%;
+          "
+        >
+          What is the keyword to define a function in Python?<br />A)def<br />B)func<br />C)function<br />D)define<br />
+        </div>
+        <div
+          class="Answer-Area"
+          style="display: flex; width: 90%; height: 20%; margin: 0 5%"
+        >
+          <div
+            class="Half-Answer-Area"
+            style="width: 50%; height: 100%; margin: 0"
+          >
+            <ul style="list-style-type: none; padding: 0">
+              <li style="font-size: 1.2rem; height: 20%; margin: 2% 8%">
+                <input type="radio" name="q" id="1a" class="answer" />
+                <label for="1a" id="a_text">A</label>
               </li>
-              <li style='font-size: 1.2rem;
-              height: 20%;
-              margin: 2% 8%;'>
-                <input type='radio' name='q' id='1b' class='answer'>
-                <label for='1b' id='a_text'>B</label>
-              </li>
-            </ul style='list-style-type: none;
-            padding: 0;'>
-          </div>
-          <div class='Half-Answer-Area' style='width: 50%;
-          height: 100%;
-          margin: 0;'>
-            <ul style='list-style-type: none;
-            padding: 0;'>
-              <li style='font-size: 1.2rem;
-              height: 20%;
-              margin: 2% 8%;'>
-                <input type='radio' name='q' id='1c' class='answer'>
-                <label for='1c' id='a_text'>C</label>
-              </li>
-              <li style='font-size: 1.2rem;
-              height: 20%;
-              margin: 2% 8%;'>
-                <input type='radio' name='q' id='1d' class='answer'>
-                <label for='1d' id='a_text'>D</label>
+              <li style="font-size: 1.2rem; height: 20%; margin: 2% 8%">
+                <input type="radio" name="q" id="1b" class="answer" />
+                <label for="1b" id="a_text">B</label>
               </li>
             </ul>
           </div>
-
+          <div
+            class="Half-Answer-Area"
+            style="width: 50%; height: 100%; margin: 0"
+          >
+            <ul style="list-style-type: none; padding: 0">
+              <li style="font-size: 1.2rem; height: 20%; margin: 2% 8%">
+                <input type="radio" name="q" id="1c" class="answer" />
+                <label for="1c" id="a_text">C</label>
+              </li>
+              <li style="font-size: 1.2rem; height: 20%; margin: 2% 8%">
+                <input type="radio" name="q" id="1d" class="answer" />
+                <label for="1d" id="a_text">D</label>
+              </li>
+            </ul>
+          </div>
         </div>
-
       </div>
 
-      <div class='Quiz-Bottom' style='
-      width: 94%;
-      height: 14%;
-      margin: 0 3%;'>
-
-        <button class='bottom-button' onclick='submitPressed()' style='width: 40%;
-        height: 100%;
-        width: 80%;
-        margin: 0 10%;
-        background-color: #80d9ff;
-        cursor: pointer;
-        border-radius: 10px;
-        '> Submit</button>
+      <div class="Quiz-Bottom" style="width: 94%; height: 14%; margin: 0 3%">
+        <button
+          class="bottom-button"
+          onclick="submitPressed()"
+          style="
+            width: 40%;
+            height: 100%;
+            width: 80%;
+            margin: 0 10%;
+            background-color: #80d9ff;
+            cursor: pointer;
+            border-radius: 10px;
+          "
+        >
+          Submit
+        </button>
       </div>
       <button onclick="reload()">Submit</button>
-      
     </div>
-
   </body>
 </html>
