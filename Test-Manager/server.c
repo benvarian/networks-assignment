@@ -481,16 +481,14 @@ void answer_incorrect(char *student_name, int qid)
     writeToCSV(hashtable, &numStudents, studentNames, FILEPATH);
 }
 
+/**
+ * Pings the QB specified at the socket, if it is still connected
+ * it wont change anything, but if it has disconnected it will
+ * update the qb_info array to say there is a slot available
+ * for a new QB to connect
+*/
 void ping_QB(SOCKET socket, int qb_num)
 {
-    /*
-     * first, check that the qb is still connected, if not quit under exit_failure
-     * if return is say 1, then the qb is still connected, so proceed with execution,
-     * add to some form of struct so can refernec later
-     * send the get questions command to the qb
-     * parse
-     * serve html
-     */
     char *ping = "TM\r\nPING\r\n\r\n";
     char response[MAXDATASIZE + 1];
 
@@ -514,6 +512,14 @@ void ping_QB(SOCKET socket, int qb_num)
     return;
 }
 
+/**
+ * Connects to a QB at socket, of type (PYTHON or C)
+ * if there is space to connect to it (as can only connect
+ * to a specified number of QBs at a time)
+ * 
+ * Pings both QB slots to make sure there is space available
+ * Returns -1 if cannot connect, 0 if it can
+*/
 int connect_QB(SOCKET socket, enum QBType type)
 {
     // check any existing connections to ensure no QB has disconnected
@@ -547,7 +553,11 @@ int connect_QB(SOCKET socket, enum QBType type)
     return 0;
 }
 
-// Returns the question string of a specific qid from the QB
+/**
+ * Queries the QB for the question specified by qid from the
+ * corresponding QB - and returns the string
+ * Odd qid = Python question, even qid = C question
+*/
 char *get_question(int qid)
 {
     char request[64];
@@ -605,6 +615,11 @@ char *get_question(int qid)
     return question;
 }
 
+/**
+ * Gets the answer to a question specified by qid
+ * from the corresponding QB, returns a char * to
+ * that question
+*/
 char *get_answer(int qid)
 {
     char request[64];
@@ -664,6 +679,11 @@ char *get_answer(int qid)
     return answer;
 }
 
+/**
+ * Queries the correct QB if the student answer ans
+ * for the question qid is correct or not
+ * Returns char 1 if correct, char 0 if incorrect
+*/
 char get_mark(int qid, char *ans)
 {
     char request[MAXDATASIZE];
