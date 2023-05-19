@@ -4,7 +4,6 @@
 // Nodes are used to store data of any type in a list.  
 struct Node
 {
-    /* PUBLIC MEMBER VARIABLES */
     // The data is stored as a void pointer - casting is required for proper access.
     void *data;
     // A pointer to the next node in the chain.
@@ -17,4 +16,4 @@ struct Node node_constructor(void *data, unsigned long size);
 // The destructor should be used to destroy nodes.
 void node_destructor(struct Node *node);
 
-#endif /* Node_h */
+#endif

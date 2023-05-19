@@ -9,8 +9,6 @@ struct LinkedList
     struct Node *head;
     // Length refers to the number of nodes in the chain.
     int length;
-    
-    /* PUBLIC MEMBER METHODS */
     // Insert adds new items to the chain at a specified location - this function creates the new nodes.
     void (*insert)(struct LinkedList *linked_list, int index, void *data, unsigned long size);
     // Remove deletes an item from the chain and handles the deallocation of memory.
@@ -26,4 +24,4 @@ struct LinkedList
 struct LinkedList linked_list_constructor(void);
 void linked_list_destructor(struct LinkedList *linked_list);
 
-#endif /* LinkedList_h */
+#endif
