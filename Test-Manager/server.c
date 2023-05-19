@@ -157,6 +157,13 @@ void send_302(SOCKET socket, const char *path, const char *username)
     drop_client(socket);
 }
 
+void send_302_quiz_finish(SOCKET socket)
+{
+    const char *c301 = "HTTP/1.1 301 Found\r\nLocation: /quiz\r\n\r\n";
+    send(socket, c301, strlen(c301), 0);
+    drop_client(socket);
+}
+
 void send_418(SOCKET socket)
 {
     const char *c418 = "HTTP/1.1 418 I'm a teapot\r\n\r\n";
@@ -168,9 +175,9 @@ void send_418(SOCKET socket)
  * with the dynamic 'centre' and send it to the socket
  *  Used for Summary page and displaying each question
  */
-void send_webpage(SOCKET socket, char *centre, const char *start, const char *end)
+void send_webpage(SOCKET socket, char *centre, const char *start, const char *end, char question_type)
 {
-    char *web_page = calloc(1, 8095 + 1);
+    char *web_page = calloc(1, 10013 + 1);
     CHECK_ALLOC(web_page);
 
     //printf("Sending changed stuff: %s\n\n", centre);
@@ -179,6 +186,24 @@ void send_webpage(SOCKET socket, char *centre, const char *start, const char *en
     strcat(web_page, end);
     // printf("%s:", web_page)
     // fprintf(stderr, "%d: %s", socket, question);
+    static const char *first = "<!DOCTYPE html>\n<html lang='en' dir='ltr'>\n  <head>\n    <meta charset='utf-8'>\n    <meta name='viewport' content='width=device-width, initial-scale=1.0' />\n    <script src='https://cdn.tailwindcss.com'></script>\n<style>.hide {display: none;}</style>\n</head>\n <body>\n<div>\n<nav class='bg-slate-100 shadow flex justify-between sticky top-0 z-50 place-items-center w-full'>\n        <div class='flex justify-center'>\n          <h1 class='mx-4'>CITS3002 Project</h1>\n          <button class='ml-4'>logout</button>\n          <a class='ml-4' href='profile.html'>back</a>\n        </div>\n      </nav>\n    </div>\n    <div class='Quiz-Area' style='flex: justify-center;\n    width: 60%;\n    height: 500px;\n    margin: 100px 20% 0 20%;\n    border-radius: 10px;\n    background: rgba(0,0,0,0.1);\n    box-shadow: 0 0 10px 2px rgba(100,100,100,0.1);\n    overflow: auto;\n'>      <div style='display: block;'class='Quiz-Header slide'>\n<h1 style='font-size: 30px;\n        color: #3d3d3d;\n        text-align: center;'>Question 1 / 10</h1><br>\n        <div class='Question-Area' style='width: 90%;\n        height: 70%;\n        border-bottom: 2px solid #3d3d3d;\n        margin: 0 5%;'>";
+    static const char *last = "</div>\n        <div class='Answer-Area' style='display: flex;\n        width: 90%;\n        height: 20%;\n        margin: 0 5%;'>\n          <div class='Half-Answer-Area' style='width: 50%;\n          height: 100%;\n          margin: 0;'>\n            <ul style='list-style-type: none;\n            padding: 0;'>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1a' class='answer'>\n                <label for='1a' id='a_text'>A</label>\n              </li>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1b' class='answer'>\n                <label for='1b' id='a_text'>B</label>\n              </li>\n            </ul style='list-style-type: none;\n            padding: 0;'>\n          </div>\n          <div class='Half-Answer-Area' style='width: 50%;\n          height: 100%;\n          margin: 0;'>\n            <ul style='list-style-type: none;\n            padding: 0;'>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1c' class='answer'>\n                <label for='1c' id='a_text'>C</label>\n              </li>\n              <li style='font-size: 1.2rem;\n              height: 20%;\n              margin: 2% 8%;'>\n                <input type='radio' name='q' id='1d' class='answer'>\n                <label for='1d' id='a_text'>D</label>\n              </li>\n            </ul>\n          </div>\n\n        </div>\n\n      </div>\n\n      <div class='Quiz-Bottom' style='\n      width: 94%;\n      height: 14%;\n      margin: 0 3%;'>\n\n        <input class='bottom-button' onclick='submitPressed()' type='submit' name='' value='Submit Question' style=\"width: 40%;\n        height: 100%;\n        width: 80%;\n        margin: 0 10%;\n        background-color: #80d9ff;\n        cursor: pointer;\n        border-radius: 10px;\n\">\n<button id=\"real-submit\"  class=\"text-blue-500\" onclick=\"reload()\">Next Question</button>\n<p class=\"text-green-500\" id=\"correct\">Answer Correct</p> <p class=\"text-red-700\" id=\"incorrect\">Answer incorrect</p></div>\n</div>\n<script>\n let qtnArea = document.getElementsByClassName('Question-Area');\n let quizArea = document.getElementsByClassName('Quiz-Area');\nlet id = document.getElementById(\"incorrect\"); window.addEventListener(\"load\", ()=>{ console.log(\"page loaded\"); id.classList.add(\"hide\"); correct.classList.add(\"hide\"); real.classList.add('hide'); }); \nlet submitBtn = document.getElementsByClassName('submit-button');\nlet radio = document.getElementsByName('q'); let correct = document.getElementById(\"correct\"); let real = document.getElementById('real-submit')\nlet radioAnsArea = document.getElementsByClassName('Half-Answer-Area');\nlet ans = \"\";\nconst addAnswer = (question, answer) => {\nans = `qid=${question}&sans=${answer}&ans=${answer}\\0`;}\nvar xhr = new XMLHttpRequest();\nxhr.onreadystatechange = () => {if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 418) {incorrect.classList.remove('hide'); correct.classList.add('hide'); real.classList.add('hide') } else {incorrect.classList.add('hide'); correct.classList.remove('hide'); real.classList.remove('hide');}}; \nconst submit = async (answers) => {\nxhr.open('POST', window.location.href, true);\nxhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');\nawait xhr.send(ans);\n}\n//function called when the submit button is pressed\nfunction submitPressed() {\nlet selections = ['a','b','c','d'];\nfor(let k = 0; k < 4; k++) {\nif(radio[k].checked) {\naddAnswer(1,selections[k]);\nsubmit(ans);\n}}} function reload() {if (incorrect.classList.contains(\"hide\") === true )window.location.reload();} </script>\n</body>\n</html>\n";
+
+    static const char *first_input = "<!DOCTYPE html><html lang='en' dir='ltr'> <head> <meta charset='utf-8'/> <meta name='viewport' content='width=device-width, initial-scale=1.0'/> <script src='https://cdn.tailwindcss.com'></script> <style>.hide{display: none;}</style> </head> <body> <div> <nav class='bg-slate-100 shadow flex justify-between sticky top-0 z-50 place-items-center w-full' > <div class='flex justify-center'> <h1 onclick='window.location.href='/'' class='mx-4'>CITS3002 Project</h1> <button onclick='window.location.href='/logout'' class='ml-4'>logout</button> </div></nav> </div><div class='Quiz-Area flex flex-col justify-center items-center h-[calc(100vh-72px)]'> <div class='Quiz-Header slide'> <div class='Question-Area'>";
+    static const char *last_input = "</div><div class='Answer-Area'> <div class='Text-Answer-Area'> <textarea class='codeInput border-solid border-2 border-slate-500' rows='8' cols='80'></textarea> </div></div></div><div class='Quiz-Bottom'> <input class='bottom-button bg-yellow-300 rounded-md p-2 m-2 pb-2' onclick='submitPressed()' type='submit' name='' value='Submit Answer'/> <button id='real-submit' class='text-blue-500' onclick='reload()'> Next Question </button> <p class='text-red-700' id='incorrect'>Answer incorrect</p><p class='text-green-500' id='correct'>Answer Correct</p></div></div><script>let qtnArea=document.getElementsByClassName('Question-Area'); let quizArea=document.getElementsByClassName('Quiz-Area'); let submitBtn=document.getElementsByClassName('submit-button'); let textAns=document.getElementsByClassName('codeInput'); let textAnsArea=document.getElementsByClassName('Text-Answer-Area'); let radioAnsArea=document.getElementsByClassName('Half-Answer-Area'); let sumQtnDisplay=document.getElementsByClassName('sumQtnDisplay'); let sumAnsDisplay=document.getElementsByClassName('sumAnsDisplay'); let incorrect=document.getElementById('incorrect'); let real=document.getElementById('real-submit'); let correct=document.getElementById('correct'); let answers=''; window.addEventListener('load', ()=>{console.log('page loaded'); incorrect.classList.add('hide'); correct.classList.add('hide'); real.classList.add('hide');}); var xhr=new XMLHttpRequest(); const addAnswer=(question, answer)=>{ans=`qid=${question}&sans=${answer}&ans=${answer}`;}; xhr.onreadystatechange=()=>{if (xhr.readyState===XMLHttpRequest.DONE && xhr.status===418){incorrect.classList.remove('hide'); real.classList.add('hide'); correct.classList.add('hide');}else{incorrect.classList.add('hide'); correct.classList.remove('hide'); real.classList.remove('hide');}}; const submit=async (answers)=>{xhr.open('POST', window.location.href, true); xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' ); await xhr.send(ans);}; function reload (){window.location.reload();}function submitPressed(){if (textAns[0].value !=''){addAnswer(1, textAns[0].value); submit(ans);}}</script> </body></html>";
+    if (question_type == 'M')
+    {
+        strcat(web_page, first);
+        strcat(web_page, question);
+        strcat(web_page, last);
+    }
+    else
+    {
+        strcat(web_page, first_input);
+        strcat(web_page, question);
+        strcat(web_page, last_input);
+    }
+
 
     char buffer[BSIZE];
 
@@ -200,7 +225,6 @@ void send_webpage(SOCKET socket, char *centre, const char *start, const char *en
     //printf("WEBPAGE:\n\n%s\n\n", web_page);
     send(socket, web_page, strlen(web_page) + 1, 0);
 
-    // send_403(socket);
     free(web_page);
 }
 
@@ -579,11 +603,9 @@ char *get_question(int qid)
         }
     }
     // Handle Response - strtok twice to get question
-
     char *question = strtok(response, "\r\n");
     strtok(NULL, "\r\n");
-    question = strtok(NULL, "\r\n");
-    // printf("GOT QUESTION FOR QID %i: %s\n", qid, question);
+    question = strtok(NULL, "\0");
     return question;
 }
 
@@ -638,23 +660,20 @@ char *get_answer(int qid)
         }
     }
     // Handle Response - strtok twice to get question
-    // printf("Response: %s\n*endresponse\n", response);
 
-    char *answer = strtok(response, "\r\n\r\n");
-    answer = strtok(NULL, "\r\n");
-    answer = strtok(NULL, "\n");
-    answer = strtok(NULL, "\r\n\r\n");
-
-    printf("GOT answer FOR QID %i: %s\n", qid, answer);
+    char *answer = strstr(response, "\r\n\r\n") + 4;
+    // remove final padding
+    answer[strlen(answer) - 3] = 0;
+    // printf("GOT answer FOR QID %i: %s\n", qid, answer);
     return answer;
 }
 
-char get_mark(int qid, char ans)
+char get_mark(int qid, char *ans)
 {
     char request[MAXDATASIZE];
     char *response = calloc(1, MAXDATASIZE + 1);
     CHECK_ALLOC(response);
-    sprintf(request, "MARK\r\n%i:%c", qid, ans);
+    sprintf(request, "MARK\r\n%i:%s", qid, ans);
     if (qid % 2 == 1)
     {
         // Question is a Python question, so ask from a Python QB
@@ -716,26 +735,34 @@ void handle_question_increase(SOCKET socket, char *student_name)
     }
     // Get first question of the student's test
     TESTINFO *student = hashtable_get(hashtable, student_name);
-    // printf("GOT STUDENT STUFF, asking for question %i\n", student->qid[student->currentq]);
+    printf("GOT STUDENT STUFF, asking for question %i:%d\n", student->qid[student->currentq], student->type[student->currentq]);
     char *next_question = get_question(student->qid[student->currentq]);
     if (student->currentq <= NUM_QUESTIONS && student->currentq != NUM_QUESTIONS - 1)
     {
         increment_question(student_name);
     }
     else
-        // implement summary page here
-        // send_302(socket, "/quiz", cookie);
-        send_403(socket);
-    // printf("Question passed: %s\n", next_question);
-    // increment_question(student_name);
+        send_302_quiz_finish(socket);
     student = hashtable_get(hashtable, student_name);
-    printf("Question tracker incremented to %i\n", student->currentq);
-    send_webpage(socket, next_question, first_multi, last_multi);
+    printf("Question tracker incremented to %i:%d:%s\n", student->currentq, student->qid[student->currentq], next_question);
+
+    char qtype;
+
+    if (student->qid[student->currentq - 1] >= 100)
+    {
+        qtype = 'P';
+    }
+    else
+    {
+        qtype = 'M';
+    }
+
+    send_webpage(socket, next_question, qtype, first_multi, last_multi);
 }
 
 void handle_get(SOCKET socket, HTTPRequest request)
 {
-    char *path = request.request_line.search(&request.request_line, "uri", strlen("uri"));
+    char *path = request.request_line.search(&request.request_line, "uri", strlen("uri") + 1);
     if (strstr(path, ".."))
     {
         send_400(socket);
@@ -753,7 +780,7 @@ void handle_get(SOCKET socket, HTTPRequest request)
     }
     else
     {
-        char *cookie = request.header_fields.search(&request.header_fields, "Cookie", strlen("Cookie"));
+        char *cookie = request.header_fields.search(&request.header_fields, "Cookie", strlen("Cookie") + 1);
         char *student_name;
         if (cookie != NULL)
             student_name = cookie + 5; // plus 5 because cookie starts with 'user=XXXXX'
@@ -875,7 +902,12 @@ void handle_get(SOCKET socket, HTTPRequest request)
 
 void handle_post(HTTPRequest response, SOCKET socket)
 {
-    char *url = (char *)response.request_line.search(&response.request_line, "uri", strlen("uri"));
+    char *url = (char *)response.request_line.search(&response.request_line, "uri", strlen("uri") + 1);
+    if (url == NULL) {
+        perror("url is NULL");
+        send_404(socket);
+        return;
+    }
     if (strcmp(url, "/login") == 0)
     {
         char *username = (char *)response.body.search(&response.body, "username", strlen("username") * sizeof(char) + 1);
@@ -903,14 +935,19 @@ void handle_post(HTTPRequest response, SOCKET socket)
     }
     if (strcmp(url, "/quiz/start") == 0)
     {
-        char *cookie = response.header_fields.search(&response.header_fields, "Cookie", strlen("Cookie"));
+        char *cookie = response.header_fields.search(&response.header_fields, "Cookie", strlen("Cookie") + 1);
+        printf("%s\n", cookie);
         char *user = cookie + 5;
+        printf("%s\n", user);
         TESTINFO *student = hashtable_get(hashtable, user);
         int current_question = student->currentq;
-        char *student_answer = response.body.search(&response.body, "sans", strlen("sans"));
-        char actual = toupper(student_answer[0]);
-        // printf("%d:%c\n", student->qid[current_question - 1], student_answer);
-        if (get_mark(current_question, actual) == '1')
+        char *student_answer = response.body.search(&response.body, "sans", strlen("sans") + 1);
+
+        printf("%s\n", student_answer);
+        char *actual = student_answer;
+        // actual[1] = '\0';
+        printf("%d:%s\n", student->qid[current_question - 1], student_answer);
+        if (get_mark(student->qid[current_question - 1], actual) == '1')
         {
             printf("correct\n");
             answer_correct(student->user, student->qid[current_question - 1]);
@@ -945,18 +982,7 @@ void parse_request(char *response_string, SOCKET socket)
     extract_header_fields(&response, header_fields);
     extract_request_line_fields(&response, request_line);
     extract_body(&response, body);
-    // ! keeping for debugging incase something happens and everything breaks
-    // for (int i = 0; i < response.header_fields.keys.length; i++)
-    // {
-    //     printf("%s:%s\n", (char *)response.header_fields.keys.head->data, (char *)response.header_fields.search(&response.header_fields, (char *)response.header_fields.keys.head->data, strlen((char *)response.header_fields.keys.head->data)));
-    //     response.header_fields.keys.head = response.header_fields.keys.head->next;
-    // }
-    // for (int i = 0; i < response.request_line.keys.length; i++)
-    // {
-    //     printf("%s:%s:lol\n", (char *)response.request_line.keys.head->data, (char *)response.request_line.search(&response.request_line, (char *)response.request_line.keys.head->data, strlen((char *)response.request_line.keys.head->data)));
-    //     response.request_line.keys.head = response.request_line.keys.head->next;
-    // }
-    char *method = (char *)response.request_line.search(&response.request_line, "method", strlen("method"));
+    char *method = (char *)response.request_line.search(&response.request_line, "method", strlen("method") + 1);
     if (strcmp(method, "GET") == 0)
     {
         handle_get(socket, response);
@@ -974,7 +1000,6 @@ void parse_request(char *response_string, SOCKET socket)
 
 void received(int new_fd, int numbytes, char *buf)
 {
-    // ! maybe change up how this is dealt with as its a big messy
     int client_received = 0;
     if (numbytes < 1)
     {

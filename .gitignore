@@ -4,3 +4,6 @@
 .vscode/
 *.DS_Store
 
+*.o
+*.pyc
+*.pyc
