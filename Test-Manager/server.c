@@ -720,7 +720,15 @@ void handle_question_increase(SOCKET socket, char *student_name)
         send_403(socket);
     student = hashtable_get(hashtable, student_name);
     printf("Question tracker incremented to %i:%s\n", student->currentq, next_question);
-)
+
+    char qtype;
+
+    if (student->qid[student->currentq] >= 100) {
+        qtype = 'P';
+    } else {
+        qtype = 'M';
+    }
+
     send_webpage(socket, next_question);
 }
 
