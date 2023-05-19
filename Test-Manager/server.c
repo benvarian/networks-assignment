@@ -149,6 +149,13 @@ void send_403(SOCKET socket)
     send(socket, c403, strlen(c403), 0);
     drop_client(socket);
 }
+
+void send_307(SOCKET socket) {
+    const char *c307 = "HTTP/1.1 307 Temporary Redirect\r\nLocation: /quiz\r\n\r\n";
+    send(socket, c307, strlen(c307), 0);
+    drop_client(socket);
+}
+
 void send_302(SOCKET socket, const char *path, const char *username)
 {
     char c302[52 + (strlen(path) + 1) + (strlen(username) + 1)];
@@ -171,10 +178,17 @@ void send_418(SOCKET socket)
     drop_client(socket);
 }
 
+void send_501(SOCKET socket) {
+    const char *c501 = "HTTP/1.1 501 Not Implemented\r\n\r\n";
+    send(socket, c501, strlen(c501), 0);
+    drop_client(socket);
+}
+
 /*  Concatenates a static 'start' and 'end' html page (found in server.h) 
  * with the dynamic 'centre' and send it to the socket
  *  Used for Summary page and displaying each question
  */
+
 void send_webpage(SOCKET socket, char *centre, const char *start, const char *end)
 {
     char *web_page = calloc(1, 10013 + 1);
@@ -723,7 +737,8 @@ void handle_question_increase(SOCKET socket, char *student_name)
         increment_question(student_name);
     }
     else
-        send_302_quiz_finish(socket);
+        send_307(socket);
+
     student = hashtable_get(hashtable, student_name);
     printf("Question tracker incremented to %i:%d:%s\n", student->currentq, student->qid[student->currentq], next_question);
 
@@ -882,34 +897,39 @@ void handle_get(SOCKET socket, HTTPRequest request)
 void handle_post(HTTPRequest response, SOCKET socket)
 {
     char *url = (char *)response.request_line.search(&response.request_line, "uri", strlen("uri") + 1);
-    if (url == NULL) {
-        perror("url is NULL");
-        send_404(socket);
-        return;
-    }
     if (strcmp(url, "/login") == 0)
     {
-        char *username = (char *)response.body.search(&response.body, "username", strlen("username") * sizeof(char) + 1);
-        char *password = (char *)response.body.search(&response.body, "password", strlen("password") * sizeof(char) + 1);
+        char *username = (char *)response.body.search(&response.body, "username", strlen("username") + 1);
+        char *password = (char *)response.body.search(&response.body, "password", strlen("password") + 1);
         printf("\n%s is attempting to sign in with the password %s\n", username, password);
         TESTINFO *student = hashtable_get(hashtable, username);
-        if (strcmp(username, student->user) == 0 && strcmp(password, student->pw) == 0)
+        // stops segfault
+        if (student == NULL)
         {
-            printf("Sign in success\n");
-            char *path = calloc(1, strlen(student->user) * sizeof(char) + sizeof("/profile/%s") + 1);
-            char *cookie = calloc(1, strlen(student->user) * sizeof(char) + sizeof("user=%s") + 1);
-            CHECK_ALLOC(path);
-            CHECK_ALLOC(cookie);
-            sprintf(path, "/profile/%s", username);
-            sprintf(cookie, "user=%s", username);
-            send_302(socket, path, cookie);
-            free(path);
-            free(cookie);
+            printf("Student doesnt exist\n");
+            send_418(socket);
+            return;
         }
         else
         {
-            printf("\n\ndoenst match\n");
-            send_401(socket);
+            if (strcmp(username, student->user) == 0 && strcmp(password, student->pw) == 0)
+            {
+                printf("Sign in success\n");
+                char *path = calloc(1, strlen(student->user) + 1 + strlen("/profile/") + 1);
+                char *cookie = calloc(1, strlen(student->user) + 1 + strlen("user=") + 1);
+                CHECK_ALLOC(path);
+                CHECK_ALLOC(cookie);
+                sprintf(path, "/profile/%s", username);
+                sprintf(cookie, "user=%s", username);
+                send_302(socket, path, cookie);
+                free(path);
+                free(cookie);
+            }
+            else
+            {
+                printf("\n\ndoenst match\n");
+                send_418(socket);
+            }
         }
     }
     if (strcmp(url, "/quiz/start") == 0)
@@ -961,7 +981,7 @@ void parse_request(char *response_string, SOCKET socket)
     extract_header_fields(&response, header_fields);
     extract_request_line_fields(&response, request_line);
     extract_body(&response, body);
-    char *method = (char *)response.request_line.search(&response.request_line, "method", strlen("method") + 1);
+    char *method = (char *)response.request_line.search(&response.request_line, "method", strlen("method"));
     if (strcmp(method, "GET") == 0)
     {
         handle_get(socket, response);
@@ -972,8 +992,7 @@ void parse_request(char *response_string, SOCKET socket)
     }
     else
     {
-        // todo change to a  http response function to indicate we aint got a clue what they are doing
-        printf("Method unknown\n");
+       send_501(socket);
     }
 }
 
