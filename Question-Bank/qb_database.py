@@ -157,11 +157,11 @@ def test():
     print("")
 
     # mark Programming
-    print("Not yet implemented:")
-    print("should be 1", qb.mark(30, """#include<stdio.h>\nchar *function() {return("Hello World");}""")) # suppose student submits proper code
-    print("should be 0", qb.mark(30, ""))
-    print("should be 0", qb.mark(30, "hey"))
-    print("should be 0", qb.mark(30, "function"))
+    print("should be 1", qb.mark(132, """#include<stdio.h>\nchar *function() {return("5");}""")) # suppose student submits proper code
+    print("should be 0", qb.mark(132, ""))
+    print("should be 0", qb.mark(132, "hey"))
+    print("should be 0", qb.mark(132, "function"))
+    print("should be 0", qb.mark(132, "#include<stdio.h>\nchar *function() {return(function());}"))
     print("")
 
     # test get random qs
