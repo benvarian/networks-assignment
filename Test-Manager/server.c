@@ -944,18 +944,21 @@ void handle_post(HTTPRequest response, SOCKET socket)
 
         printf("%s\n", student_answer);
         char *actual = student_answer;
-        // actual[1] = '\0';
+        
         printf("%d:%s\n", student->qid[current_question - 1], student_answer);
-        if (get_mark(student->qid[current_question - 1], actual) == '1')
-        {
-            printf("correct\n");
-            answer_correct(student->user, student->qid[current_question - 1]);
+        if(student->correct[student->currentq - 1] != true && student->attemptsLeft[student->currentq - 1] > 0) {
+            if (get_mark(student->qid[current_question - 1], actual) == '1')
+            {
+                printf("correct\n");
+                answer_correct(student->user, student->qid[current_question - 1]);
+            }
+            else
+            {
+                answer_incorrect(student->user, student->qid[current_question - 1]);
+                send_418(socket);
+            }
         }
-        else
-        {
-            answer_incorrect(student->user, student->qid[current_question - 1]);
-            send_418(socket);
-        }
+        else { /* TO DO BEN FINISH */ return;}
     }
     // http_request_destructor(&response);
 }
