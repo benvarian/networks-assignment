@@ -35,40 +35,11 @@
             name="password"
             required
           /><br /><br />
-          <button onclick="submit()" class="bg-yellow-400" type="submit">
-            Login
-          </button>
+          <button class="bg-yellow-400" type="submit">Login</button>
         </form>
-        <p class="text-red-500" id="incorrect">incorrect password/username</p>
       </section>
     </div>
     <script>
-      let incorrect = document.getElementById("incorrect");
-      let password = document.getElementById("password");
-      let username = document.getElementById("username");
-      var xhr = new XMLHttpRequest();
-      window.addEventListener("load", () => {
-        incorrect.classList.add("hide");
-      });
-      
-      xhr.onreadystatechange = () => {
-        if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 418) {
-          incorrect.classList.remove("hide");
-        } else {
-          incorrect.classList.add("hide");
-        }
-      };
-      const submit = async () => {
-        submit.preventDefault();
-        const ans = `username=${username.value}&password=${password.value}`;
-        console.log(username.value, password.value);
-        xhr.open("POST", window.location.href, true);
-        xhr.setRequestHeader(
-          "Content-Type",
-          "application/x-www-form-urlencoded"
-        );
-        await xhr.send(ans);
-      };
     </script>
   </body>
 </html>

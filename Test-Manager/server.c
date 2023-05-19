@@ -994,7 +994,6 @@ void received(int new_fd, int numbytes, char *buf)
     }
     else
     {
-        printf("%s", buf);
         char original[strlen(buf) + 1];
         strcpy(original, buf);
         client_received += numbytes;
@@ -1054,7 +1053,7 @@ void manage_connection(SOCKET sockfd)
     fd_set current_sockets, ready_sockets;
     int new_fd;
     ssize_t numbytes;
-    char buf[MAXDATASIZE + 1];
+    char *buf;
 
     FD_ZERO(&current_sockets);
     FD_SET(sockfd, &current_sockets);
@@ -1087,7 +1086,9 @@ void manage_connection(SOCKET sockfd)
                 }
                 else
                 {
-                    if ((numbytes = recv(i, buf, sizeof buf, 0)) == -1)
+                    buf = calloc(1, MAXDATASIZE + 1);
+                    CHECK_ALLOC(buf);
+                    if ((numbytes = recv(i, buf, MAXDATASIZE + 1, 0)) == -1)
                     {
                         perror("recv");
                         exit(EXIT_FAILURE);
@@ -1097,6 +1098,7 @@ void manage_connection(SOCKET sockfd)
                         received(i, numbytes, buf);
                     }
                     FD_CLR(i, &current_sockets);
+                    free(buf);
                 }
             }
         }
