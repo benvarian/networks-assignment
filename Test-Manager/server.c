@@ -841,9 +841,10 @@ void handle_get(SOCKET socket, HTTPRequest request)
                     printf("Cannot retrieve questions: Missing QB Connection\n");
                     send_QB_disconnected(socket);
                 }
-                else
+                else {
                     printf("New Questions have been generated for %s\n", student_name);
                     writeToCSV(hashtable, &numStudents, studentNames, FILEPATH); // update csv with info
+                }
             }
             student = hashtable_get(hashtable, student_name); // regenerate information again
             char *summary_centre = calloc(1, MAXDATASIZE - strlen(summary_start) - strlen(summary_end));

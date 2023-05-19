@@ -8,6 +8,7 @@ The detailed project description can be found in [here](https://teaching.csse.uw
 The main idea for this project is to code a Test Manager and Question Bank in their respective languages and create a socket server between the two that allows for requests that a client makes on their browser to be fulfilled. 
 
 ## How to run 
+### How to run Test Manager
 Before running the Test Manager please make sure your in the Test-Manager directory. 
 ```
     make
@@ -17,8 +18,12 @@ Before running the Test Manager please make sure your in the Test-Manager direct
     ./server [port]
 ```
 
-Qb to come later...
+## How to run Question Bank
+Before running the Question Bank please make sure your in the Question-Bank directory. 
+```
+    python3 Question_Bank.py [ip] [port] [type: C | PYTHON]
+```
 
 
 ## View output 
-Simply go to your browser and go to localhost:[port] and you will see the magic happen!!
+Simply go to your browser and go to [ip]:[port] and you will see the magic happen!!

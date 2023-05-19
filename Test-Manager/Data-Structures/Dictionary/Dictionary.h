@@ -25,4 +25,4 @@ void dictionary_destructor(struct Dictionary *dictionary);
 
 int compare_string_keys(void *entry_one, void *entry_two);
 
-#endif /* Dictionary_h */
+#endif

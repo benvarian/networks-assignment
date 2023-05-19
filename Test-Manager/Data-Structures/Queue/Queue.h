@@ -6,11 +6,9 @@
 // Queues are used to access a linked list in a controlled manner.
 struct Queue
 {
-    /* MEMBER VARIABLES */
     // A reference to the embedded LinkedList.
     struct LinkedList list;
-    
-    /* PUBLIC MEMBER METHODS */
+
     // The push function adds a node to the end of the chain.
     void (*push)(struct Queue *queue, void *data, unsigned long size);
     // The peek function retrieves the data from the front of the list.
@@ -24,4 +22,4 @@ struct Queue queue_constructor(void);
 // The destructor should be used to delete a Queue instance.
 void queue_destructor(struct Queue *queue);
 
-#endif /* Queue_h */
+#endif
