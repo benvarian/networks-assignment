@@ -727,7 +727,7 @@ void handle_question_increase(SOCKET socket, char *student_name)
 
 void handle_get(SOCKET socket, HTTPRequest request)
 {
-    char *path = request.request_line.search(&request.request_line, "uri", strlen("uri"));
+    char *path = request.request_line.search(&request.request_line, "uri", strlen("uri") + 1);
     if (strstr(path, ".."))
     {
         send_400(socket);
@@ -745,7 +745,7 @@ void handle_get(SOCKET socket, HTTPRequest request)
     }
     else
     {
-        char *cookie = request.header_fields.search(&request.header_fields, "Cookie", strlen("Cookie"));
+        char *cookie = request.header_fields.search(&request.header_fields, "Cookie", strlen("Cookie") + 1);
         char *student_name;
         if (cookie != NULL)
             student_name = cookie + 5; // plus 5 because cookie starts with 'user=XXXXX'
@@ -871,7 +871,7 @@ void handle_get(SOCKET socket, HTTPRequest request)
 
 void handle_post(HTTPRequest response, SOCKET socket)
 {
-    char *url = (char *)response.request_line.search(&response.request_line, "uri", strlen("uri"));
+    char *url = (char *)response.request_line.search(&response.request_line, "uri", strlen("uri") + 1);
     printf("url = %s\n", url);
     if (url == NULL) {
         return;
@@ -903,13 +903,13 @@ void handle_post(HTTPRequest response, SOCKET socket)
     }
     if (strcmp(url, "/quiz/start") == 0)
     {
-        char *cookie = response.header_fields.search(&response.header_fields, "Cookie", strlen("Cookie"));
+        char *cookie = response.header_fields.search(&response.header_fields, "Cookie", strlen("Cookie") + 1);
         printf("%s\n", cookie);
         char *user = cookie + 5;
         printf("%s\n", user);
         TESTINFO *student = hashtable_get(hashtable, user);
         int current_question = student->currentq;
-        char *student_answer = response.body.search(&response.body, "sans", strlen("sans"));
+        char *student_answer = response.body.search(&response.body, "sans", strlen("sans") + 1);
 
         printf("%s\n", student_answer);
         char *actual = student_answer;
@@ -961,7 +961,7 @@ void parse_request(char *response_string, SOCKET socket)
     //     printf("%s:%s:lol\n", (char *)response.request_line.keys.head->data, (char *)response.request_line.search(&response.request_line, (char *)response.request_line.keys.head->data, strlen((char *)response.request_line.keys.head->data)));
     //     response.request_line.keys.head = response.request_line.keys.head->next;
     // }
-    char *method = (char *)response.request_line.search(&response.request_line, "method", strlen("method"));
+    char *method = (char *)response.request_line.search(&response.request_line, "method", strlen("method") + 1);
     if (strcmp(method, "GET") == 0)
     {
         handle_get(socket, response);
