@@ -633,10 +633,10 @@ char *get_answer(int qid)
         }
     }
     // Handle Response - strtok twice to get question
-    
+
     char *answer = strstr(response, "\r\n\r\n") + 4;
     // remove final padding
-    answer[strlen(answer)-3] = 0;
+    answer[strlen(answer) - 3] = 0;
     printf("GOT answer FOR QID %i: %s\n", qid, answer);
     return answer;
 }
@@ -872,33 +872,39 @@ void handle_get(SOCKET socket, HTTPRequest request)
 void handle_post(HTTPRequest response, SOCKET socket)
 {
     char *url = (char *)response.request_line.search(&response.request_line, "uri", strlen("uri"));
-    printf("url = %s\n", url);
-    if (url == NULL) {
-        return;
-    }
     if (strcmp(url, "/login") == 0)
     {
-        char *username = (char *)response.body.search(&response.body, "username", strlen("username") * sizeof(char) + 1);
-        char *password = (char *)response.body.search(&response.body, "password", strlen("password") * sizeof(char) + 1);
+        char *username = (char *)response.body.search(&response.body, "username", strlen("username") + 1);
+        char *password = (char *)response.body.search(&response.body, "password", strlen("password") + 1);
         printf("\n%s is attempting to sign in with the password %s\n", username, password);
         TESTINFO *student = hashtable_get(hashtable, username);
-        if (strcmp(username, student->user) == 0 && strcmp(password, student->pw) == 0)
+        // stops segfault
+        if (student == NULL)
         {
-            printf("Sign in success\n");
-            char *path = calloc(1, strlen(student->user) * sizeof(char) + sizeof("/profile/%s") + 1);
-            char *cookie = calloc(1, strlen(student->user) * sizeof(char) + sizeof("user=%s") + 1);
-            CHECK_ALLOC(path);
-            CHECK_ALLOC(cookie);
-            sprintf(path, "/profile/%s", username);
-            sprintf(cookie, "user=%s", username);
-            send_302(socket, path, cookie);
-            free(path);
-            free(cookie);
+            printf("Student doesnt exist\n");
+            send_418(socket);
+            return;
         }
         else
         {
-            printf("\n\ndoenst match\n");
-            send_401(socket);
+            if (strcmp(username, student->user) == 0 && strcmp(password, student->pw) == 0)
+            {
+                printf("Sign in success\n");
+                char *path = calloc(1, strlen(student->user) + 1 + strlen("/profile/") + 1);
+                char *cookie = calloc(1, strlen(student->user) + 1 + strlen("user=") + 1);
+                CHECK_ALLOC(path);
+                CHECK_ALLOC(cookie);
+                sprintf(path, "/profile/%s", username);
+                sprintf(cookie, "user=%s", username);
+                send_302(socket, path, cookie);
+                free(path);
+                free(cookie);
+            }
+            else
+            {
+                printf("\n\ndoenst match\n");
+                send_418(socket);
+            }
         }
     }
     if (strcmp(url, "/quiz/start") == 0)
@@ -988,6 +994,7 @@ void received(int new_fd, int numbytes, char *buf)
     }
     else
     {
+        printf("%s", buf);
         char original[strlen(buf) + 1];
         strcpy(original, buf);
         client_received += numbytes;

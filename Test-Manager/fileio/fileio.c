@@ -49,7 +49,14 @@ void hashtable_add(HASHTABLE *hashtable, char *username, char *passw, enum qType
 TESTINFO *hashtable_get(HASHTABLE *hashtable, char *username)
 {
     uint32_t h = hash_string(username) % HASHTABLE_SIZE; // get index
-    return hashtable[h];
+    if (h <= 0)
+    {
+        return NULL;
+    }
+    else
+    {
+        return hashtable[h];
+    }
 }
 
 /* Will open a file in the specified mode, returning the file pointer */
@@ -131,11 +138,11 @@ void getData(HASHTABLE *hashtable, int *numStudents, char ***studentNames, char 
         for (int i = 0; i < NUM_QUESTIONS; i++)
         {
             if (strcmp(typetok, "M") == 0)
-                types[i] = (enum qType) M;
+                types[i] = (enum qType)M;
             else if (strcmp(typetok, "P") == 0)
-                types[i] = (enum qType) P;
+                types[i] = (enum qType)P;
             else
-                types[i] = (enum qType) N; // ERROR: SHOULD BE M OR P NOT NOTHING
+                types[i] = (enum qType)N; // ERROR: SHOULD BE M OR P NOT NOTHING
             typetok = strtok_r(NULL, "$", &savetype);
         }
 

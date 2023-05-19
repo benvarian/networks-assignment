@@ -1,27 +1,74 @@
 <html>
   <head>
     <title>Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
   </head>
+  <style>
+    .hide {
+      display: none;
+    }
+  </style>
   <body>
-    <section>
-      <form
-        action="/login"
-        method="POST"
-        enctype="application/x-www-form-urlencoded"
-      >
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" /><br /><br />
-        <label for="password">Password:</label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          required
-        /><br /><br />
-        <button type="submit">Login</button>
-      </form>
-    </section>
+    <div class="flex flex-col justify-center items-center h-[calc(100vh-72px)]">
+      <div>
+        <h1 class="text-4xl">Login Page</h1>
+      </div>
+      <section class="pt-4">
+        <form
+          action="/login"
+          method="POST"
+          enctype="application/x-www-form-urlencoded"
+        >
+          <label for="username">Username:</label>
+          <input
+            class="bg-slate-100 border-solid border-2 border-slate-400 rounded-lg"
+            type="text"
+            id="username"
+            name="username"
+          /><br /><br />
+          <label for="password">Password:</label>
+          <input
+            class="bg-slate-100 border-solid border-2 border-slate-400 rounded-lg"
+            type="password"
+            id="password"
+            name="password"
+            required
+          /><br /><br />
+          <button onclick="submit()" class="bg-yellow-400" type="submit">
+            Login
+          </button>
+        </form>
+        <p class="text-red-500" id="incorrect">incorrect password/username</p>
+      </section>
+    </div>
     <script>
+      let incorrect = document.getElementById("incorrect");
+      let password = document.getElementById("password");
+      let username = document.getElementById("username");
+      var xhr = new XMLHttpRequest();
+      window.addEventListener("load", () => {
+        incorrect.classList.add("hide");
+      });
+      
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 418) {
+          incorrect.classList.remove("hide");
+        } else {
+          incorrect.classList.add("hide");
+        }
+      };
+      const submit = async () => {
+        submit.preventDefault();
+        const ans = `username=${username.value}&password=${password.value}`;
+        console.log(username.value, password.value);
+        xhr.open("POST", window.location.href, true);
+        xhr.setRequestHeader(
+          "Content-Type",
+          "application/x-www-form-urlencoded"
+        );
+        await xhr.send(ans);
+      };
     </script>
   </body>
 </html>
