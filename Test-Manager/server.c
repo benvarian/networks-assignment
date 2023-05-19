@@ -577,7 +577,7 @@ char *get_question(int qid)
 
     char *question = strtok(response, "\r\n");
     strtok(NULL, "\r\n");
-    question = strtok(NULL, "\r\n");
+    question = strtok(NULL, "\0");
     // printf("GOT QUESTION FOR QID %i: %s\n", qid, question);
     return question;
 }
@@ -633,23 +633,20 @@ char *get_answer(int qid)
         }
     }
     // Handle Response - strtok twice to get question
-    // printf("Response: %s\n*endresponse\n", response);
-
-    char *answer = strtok(response, "\r\n\r\n");
-    answer = strtok(NULL, "\r\n");
-    answer = strtok(NULL, "\n");
-    answer = strtok(NULL, "\r\n\r\n");
-
+    
+    char *answer = strstr(response, "\r\n\r\n") + 4;
+    // remove final padding
+    answer[strlen(answer)-3] = 0;
     printf("GOT answer FOR QID %i: %s\n", qid, answer);
     return answer;
 }
 
-char get_mark(int qid, char ans)
+char get_mark(int qid, char *ans)
 {
     char request[MAXDATASIZE];
     char *response = calloc(1, MAXDATASIZE + 1);
     CHECK_ALLOC(response);
-    sprintf(request, "MARK\r\n%i:%c", qid, ans);
+    sprintf(request, "MARK\r\n%i:%s", qid, ans);
     if (qid % 2 == 1)
     {
         // Question is a Python question, so ask from a Python QB
@@ -875,6 +872,10 @@ void handle_get(SOCKET socket, HTTPRequest request)
 void handle_post(HTTPRequest response, SOCKET socket)
 {
     char *url = (char *)response.request_line.search(&response.request_line, "uri", strlen("uri"));
+    printf("url = %s\n", url);
+    if (url == NULL) {
+        return;
+    }
     if (strcmp(url, "/login") == 0)
     {
         char *username = (char *)response.body.search(&response.body, "username", strlen("username") * sizeof(char) + 1);
@@ -903,13 +904,18 @@ void handle_post(HTTPRequest response, SOCKET socket)
     if (strcmp(url, "/quiz/start") == 0)
     {
         char *cookie = response.header_fields.search(&response.header_fields, "Cookie", strlen("Cookie"));
+        printf("%s\n", cookie);
         char *user = cookie + 5;
+        printf("%s\n", user);
         TESTINFO *student = hashtable_get(hashtable, user);
         int current_question = student->currentq;
         char *student_answer = response.body.search(&response.body, "sans", strlen("sans"));
-        char actual = toupper(student_answer[0]);
-        // printf("%d:%c\n", student->qid[current_question - 1], student_answer);
-        if (get_mark(current_question, actual) == '1')
+
+        printf("%s\n", student_answer);
+        char *actual = student_answer;
+        // actual[1] = '\0';
+        printf("%d:%s\n", student->qid[current_question - 1], student_answer);
+        if (get_mark(student->qid[current_question - 1], actual) == '1')
         {
             printf("correct\n");
             answer_correct(student->user, student->qid[current_question - 1]);
