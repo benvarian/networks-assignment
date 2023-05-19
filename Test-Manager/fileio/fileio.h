@@ -11,7 +11,7 @@
 #define MAX_USER_LENGTH     256
 #define FILEPATH            "./fileio/userdata.csv"
 
-//  ENUMERATION OF QUESTION TYPE - M FOR MULTICHOICE, P FOR PROGRAMMING
+//  ENUMERATION OF QUESTION TYPE - M FOR MULTICHOICE, P FOR PROGRAMMING, N FOR NONE
 enum qType {M, P, N};
 
 //  STUDENT DATA STRUCTURE
@@ -31,33 +31,18 @@ typedef struct _testinfo {
 //  WE DEFINE A HASHTABLE AS A (WILL BE, DYNAMICALLY ALLOCATED) ARRAY OF USER INFO
 typedef	TESTINFO * HASHTABLE;
 
-// Calculates the hash of a string
 extern uint32_t hash_string(char *string);
 
-//  ALLOCATE AND INITIALIZE SPACE FOR A NEW HASHTABLE (AN ARRAY OF TESTINFO)
 extern HASHTABLE *hashtable_new(void);
 
-/*  ADD A NEW USER TO A GIVEN HASHTABLE
-    HASHING IS BASED ON THE USERNAME (SO IT MUST BE UNIQUE)
-*/
 extern void hashtable_add(HASHTABLE *hashtable, char *username, char *passw, enum qType *types, int *qid, int *attemptsLeft, bool *correct);
 
-/*  DETERMINE IF A USER EXISTS IN THE HASHTABLE AND
-    RETURN A POINTER TO THE USER INFO STRUCTURE IF IT EXISTS 
-    RETURNS NULL POINTER IF USER DOES NOT EXIST     
-*/
 extern TESTINFO *hashtable_get(HASHTABLE *hashtable, char *username);
 
-// Opens the file and returns file pointer
 extern FILE *openFile(char *file_path, char *mode);
 
-// Reads content of the file into a buffer
 extern void readFile(FILE *fp, char **buffer);
 
-// Uses openFile and readFile to get data and put it in the hashtable
-// shouldn't need to call openFile and readFile, just this
 extern void getData(HASHTABLE *hashtable, int *numStudents, char ***studentNames, char *filepath);
 
-// Writes data from the hashtable into the csv at filepath, using the list of students
-// as a reference for the values in the hashtable
 extern void writeToCSV(HASHTABLE *hashtable, int *numStudents, char **studentNames, char *filepath);
